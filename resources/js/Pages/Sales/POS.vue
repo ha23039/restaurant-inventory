@@ -1,0 +1,627 @@
+<template>
+    <Head title="Punto de Venta" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex justify-between items-center">
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    Punto de Venta (POS)
+                </h2>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">
+                        {{ currentDate }}
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        Cajero: {{ $page.props.auth.user.name }}
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Panel de Productos -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div class="p-6">
+                                <!-- Header con controles -->
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-900">Catálogo de Productos</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <input
+                                            v-model="searchTerm"
+                                            type="text"
+                                            placeholder="Buscar producto..."
+                                            class="text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        />
+                                        <select
+                                            v-model="selectedCategory"
+                                            class="text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        >
+                                            <option value="">Todas las categorías</option>
+                                            <option value="menu">Platillos del Menú</option>
+                                            <option value="bebida">Bebidas</option>
+                                            <option value="extra">Extras</option>
+                                            <option value="condimento">Condimentos</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Tabs de categorías -->
+                                <div class="border-b border-gray-200 mb-6">
+                                    <nav class="-mb-px flex space-x-8">
+                                        <button
+                                            v-for="(group, key) in groupedProducts"
+                                            :key="key"
+                                            @click="activeTab = key"
+                                            :class="[
+                                                activeTab === key
+                                                    ? 'border-indigo-500 text-indigo-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                                            ]"
+                                        >
+                                            {{ group.title }} ({{ group.items.length }})
+                                        </button>
+                                    </nav>
+                                </div>
+
+                                <!-- Grid de productos -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    <div
+                                        v-for="item in groupedProducts[activeTab]?.items || []"
+                                        :key="`${item.product_type}-${item.id}`"
+                                        class="border rounded-lg p-4 transition-all duration-200 cursor-pointer relative"
+                                        :class="[
+                                            item.is_in_stock 
+                                                ? 'hover:shadow-md hover:border-blue-300 bg-white' 
+                                                : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                                        ]"
+                                        @click="addToCart(item)"
+                                    >
+                                        <!-- Badge de disponibilidad -->
+                                        <div class="absolute top-2 right-2">
+                                            <span 
+                                                v-if="item.is_in_stock"
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                            >
+                                                Stock: {{ item.available_quantity }}
+                                            </span>
+                                            <span 
+                                                v-else
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                            >
+                                                Agotado
+                                            </span>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <h4 class="font-semibold text-gray-900 text-lg">{{ item.name }}</h4>
+                                            <p class="text-sm text-gray-600 mt-1" v-if="item.description">
+                                                {{ item.description }}
+                                            </p>
+                                            
+                                            <!-- Ingredientes para platillos del menú -->
+                                            <div class="mt-2" v-if="item.product_type === 'menu' && item.recipes && item.recipes.length > 0">
+                                                <p class="text-xs text-gray-500 mb-1">Ingredientes:</p>
+                                                <div class="flex flex-wrap gap-1">
+                                                    <span 
+                                                        v-for="recipe in item.recipes" 
+                                                        :key="recipe.id"
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-200 text-gray-700"
+                                                    >
+                                                        {{ recipe.product.name }}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Información para productos simples -->
+                                            <div class="mt-2" v-else-if="item.product_type === 'simple'">
+                                                <p class="text-xs text-gray-500">
+                                                    Categoría: {{ item.category }}
+                                                </p>
+                                            </div>
+
+                                            <div class="flex justify-between items-center mt-4">
+                                                <span class="text-2xl font-bold text-green-600">
+                                                    ${{ formatPrice(item.price) }}
+                                                </span>
+                                                <button
+                                                    v-if="item.is_in_stock"
+                                                    @click.stop="addToCart(item)"
+                                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                                                >
+                                                    Agregar
+                                                </button>
+                                                <span v-else class="text-sm text-red-500 font-medium">
+                                                    Agotado
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mensaje si no hay productos -->
+                                <div v-if="(groupedProducts[activeTab]?.items || []).length === 0" class="text-center py-12">
+                                    <div class="text-gray-500">
+                                        <div class="text-4xl mb-4">📦</div>
+                                        <div>No hay productos disponibles en esta categoría</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel del Carrito -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg sticky top-6">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-900">Carrito de Compras</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <!-- Indicador de carrito guardado -->
+                                        <div v-if="cartItems.length > 0" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                            Guardado automáticamente
+                                        </div>
+                                        <button
+                                            v-if="cartItems.length > 0"
+                                            @click="clearCart"
+                                            class="text-red-500 hover:text-red-700 text-sm font-medium"
+                                        >
+                                            Limpiar Carrito
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Items del carrito -->
+                                <div v-if="cartItems.length === 0" class="text-center py-8 text-gray-500">
+                                    <div class="text-3xl mb-2">🛒</div>
+                                    <div class="font-medium">Carrito vacío</div>
+                                    <div class="text-sm">Agrega productos del catálogo</div>
+                                    <div class="text-xs mt-2 text-blue-600">
+                                        El carrito se guarda automáticamente
+                                    </div>
+                                </div>
+
+                                <div v-else class="space-y-3 mb-6">
+                                    <div
+                                        v-for="(item, index) in cartItems"
+                                        :key="index"
+                                        class="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                                    >
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900">{{ item.name }}</h4>
+                                            <p class="text-sm text-gray-600">${{ formatPrice(item.price) }} c/u</p>
+                                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                {{ item.product_type === 'menu' ? 'Platillo' : 'Individual' }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-2">
+                                            <button
+                                                @click="decrementQuantity(index)"
+                                                class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 font-medium"
+                                            >
+                                                -
+                                            </button>
+                                            <span class="w-8 text-center font-medium">{{ item.quantity }}</span>
+                                            <button
+                                                @click="incrementQuantity(index)"
+                                                :disabled="item.quantity >= item.available_quantity"
+                                                class="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 flex items-center justify-center text-white font-medium"
+                                            >
+                                                +
+                                            </button>
+                                            <button
+                                                @click="removeFromCart(index)"
+                                                class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white font-medium ml-2"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Totales -->
+                                <div v-if="cartItems.length > 0" class="border-t border-gray-200 pt-4">
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between text-sm">
+                                            <span class="font-medium">Subtotal:</span>
+                                            <span>${{ formatPrice(subtotal) }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm items-center">
+                                            <span class="font-medium">Descuento:</span>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs">$</span>
+                                                <input
+                                                    v-model="discount"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    :max="subtotal"
+                                                    class="w-20 text-right text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between text-sm items-center">
+                                            <span class="font-medium">Impuesto:</span>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs">$</span>
+                                                <input
+                                                    v-model="tax"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    class="w-20 text-right text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between text-lg font-bold border-t pt-3">
+                                            <span>Total:</span>
+                                            <span class="text-green-600">${{ formatPrice(total) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Método de pago -->
+                                    <div class="mt-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Método de Pago
+                                        </label>
+                                        <select
+                                            v-model="paymentMethod"
+                                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        >
+                                            <option value="efectivo">Efectivo</option>
+                                            <option value="tarjeta">Tarjeta</option>
+                                            <option value="transferencia">Transferencia</option>
+                                            <option value="mixto">Mixto</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Botón de procesar venta -->
+                                    <button
+                                        @click="processSale"
+                                        :disabled="processing || cartItems.length === 0"
+                                        class="w-full mt-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                                    >
+                                        <span v-if="processing" class="flex items-center justify-center">
+                                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Procesando...
+                                        </span>
+                                        <span v-else>Procesar Venta (${{ formatPrice(total) }})</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sistema de Notificaciones -->
+        <div v-if="notification" class="fixed top-4 right-4 z-50">
+            <div 
+                class="px-6 py-4 rounded-lg shadow-lg transition-all duration-300 max-w-sm border"
+                :class="{
+                    'bg-green-50 border-green-200 text-green-800': notification.type === 'success',
+                    'bg-red-50 border-red-200 text-red-800': notification.type === 'error',
+                    'bg-blue-50 border-blue-200 text-blue-800': notification.type === 'info',
+                    'bg-yellow-50 border-yellow-200 text-yellow-800': notification.type === 'warning'
+                }"
+            >
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-3">
+                        <svg v-if="notification.type === 'success'" class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg v-else-if="notification.type === 'error'" class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg v-else-if="notification.type === 'warning'" class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg v-else class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="font-medium">{{ notification.message }}</div>
+                </div>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>
+
+<script setup>
+// 1. IMPORTS CORRECTOS AL INICIO
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+
+// 2. PROPS DEL COMPONENTE
+const props = defineProps({
+    menu_items: Array,
+    simple_products: Array
+});
+
+// 3. ESTADO PRINCIPAL DEL POS
+const searchTerm = ref('');
+const selectedCategory = ref('');
+const activeTab = ref('menu');
+const cartItems = ref([]);
+const discount = ref(0);
+const tax = ref(0);
+const paymentMethod = ref('efectivo');
+const processing = ref(false);
+const notification = ref(null);
+
+// 4. FUNCIONES DE PERSISTENCIA DEL CARRITO
+const saveCartToStorage = () => {
+    const cartData = {
+        items: cartItems.value,
+        discount: discount.value,
+        tax: tax.value,
+        paymentMethod: paymentMethod.value,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('pos_cart_data', JSON.stringify(cartData));
+};
+
+const loadCartFromStorage = () => {
+    try {
+        const savedCart = localStorage.getItem('pos_cart_data');
+        if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            
+            // Verificar que no sea muy antiguo (24 horas)
+            const isExpired = (Date.now() - cartData.timestamp) > 24 * 60 * 60 * 1000;
+            
+            if (!isExpired && cartData.items) {
+                cartItems.value = cartData.items || [];
+                discount.value = cartData.discount || 0;
+                tax.value = cartData.tax || 0;
+                paymentMethod.value = cartData.paymentMethod || 'efectivo';
+                
+                if (cartItems.value.length > 0) {
+                    showNotification(`Carrito restaurado con ${cartItems.value.length} productos`, 'info');
+                }
+            } else {
+                // Limpiar carrito expirado
+                clearCartStorage();
+            }
+        }
+    } catch (error) {
+        console.warn('Error cargando carrito guardado:', error);
+        clearCartStorage();
+    }
+};
+
+const clearCartStorage = () => {
+    localStorage.removeItem('pos_cart_data');
+};
+
+// 5. COMPUTED PROPERTIES
+const currentDate = computed(() => {
+    return new Date().toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+});
+
+const groupedProducts = computed(() => {
+    const menuProducts = (props.menu_items || []).map(item => ({
+        ...item,
+        product_type: 'menu'
+    }));
+    
+    const simpleProducts = (props.simple_products || []).map(item => ({
+        ...item,
+        product_type: 'simple'
+    }));
+
+    // Filtrar por búsqueda y categoría
+    const allProducts = [...menuProducts, ...simpleProducts].filter(product => {
+        const matchesSearch = !searchTerm.value || 
+            product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
+        
+        const matchesCategory = !selectedCategory.value || 
+            (selectedCategory.value === 'menu' && product.product_type === 'menu') ||
+            (selectedCategory.value !== 'menu' && product.category === selectedCategory.value);
+        
+        return matchesSearch && matchesCategory;
+    });
+
+    // Agrupar por categorías
+    const groups = {
+        menu: { title: 'Platillos del Menú', items: [] },
+        bebida: { title: 'Bebidas', items: [] },
+        extra: { title: 'Extras', items: [] },
+        condimento: { title: 'Condimentos', items: [] },
+    };
+
+    allProducts.forEach(product => {
+        const category = product.product_type === 'menu' ? 'menu' : product.category;
+        if (groups[category]) {
+            groups[category].items.push(product);
+        }
+    });
+
+    return groups;
+});
+
+const subtotal = computed(() => {
+    return cartItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+});
+
+const total = computed(() => {
+    return Math.max(0, subtotal.value - parseFloat(discount.value || 0) + parseFloat(tax.value || 0));
+});
+
+// 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
+const addToCart = (product) => {
+    if (!product.is_in_stock) {
+        showNotification('Este producto no está disponible por falta de stock', 'warning');
+        return;
+    }
+
+    const existingIndex = cartItems.value.findIndex(item => 
+        item.id === product.id && item.product_type === product.product_type
+    );
+    
+    if (existingIndex >= 0) {
+        if (cartItems.value[existingIndex].quantity < product.available_quantity) {
+            cartItems.value[existingIndex].quantity++;
+            showNotification(`${product.name} agregado al carrito`, 'success');
+        } else {
+            showNotification(`Solo hay ${product.available_quantity} ${product.name} disponibles`, 'warning');
+        }
+    } else {
+        cartItems.value.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            available_quantity: product.available_quantity,
+            product_type: product.product_type
+        });
+        showNotification(`${product.name} agregado al carrito`, 'success');
+    }
+    
+    // Guardar automáticamente
+    saveCartToStorage();
+};
+
+const incrementQuantity = (index) => {
+    const item = cartItems.value[index];
+    if (item.quantity < item.available_quantity) {
+        item.quantity++;
+        saveCartToStorage();
+    } else {
+        showNotification(`Stock máximo alcanzado para ${item.name}`, 'warning');
+    }
+};
+
+const decrementQuantity = (index) => {
+    const item = cartItems.value[index];
+    if (item.quantity > 1) {
+        item.quantity--;
+        saveCartToStorage();
+    } else {
+        removeFromCart(index);
+    }
+};
+
+const removeFromCart = (index) => {
+    const item = cartItems.value[index];
+    cartItems.value.splice(index, 1);
+    showNotification(`${item.name} eliminado del carrito`, 'info');
+    saveCartToStorage();
+};
+
+const clearCart = () => {
+    if (confirm('¿Estás seguro de limpiar el carrito?')) {
+        cartItems.value = [];
+        discount.value = 0;
+        tax.value = 0;
+        clearCartStorage();
+        showNotification('Carrito limpiado', 'info');
+    }
+};
+
+// 7. PROCESAR VENTA
+const processSale = () => {
+    if (cartItems.value.length === 0) {
+        showNotification('El carrito está vacío', 'warning');
+        return;
+    }
+
+    if (!paymentMethod.value) {
+        showNotification('Selecciona un método de pago', 'warning');
+        return;
+    }
+
+    processing.value = true;
+
+    const saleData = {
+        items: cartItems.value.map(item => ({
+            id: item.id,
+            product_type: item.product_type,
+            quantity: item.quantity,
+            unit_price: item.price
+        })),
+        payment_method: paymentMethod.value,
+        discount: parseFloat(discount.value || 0),
+        tax: parseFloat(tax.value || 0)
+    };
+
+    console.log('Enviando datos de venta:', saleData);
+
+    router.post(route('sales.pos.store'), saleData, {
+        onSuccess: (page) => {
+            console.log('Venta exitosa:', page);
+            showNotification('¡Venta procesada exitosamente!', 'success');
+            
+            // Limpiar carrito y storage después de venta exitosa
+            cartItems.value = [];
+            discount.value = 0;
+            tax.value = 0;
+            paymentMethod.value = 'efectivo';
+            clearCartStorage();
+        },
+        onError: (errors) => {
+            console.error('Error en venta:', errors);
+            
+            if (errors.message) {
+                showNotification('Error: ' + errors.message, 'error');
+            } else if (typeof errors === 'object') {
+                showNotification('Error: ' + Object.values(errors).join(', '), 'error');
+            } else {
+                showNotification('Error desconocido al procesar la venta', 'error');
+            }
+        },
+        onFinish: () => {
+            processing.value = false;
+        }
+    });
+};
+
+// 8. SISTEMA DE NOTIFICACIONES
+const showNotification = (message, type = 'info') => {
+    notification.value = { message, type };
+    
+    setTimeout(() => {
+        notification.value = null;
+    }, 5000);
+};
+
+// 9. FUNCIONES DE UTILIDAD
+const formatPrice = (price) => {
+    return parseFloat(price || 0).toFixed(2);
+};
+
+// 10. WATCHERS PARA AUTO-GUARDAR
+watch([discount, tax, paymentMethod], () => {
+    if (cartItems.value.length > 0) {
+        saveCartToStorage();
+    }
+});
+
+// 11. LIFECYCLE HOOKS
+onMounted(() => {
+    // Cargar carrito guardado
+    loadCartFromStorage();
+    console.log('🛒 POS iniciado - Carrito persistente activado');
+});
+
+onBeforeUnmount(() => {
+    // Guardar antes de salir de la página
+    if (cartItems.value.length > 0) {
+        saveCartToStorage();
+    }
+});
+</script>
