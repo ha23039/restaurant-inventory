@@ -1,240 +1,240 @@
-# CLAUDE.md - AI Assistant Guide for Restaurant Inventory & POS System
+# CLAUDE.md - Guía para Asistentes IA del Sistema de Inventario y POS para Restaurantes
 
-**Last Updated**: 2025-11-15
-**Project**: Restaurant Management System with POS, Inventory, and Thermal Printing
+**Última Actualización**: 2025-11-15
+**Proyecto**: Sistema de Gestión de Restaurantes con POS, Inventario e Impresión Térmica
 **Stack**: Laravel 12 + Inertia.js + Vue 3 + Tailwind CSS
 
 ---
 
-## Table of Contents
+## Tabla de Contenidos
 
-1. [Project Overview](#project-overview)
-2. [Technology Stack](#technology-stack)
-3. [Project Structure](#project-structure)
-4. [Development Setup](#development-setup)
-5. [Database Architecture](#database-architecture)
-6. [Key Business Logic](#key-business-logic)
-7. [Authentication & Authorization](#authentication--authorization)
-8. [Frontend Architecture](#frontend-architecture)
-9. [Testing Guidelines](#testing-guidelines)
-10. [Deployment Considerations](#deployment-considerations)
-11. [Common Tasks & Workflows](#common-tasks--workflows)
-12. [Code Conventions & Patterns](#code-conventions--patterns)
-13. [Troubleshooting](#troubleshooting)
-
----
-
-## Project Overview
-
-### What This System Does
-
-This is a **full-stack restaurant management system** designed for Mexican/Latin American restaurants with the following capabilities:
-
-- **Point of Sale (POS)**: Process customer orders with real-time stock validation
-- **Inventory Management**: Track raw materials (ingredients) with automatic deduction
-- **Recipe Management**: Define dishes as combinations of inventory items (Bill of Materials)
-- **Dual Product System**:
-  - Menu Items (prepared dishes using recipes)
-  - Simple Products (individual sellable items linked directly to inventory)
-- **Sales Returns**: Process refunds with inventory restoration and cash flow adjustments
-- **Cash Flow Tracking**: Complete financial audit trail
-- **Thermal Printer Integration**: Kitchen orders (comandas) and customer receipts
-- **Role-Based Access**: Admin, Chef, Warehouse Manager (Almacenero), Cashier (Cajero)
-
-### Business Domain
-
-- Primary language for business terms: **Spanish**
-- Target market: Restaurant operations in Mexico/Latin America
-- Key business concepts use Spanish terms (cajero, almacenero, devoluciones, comandas)
+1. [Resumen del Proyecto](#resumen-del-proyecto)
+2. [Stack Tecnológico](#stack-tecnológico)
+3. [Estructura del Proyecto](#estructura-del-proyecto)
+4. [Configuración de Desarrollo](#configuración-de-desarrollo)
+5. [Arquitectura de Base de Datos](#arquitectura-de-base-de-datos)
+6. [Lógica de Negocio Clave](#lógica-de-negocio-clave)
+7. [Autenticación y Autorización](#autenticación-y-autorización)
+8. [Arquitectura del Frontend](#arquitectura-del-frontend)
+9. [Guías de Testing](#guías-de-testing)
+10. [Consideraciones de Despliegue](#consideraciones-de-despliegue)
+11. [Tareas y Flujos Comunes](#tareas-y-flujos-comunes)
+12. [Convenciones y Patrones de Código](#convenciones-y-patrones-de-código)
+13. [Solución de Problemas](#solución-de-problemas)
 
 ---
 
-## Technology Stack
+## Resumen del Proyecto
+
+### Qué Hace Este Sistema
+
+Este es un **sistema completo de gestión de restaurantes** diseñado para restaurantes mexicanos/latinoamericanos con las siguientes capacidades:
+
+- **Punto de Venta (POS)**: Procesar pedidos de clientes con validación de stock en tiempo real
+- **Gestión de Inventario**: Seguimiento de materias primas (ingredientes) con deducción automática
+- **Gestión de Recetas**: Definir platillos como combinaciones de artículos de inventario (Lista de Materiales)
+- **Sistema Dual de Productos**:
+  - Artículos del Menú (platillos preparados usando recetas)
+  - Productos Simples (artículos vendibles individuales vinculados directamente al inventario)
+- **Devoluciones de Ventas**: Procesar reembolsos con restauración de inventario y ajustes de flujo de efectivo
+- **Seguimiento de Flujo de Efectivo**: Pista de auditoría financiera completa
+- **Integración de Impresora Térmica**: Órdenes de cocina (comandas) y recibos de clientes
+- **Acceso Basado en Roles**: Administrador, Chef, Almacenero, Cajero
+
+### Dominio de Negocio
+
+- Idioma principal para términos de negocio: **Español**
+- Mercado objetivo: Operaciones de restaurantes en México/Latinoamérica
+- Los conceptos clave de negocio usan términos en español (cajero, almacenero, devoluciones, comandas)
+
+---
+
+## Stack Tecnológico
 
 ### Backend
 
 - **Framework**: Laravel 12.0
-- **PHP Version**: 8.2+ (8.4 in Docker)
-- **Database**: SQLite (dev) / MySQL 8.0 (production)
+- **Versión de PHP**: 8.2+ (8.4 en Docker)
+- **Base de Datos**: SQLite (desarrollo) / MySQL 8.0 (producción)
 - **ORM**: Eloquent
-- **Authentication**: Laravel Breeze + Sanctum
-- **Queue**: Database driver
-- **Cache/Session**: Database driver
+- **Autenticación**: Laravel Breeze + Sanctum
+- **Colas**: Driver de base de datos
+- **Caché/Sesión**: Driver de base de datos
 
 ### Frontend
 
-- **SPA Framework**: Inertia.js 2.0 (modern monolith pattern)
-- **JavaScript Framework**: Vue 3.5 (Composition API available)
-- **Build Tool**: Vite 6.2
-- **CSS Framework**: Tailwind CSS 3.2 + @tailwindcss/forms plugin
-- **Routing**: Laravel routes + Ziggy (JS route helpers)
+- **Framework SPA**: Inertia.js 2.0 (patrón de monolito moderno)
+- **Framework JavaScript**: Vue 3.5 (Composition API disponible)
+- **Herramienta de Build**: Vite 6.2
+- **Framework CSS**: Tailwind CSS 3.2 + plugin @tailwindcss/forms
+- **Enrutamiento**: Rutas de Laravel + Ziggy (helpers de rutas JS)
 
-### Development Tools
+### Herramientas de Desarrollo
 
 - **Docker**: Laravel Sail 1.41
-- **Code Style**: Laravel Pint 1.13
+- **Estilo de Código**: Laravel Pint 1.13
 - **Testing**: PHPUnit 11.5
 - **REPL**: Laravel Tinker 2.10
-- **Log Viewer**: Laravel Pail 1.2
+- **Visor de Logs**: Laravel Pail 1.2
 
-### Special Dependencies
+### Dependencias Especiales
 
-- **mike42/escpos-php**: ESC/POS thermal printer commands
-- **barryvdh/laravel-dompdf**: PDF generation
-- **simplesoftwareio/simple-qrcode**: QR code generation for sales
-- **tightenco/ziggy**: Laravel routes in JavaScript
+- **mike42/escpos-php**: Comandos ESC/POS para impresoras térmicas
+- **barryvdh/laravel-dompdf**: Generación de PDF
+- **simplesoftwareio/simple-qrcode**: Generación de códigos QR para ventas
+- **tightenco/ziggy**: Rutas de Laravel en JavaScript
 
 ---
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
 /home/user/restaurant-inventory/
 ├── app/
 │   ├── Http/
-│   │   ├── Controllers/           # Request handlers
-│   │   │   ├── Auth/             # Laravel Breeze auth
+│   │   ├── Controllers/           # Manejadores de peticiones
+│   │   │   ├── Auth/             # Autenticación Laravel Breeze
 │   │   │   ├── CategoryController.php
 │   │   │   ├── InventoryController.php
 │   │   │   ├── InventoryMovementController.php
-│   │   │   ├── POSController.php          # ⚠️ CRITICAL: POS logic
+│   │   │   ├── POSController.php          # ⚠️ CRÍTICO: Lógica del POS
 │   │   │   ├── ProductController.php
 │   │   │   ├── ReturnController.php
 │   │   │   ├── SaleController.php
 │   │   │   └── TicketController.php
 │   │   ├── Middleware/
-│   │   │   ├── HandleInertiaRequests.php  # Shared Inertia data
-│   │   │   └── RoleMiddleware.php         # ⚠️ RBAC implementation
-│   │   └── Requests/              # Form requests (future)
-│   ├── Models/                    # Eloquent models (13 models)
+│   │   │   ├── HandleInertiaRequests.php  # Datos compartidos de Inertia
+│   │   │   └── RoleMiddleware.php         # ⚠️ Implementación RBAC
+│   │   └── Requests/              # Form requests (futuro)
+│   ├── Models/                    # Modelos Eloquent (13 modelos)
 │   │   ├── CashFlow.php
 │   │   ├── Category.php
 │   │   ├── InventoryMovement.php
-│   │   ├── MenuItem.php           # Prepared dishes
-│   │   ├── Product.php            # ⚠️ Raw inventory items
-│   │   ├── Recipe.php             # ⚠️ BOM for menu items
+│   │   ├── MenuItem.php           # Platillos preparados
+│   │   ├── Product.php            # ⚠️ Artículos de inventario
+│   │   ├── Recipe.php             # ⚠️ Lista de Materiales
 │   │   ├── Sale.php
-│   │   ├── SaleItem.php           # ⚠️ Polymorphic relation
+│   │   ├── SaleItem.php           # ⚠️ Relación polimórfica
 │   │   ├── SaleReturn.php
 │   │   ├── SaleReturnItem.php
-│   │   ├── SimpleProduct.php      # Individual sellable items
+│   │   ├── SimpleProduct.php      # Artículos vendibles individuales
 │   │   ├── Supplier.php
 │   │   └── User.php
 │   ├── Providers/
 │   │   └── AppServiceProvider.php
 │   └── Services/
-│       └── ThermalTicketService.php  # ⚠️ Printer integration
-├── bootstrap/                     # Framework bootstrap
-├── config/                        # Configuration files
-│   ├── thermal_printer.php        # ⚠️ Printer configuration
+│       └── ThermalTicketService.php  # ⚠️ Integración de impresora
+├── bootstrap/                     # Bootstrap del framework
+├── config/                        # Archivos de configuración
+│   ├── thermal_printer.php        # ⚠️ Configuración de impresora
 │   ├── dompdf.php
-│   └── [standard Laravel configs]
+│   └── [configuraciones estándar de Laravel]
 ├── database/
 │   ├── factories/
 │   │   └── UserFactory.php
-│   ├── migrations/                # 18 migrations (sequential)
-│   └── seeders/                   # 9 seeders with sample data
-├── public/                        # Web root
-│   └── build/                     # Vite compiled assets
+│   ├── migrations/                # 18 migraciones (secuenciales)
+│   └── seeders/                   # 9 seeders con datos de ejemplo
+├── public/                        # Raíz web
+│   └── build/                     # Assets compilados por Vite
 ├── resources/
 │   ├── css/
-│   │   └── app.css               # Tailwind entry point
+│   │   └── app.css               # Punto de entrada de Tailwind
 │   ├── js/
-│   │   ├── Components/           # Reusable Vue components (15)
-│   │   ├── Layouts/              # Page layouts (2)
-│   │   ├── Pages/                # Route components (24)
+│   │   ├── Components/           # Componentes Vue reutilizables (15)
+│   │   ├── Layouts/              # Layouts de página (2)
+│   │   ├── Pages/                # Componentes de ruta (24)
 │   │   │   ├── Auth/
 │   │   │   ├── Dashboard.vue
 │   │   │   ├── Inventory/
 │   │   │   ├── Profile/
 │   │   │   ├── Returns/
 │   │   │   ├── Sales/
-│   │   │   │   └── POS.vue       # ⚠️ Point of Sale UI
+│   │   │   │   └── POS.vue       # ⚠️ Interfaz del Punto de Venta
 │   │   │   └── Welcome.vue
-│   │   ├── app.js                # ⚠️ Vue + Inertia bootstrap
+│   │   ├── app.js                # ⚠️ Bootstrap de Vue + Inertia
 │   │   └── bootstrap.js
-│   └── views/                    # Minimal Blade (Inertia shell)
+│   └── views/                    # Blade mínimo (shell de Inertia)
 ├── routes/
-│   ├── auth.php                  # Breeze auth routes
+│   ├── auth.php                  # Rutas de autenticación Breeze
 │   ├── console.php
-│   └── web.php                   # ⚠️ CRITICAL: Main routes
+│   └── web.php                   # ⚠️ CRÍTICO: Rutas principales
 ├── storage/
 │   ├── app/
-│   │   └── tickets/              # Dev thermal tickets (*.txt)
+│   │   └── tickets/              # Tickets térmicos de desarrollo (*.txt)
 │   ├── framework/
 │   └── logs/
 ├── tests/
 │   ├── Feature/
 │   └── Unit/
-├── vendor/                       # Composer dependencies
-├── .env.example                  # Environment template
-├── artisan                       # Laravel CLI
-├── composer.json                 # PHP dependencies
-├── docker-compose.yml            # ⚠️ Sail configuration
-├── package.json                  # NPM dependencies
-├── phpunit.xml                   # Testing configuration
-├── tailwind.config.js            # Tailwind configuration
-└── vite.config.js                # Vite build configuration
+├── vendor/                       # Dependencias de Composer
+├── .env.example                  # Plantilla de entorno
+├── artisan                       # CLI de Laravel
+├── composer.json                 # Dependencias PHP
+├── docker-compose.yml            # ⚠️ Configuración de Sail
+├── package.json                  # Dependencias NPM
+├── phpunit.xml                   # Configuración de testing
+├── tailwind.config.js            # Configuración de Tailwind
+└── vite.config.js                # Configuración de build de Vite
 ```
 
-**⚠️ Key Files** that AI assistants should understand thoroughly before making changes.
+**⚠️ Archivos Clave** que los asistentes IA deben entender completamente antes de hacer cambios.
 
 ---
 
-## Development Setup
+## Configuración de Desarrollo
 
-### Option 1: Laravel Sail (Docker) - Recommended
+### Opción 1: Laravel Sail (Docker) - Recomendado
 
 ```bash
-# First time setup
+# Configuración inicial
 composer install
 ./vendor/bin/sail up -d
 
-# Access container
+# Acceder al contenedor
 ./vendor/bin/sail bash
 
-# Inside container
+# Dentro del contenedor
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 npm install && npm run build
 
-# Access application
-# http://localhost (app)
-# http://localhost:5173 (Vite dev server)
+# Acceder a la aplicación
+# http://localhost (aplicación)
+# http://localhost:5173 (servidor Vite)
 ```
 
-### Option 2: Local Development
+### Opción 2: Desarrollo Local
 
 ```bash
-# Prerequisites: PHP 8.2+, Composer, Node.js 18+
+# Prerequisitos: PHP 8.2+, Composer, Node.js 18+
 
-# Install dependencies
+# Instalar dependencias
 composer install
 npm install
 
-# Environment setup
+# Configuración del entorno
 cp .env.example .env
 php artisan key:generate
 
-# Database (SQLite default)
+# Base de datos (SQLite por defecto)
 touch database/database.sqlite
 php artisan migrate --seed
 
-# Run concurrent dev servers (recommended)
+# Ejecutar servidores de desarrollo concurrentes (recomendado)
 composer run dev
-# This runs: PHP server + Queue worker + Logs + Vite HMR
+# Esto ejecuta: Servidor PHP + Worker de colas + Logs + Vite HMR
 
-# OR manually in separate terminals:
+# O manualmente en terminales separadas:
 php artisan serve              # http://localhost:8000
 npm run dev                    # http://localhost:5173
-php artisan queue:listen       # Queue worker
-php artisan pail               # Real-time logs
+php artisan queue:listen       # Worker de colas
+php artisan pail               # Logs en tiempo real
 ```
 
-### Environment Configuration
+### Configuración del Entorno
 
-**Critical `.env` Variables**:
+**Variables críticas de `.env`**:
 
 ```env
 APP_NAME="Restaurant POS"
@@ -242,7 +242,7 @@ APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://localhost
 
-# Database (SQLite for dev, MySQL for production)
+# Base de datos (SQLite para desarrollo, MySQL para producción)
 DB_CONNECTION=sqlite
 # DB_CONNECTION=mysql
 # DB_HOST=127.0.0.1
@@ -256,24 +256,24 @@ QUEUE_CONNECTION=database
 CACHE_STORE=database
 SESSION_DRIVER=database
 
-# Thermal Printers (production)
+# Impresoras Térmicas (producción)
 KITCHEN_PRINTER_IP=192.168.1.100
 KITCHEN_PRINTER_PORT=9100
 CUSTOMER_PRINTER_IP=192.168.1.101
 CUSTOMER_PRINTER_PORT=9100
 
-# Restaurant Info (for receipts)
+# Información del Restaurante (para recibos)
 RESTAURANT_NAME="Restaurante Demo"
 RESTAURANT_ADDRESS="Calle Principal #123"
 RESTAURANT_PHONE="(555) 123-4567"
 RESTAURANT_TAX_ID="RFC123456789"
 
-# Printer Settings
+# Configuración de Impresora
 AUTO_PRINT_KITCHEN=true
 AUTO_PRINT_CUSTOMER=true
 ```
 
-### Default Login Credentials (after seeding)
+### Credenciales de Login por Defecto (después del seeding)
 
 - **Admin**: admin@example.com / password
 - **Chef**: chef@example.com / password
@@ -282,115 +282,115 @@ AUTO_PRINT_CUSTOMER=true
 
 ---
 
-## Database Architecture
+## Arquitectura de Base de Datos
 
-### Core Entities & Relationships
+### Entidades Principales y Relaciones
 
 ```
 ┌─────────────┐
-│   Product   │  Raw inventory items (ingredients, supplies)
+│   Product   │  Artículos de inventario (ingredientes, suministros)
 │  (products) │  - current_stock (decimal 10,3)
 └─────┬───────┘  - unit_type (kg/lt/pcs/g/ml)
-      │          - min/max stock levels
+      │          - niveles min/max de stock
       │          - unit_cost, expiry_date
       ├──────────┐
       │          ▼
       │    ┌──────────┐
-      │    │  Recipe  │  Bill of Materials
-      │    │(recipes) │  Links MenuItem → Products
+      │    │  Recipe  │  Lista de Materiales
+      │    │(recipes) │  Vincula MenuItem → Products
       │    └────┬─────┘  - quantity_needed, unit
       │         │
       │         ▼
       │   ┌──────────────┐
-      │   │   MenuItem   │  Prepared dishes (combos)
+      │   │   MenuItem   │  Platillos preparados (combos)
       │   │(menu_items)  │  - price, image_path
       │   └──────────────┘  - is_available
       │
       ├──────────┐
       │          ▼
       │   ┌─────────────────┐
-      │   │ SimpleProduct   │  Individual sellable items
+      │   │ SimpleProduct   │  Artículos vendibles individuales
       │   │(simple_products)│  - sale_price, cost_per_unit
-      │   └─────────────────┘  - Linked to base Product
+      │   └─────────────────┘  - Vinculado al Product base
       │
       ▼
 ┌──────────────────────┐
-│ InventoryMovement    │  Stock change audit trail
+│ InventoryMovement    │  Pista de auditoría de cambios de stock
 │(inventory_movements) │  - movement_type (entrada/salida/ajuste)
 └──────────────────────┘  - reason (compra, venta_automatica, etc.)
 
 ┌──────────┐
-│   Sale   │  Sales transactions
+│   Sale   │  Transacciones de ventas
 │ (sales)  │  - sale_number (YYYYMMDD0001)
 └────┬─────┘  - payment_method, status
      │
      ├────────────────┐
      │                ▼
      │         ┌──────────────┐
-     │         │   SaleItem   │  POLYMORPHIC: menu_item OR simple_product
+     │         │   SaleItem   │  POLIMÓRFICO: menu_item O simple_product
      │         │(sale_items)  │  - product_type ('menu'/'simple')
      │         └──────────────┘  - quantity, unit_price
      │
      ├────────────────┐
      │                ▼
      │         ┌──────────────┐
-     │         │  CashFlow    │  Financial audit trail
+     │         │  CashFlow    │  Pista de auditoría financiera
      │         │(cash_flow)   │  - type (entrada/salida)
      │         └──────────────┘  - category (ventas, devoluciones, etc.)
      │
      └────────────────┐
                       ▼
                ┌──────────────┐
-               │ SaleReturn   │  Refunds/returns
+               │ SaleReturn   │  Reembolsos/devoluciones
                │(sale_returns)│  - return_number (RETYYYYMMDD0001)
                └──────────────┘  - inventory_restored (bool)
                                  - cash_flow_adjusted (bool)
 ```
 
-### Critical Database Concepts
+### Conceptos Críticos de Base de Datos
 
-#### 1. Dual Product System
+#### 1. Sistema Dual de Productos
 
-**Products (Inventory)**:
-- Raw materials and ingredients
-- Tracked with decimal precision (0.001 units)
-- Example: "Pollo" (1kg), "Coca Cola" (1 liter), "Tortillas" (1kg)
+**Products (Inventario)**:
+- Materias primas e ingredientes
+- Rastreado con precisión decimal (0.001 unidades)
+- Ejemplo: "Pollo" (1kg), "Coca Cola" (1 litro), "Tortillas" (1kg)
 
-**Menu Items (Prepared Dishes)**:
-- Composed of multiple Products via Recipes
-- Example: "Tacos de Pollo" requires 0.2kg Pollo, 0.1kg Tortillas, etc.
-- Stock availability calculated from minimum available ingredient
+**Menu Items (Platillos Preparados)**:
+- Compuestos de múltiples Products vía Recipes
+- Ejemplo: "Tacos de Pollo" requiere 0.2kg Pollo, 0.1kg Tortillas, etc.
+- Disponibilidad de stock calculada desde el ingrediente mínimo disponible
 
-**Simple Products (Individual Sales)**:
-- Direct sales linked to inventory
-- Example: "Coca Cola 355ml" consumes 0.355 liters from base Product
-- Calculated available quantity: `floor(current_stock / cost_per_unit)`
+**Simple Products (Ventas Individuales)**:
+- Ventas directas vinculadas al inventario
+- Ejemplo: "Coca Cola 355ml" consume 0.355 litros del Product base
+- Cantidad disponible calculada: `floor(current_stock / cost_per_unit)`
 
-#### 2. Automatic Inventory Deduction
+#### 2. Deducción Automática de Inventario
 
-**Location**: `app/Http/Controllers/POSController.php:processMenuItemInventoryDeduction()`
+**Ubicación**: `app/Http/Controllers/POSController.php:processMenuItemInventoryDeduction()`
 
-When a sale is completed:
-1. For each Menu Item sold:
-   - Query related Recipes
-   - Deduct `quantity_needed * items_sold` from each Product
-   - Create InventoryMovement with reason `venta_automatica`
+Cuando se completa una venta:
+1. Para cada Menu Item vendido:
+   - Consulta Recipes relacionadas
+   - Deduce `quantity_needed * items_sold` de cada Product
+   - Crea InventoryMovement con reason `venta_automatica`
 
-2. For each Simple Product sold:
-   - Deduct `cost_per_unit * items_sold` from base Product
-   - Create InventoryMovement
+2. Para cada Simple Product vendido:
+   - Deduce `cost_per_unit * items_sold` del Product base
+   - Crea InventoryMovement
 
-**⚠️ CRITICAL**: This logic ensures inventory stays synchronized with sales. DO NOT bypass this when processing sales.
+**⚠️ CRÍTICO**: Esta lógica asegura que el inventario permanezca sincronizado con las ventas. NO omitir esto al procesar ventas.
 
-#### 3. Stock Availability Calculation
+#### 3. Cálculo de Disponibilidad de Stock
 
 **Menu Items** (`app/Models/MenuItem.php`):
 ```php
-// Calculate minimum possible servings based on all recipe ingredients
+// Calcula las porciones mínimas posibles basado en todos los ingredientes de la receta
 $available_quantity = min(
     floor($product1_stock / $recipe1_quantity),
     floor($product2_stock / $recipe2_quantity),
-    // ... for all recipe items
+    // ... para todos los items de la receta
 );
 ```
 
@@ -399,89 +399,89 @@ $available_quantity = min(
 $available_quantity = floor($product->current_stock / $this->cost_per_unit);
 ```
 
-**⚠️ IMPORTANT**: The POS validates stock before allowing sales to prevent overselling.
+**⚠️ IMPORTANTE**: El POS valida el stock antes de permitir ventas para prevenir sobreventa.
 
-#### 4. Migration Execution Order
+#### 4. Orden de Ejecución de Migraciones
 
-Migrations MUST run in this order (handled by timestamps):
+Las migraciones DEBEN ejecutarse en este orden (manejado por timestamps):
 
-1. Core Laravel tables (users, cache, jobs, sessions)
+1. Tablas core de Laravel (users, cache, jobs, sessions)
 2. categories, suppliers
-3. products (depends on categories, suppliers)
+3. products (depende de categories, suppliers)
 4. menu_items
-5. recipes (depends on menu_items, products)
-6. simple_products (depends on products)
-7. inventory_movements (depends on products, users)
-8. sales (depends on users)
-9. sale_items (depends on sales, menu_items, simple_products)
-10. cash_flow (depends on sales, users)
-11. sale_returns (depends on sales, users)
-12. sale_return_items (depends on sale_returns, sale_items)
-13. User role addition
-14. Cash flow category updates
+5. recipes (depende de menu_items, products)
+6. simple_products (depende de products)
+7. inventory_movements (depende de products, users)
+8. sales (depende de users)
+9. sale_items (depende de sales, menu_items, simple_products)
+10. cash_flow (depende de sales, users)
+11. sale_returns (depende de sales, users)
+12. sale_return_items (depende de sale_returns, sale_items)
+13. Adición de rol de usuario
+14. Actualizaciones de categoría de flujo de efectivo
 
-**Running Migrations**:
+**Ejecutar Migraciones**:
 ```bash
-php artisan migrate --seed    # Fresh install with sample data
-php artisan migrate:fresh      # Reset database (DESTRUCTIVE)
-php artisan migrate:rollback   # Rollback last batch
+php artisan migrate --seed    # Instalación nueva con datos de ejemplo
+php artisan migrate:fresh      # Resetear base de datos (DESTRUCTIVO)
+php artisan migrate:rollback   # Revertir último lote
 ```
 
 ---
 
-## Key Business Logic
+## Lógica de Negocio Clave
 
-### 1. Point of Sale (POS) Flow
+### 1. Flujo del Punto de Venta (POS)
 
-**Controller**: `app/Http/Controllers/POSController.php`
-**View**: `resources/js/Pages/Sales/POS.vue`
+**Controlador**: `app/Http/Controllers/POSController.php`
+**Vista**: `resources/js/Pages/Sales/POS.vue`
 
-**Process**:
-1. User selects products (menu items or simple products)
-2. System validates stock availability in real-time
-3. User completes sale (payment method, discount, etc.)
+**Proceso**:
+1. Usuario selecciona productos (menu items o simple products)
+2. Sistema valida disponibilidad de stock en tiempo real
+3. Usuario completa la venta (método de pago, descuento, etc.)
 4. Backend:
-   - Creates Sale record with unique number `YYYYMMDD0001`
-   - Creates SaleItems (polymorphic references)
-   - **Automatically deducts inventory** (critical)
-   - Creates CashFlow entry (category: 'ventas')
-   - Triggers thermal printer (kitchen + customer receipts)
-5. Returns sale data to frontend
+   - Crea registro Sale con número único `YYYYMMDD0001`
+   - Crea SaleItems (referencias polimórficas)
+   - **Deduce inventario automáticamente** (crítico)
+   - Crea entrada CashFlow (categoría: 'ventas')
+   - Activa impresora térmica (recibos de cocina + cliente)
+5. Retorna datos de venta al frontend
 
-**Sale Number Format**: `20251115` + `0001` (padded daily counter)
+**Formato de Número de Venta**: `20251115` + `0001` (contador diario con padding)
 
-### 2. Thermal Printer Integration
+### 2. Integración de Impresora Térmica
 
-**Service**: `app/Services/ThermalTicketService.php`
-**Config**: `config/thermal_printer.php`
+**Servicio**: `app/Services/ThermalTicketService.php`
+**Configuración**: `config/thermal_printer.php`
 
-**Three Ticket Types**:
+**Tres Tipos de Tickets**:
 
-1. **Kitchen Order (Comanda)**:
-   - 58mm thermal printer
-   - Only items requiring kitchen prep (excludes 'Bebidas', 'Postres', 'Extras')
-   - Priority number calculation
-   - Printed automatically on sale
+1. **Orden de Cocina (Comanda)**:
+   - Impresora térmica de 58mm
+   - Solo items que requieren preparación en cocina (excluye 'Bebidas', 'Postres', 'Extras')
+   - Cálculo de número de prioridad
+   - Impreso automáticamente en venta
 
-2. **Customer Receipt**:
-   - 80mm thermal printer
-   - Complete sale details
-   - QR code with sale number
-   - Tax breakdown
-   - Payment method
+2. **Recibo de Cliente**:
+   - Impresora térmica de 80mm
+   - Detalles completos de la venta
+   - Código QR con número de venta
+   - Desglose de impuestos
+   - Método de pago
 
-3. **Return Receipt**:
-   - Similar to customer receipt
-   - Shows returned items
-   - Refund amount
+3. **Recibo de Devolución**:
+   - Similar al recibo de cliente
+   - Muestra items devueltos
+   - Monto de reembolso
 
-**Development Mode**:
+**Modo de Desarrollo**:
 ```php
 if (app()->environment('local')) {
-    // Save to storage/app/tickets/
+    // Guarda en storage/app/tickets/
     file_put_contents(storage_path("app/tickets/sale_{$saleNumber}.txt"), $ticket);
 } else {
-    // Send to network printer
+    // Envía a impresora de red
     $connector = new NetworkPrintConnector($printerIp, $printerPort);
     $printer = new Printer($connector);
     $printer->text($ticket);
@@ -489,117 +489,117 @@ if (app()->environment('local')) {
 }
 ```
 
-**⚠️ IMPORTANT**: In production, ensure printer IPs are configured in `.env` and printers are on the same network.
+**⚠️ IMPORTANTE**: En producción, asegurar que las IPs de impresora estén configuradas en `.env` y las impresoras estén en la misma red.
 
-### 3. Sales Returns Flow
+### 3. Flujo de Devoluciones de Ventas
 
-**Controllers**: `app/Http/Controllers/ReturnController.php`
-**Views**: `resources/js/Pages/Returns/`
+**Controladores**: `app/Http/Controllers/ReturnController.php`
+**Vistas**: `resources/js/Pages/Returns/`
 
-**Process**:
-1. Look up original sale by sale number
-2. Select items to return (partial or full)
-3. Specify return reason
+**Proceso**:
+1. Buscar venta original por número de venta
+2. Seleccionar items a devolver (parcial o total)
+3. Especificar razón de devolución
 4. Backend:
-   - Creates SaleReturn with unique number `RETYYYYMMDD0001`
-   - Creates SaleReturnItems
-   - **Restores inventory** (adds back to Products)
-   - **Adjusts cash flow** (negative entry, category: 'devoluciones')
-   - Marks flags: `inventory_restored=true`, `cash_flow_adjusted=true`
-5. Prints return receipt
+   - Crea SaleReturn con número único `RETYYYYMMDD0001`
+   - Crea SaleReturnItems
+   - **Restaura inventario** (agrega de vuelta a Products)
+   - **Ajusta flujo de efectivo** (entrada negativa, categoría: 'devoluciones')
+   - Marca banderas: `inventory_restored=true`, `cash_flow_adjusted=true`
+5. Imprime recibo de devolución
 
-**Return Number Format**: `RET` + `20251115` + `0001`
+**Formato de Número de Devolución**: `RET` + `20251115` + `0001`
 
-**⚠️ CRITICAL**: Returns must restore inventory to maintain accuracy. The system tracks this with boolean flags.
+**⚠️ CRÍTICO**: Las devoluciones deben restaurar inventario para mantener precisión. El sistema rastrea esto con banderas booleanas.
 
-### 4. Cash Flow Tracking
+### 4. Seguimiento de Flujo de Efectivo
 
-**Model**: `app/Models/CashFlow.php`
+**Modelo**: `app/Models/CashFlow.php`
 
-**Categories**:
-- `ventas` - Sales revenue (entrada)
-- `compras` - Inventory purchases (salida)
-- `gastos_operativos` - Operational expenses (salida)
-- `gastos_admin` - Administrative expenses (salida)
-- `devoluciones` - Returns/refunds (salida)
-- `otros` - Other transactions
+**Categorías**:
+- `ventas` - Ingresos de ventas (entrada)
+- `compras` - Compras de inventario (salida)
+- `gastos_operativos` - Gastos operacionales (salida)
+- `gastos_admin` - Gastos administrativos (salida)
+- `devoluciones` - Reembolsos/devoluciones (salida)
+- `otros` - Otras transacciones
 
-**Auto-Created On**:
-- Sales completion (ventas)
-- Returns processing (devoluciones)
+**Creado Automáticamente En**:
+- Finalización de ventas (ventas)
+- Procesamiento de devoluciones (devoluciones)
 
-**Manual Entry**:
-- Inventory purchases
-- Operational expenses
-- Other transactions
+**Entrada Manual**:
+- Compras de inventario
+- Gastos operacionales
+- Otras transacciones
 
-**Reports**: Available in admin dashboard (cash flow summary by date range)
+**Reportes**: Disponibles en dashboard de admin (resumen de flujo de efectivo por rango de fechas)
 
 ---
 
-## Authentication & Authorization
+## Autenticación y Autorización
 
-### Authentication Stack
+### Stack de Autenticación
 
-- **Laravel Breeze**: Provides login, registration, password reset, email verification
-- **Laravel Sanctum**: API token authentication (SPA mode)
-- **Inertia Middleware**: Shares auth user data globally
+- **Laravel Breeze**: Provee login, registro, reset de contraseña, verificación de email
+- **Laravel Sanctum**: Autenticación de tokens API (modo SPA)
+- **Middleware Inertia**: Comparte datos de usuario autenticado globalmente
 
-### Role-Based Access Control (RBAC)
+### Control de Acceso Basado en Roles (RBAC)
 
 **Middleware**: `app/Http/Middleware/RoleMiddleware.php`
 
-**Roles** (Enum in User model):
-- `admin` - Full system access
-- `chef` - Menu management, view orders
-- `almacenero` - Inventory management (warehouse manager)
-- `cajero` - POS operations, sales (cashier)
+**Roles** (Enum en modelo User):
+- `admin` - Acceso completo al sistema
+- `chef` - Gestión de menú, ver órdenes
+- `almacenero` - Gestión de inventario
+- `cajero` - Operaciones de POS, ventas
 
-**Route Protection**:
+**Protección de Rutas**:
 ```php
 Route::middleware(['auth', 'role:admin,cajero'])->group(function () {
-    // Only admin and cajero can access
+    // Solo admin y cajero pueden acceder
 });
 ```
 
-**Role Assignment** (migration: `2025_06_10_004200_add_role_to_users_table.php`):
+**Asignación de Rol** (migración: `2025_06_10_004200_add_role_to_users_table.php`):
 ```php
 $table->enum('role', ['admin', 'chef', 'almacenero', 'cajero'])->default('cajero');
 $table->boolean('is_active')->default(true);
 ```
 
-### Route Access Matrix
+### Matriz de Acceso a Rutas
 
-| Feature | Admin | Chef | Almacenero | Cajero |
-|---------|-------|------|------------|--------|
+| Funcionalidad | Admin | Chef | Almacenero | Cajero |
+|---------------|-------|------|------------|--------|
 | Dashboard | ✓ | ✓ | ✓ | ✓ |
 | POS | ✓ | ✗ | ✗ | ✓ |
-| Sales History | ✓ | ✗ | ✗ | ✓ |
-| Returns | ✓ | ✗ | ✗ | ✓ |
-| Inventory | ✓ | ✗ | ✓ | ✗ |
-| Products | ✓ | ✗ | ✓ | ✗ |
-| Menu Items | ✓ | ✓ | ✗ | ✗ |
-| Recipes | ✓ | ✓ | ✗ | ✗ |
-| Cash Flow | ✓ | ✗ | ✗ | ✗ |
-| User Management | ✓ | ✗ | ✗ | ✗ |
+| Historial de Ventas | ✓ | ✗ | ✗ | ✓ |
+| Devoluciones | ✓ | ✗ | ✗ | ✓ |
+| Inventario | ✓ | ✗ | ✓ | ✗ |
+| Productos | ✓ | ✗ | ✓ | ✗ |
+| Items del Menú | ✓ | ✓ | ✗ | ✗ |
+| Recetas | ✓ | ✓ | ✗ | ✗ |
+| Flujo de Efectivo | ✓ | ✗ | ✗ | ✗ |
+| Gestión de Usuarios | ✓ | ✗ | ✗ | ✗ |
 
-**⚠️ IMPORTANT**: When creating new routes, always consider role permissions.
+**⚠️ IMPORTANTE**: Al crear nuevas rutas, siempre considerar permisos de rol.
 
 ---
 
-## Frontend Architecture
+## Arquitectura del Frontend
 
-### Inertia.js Pattern
+### Patrón Inertia.js
 
-**Concept**: "Modern Monolith"
-- Server-side routing (Laravel)
-- Client-side rendering (Vue 3)
-- No API layer needed
-- Props passed directly from controllers
+**Concepto**: "Monolito Moderno"
+- Enrutamiento del lado del servidor (Laravel)
+- Renderizado del lado del cliente (Vue 3)
+- No se necesita capa API
+- Props pasadas directamente desde controladores
 
-**Example Flow**:
+**Ejemplo de Flujo**:
 ```php
-// Controller
+// Controlador
 return Inertia::render('Sales/POS', [
     'menuItems' => MenuItem::with('recipes.product')->get(),
     'simpleProducts' => SimpleProduct::with('product')->get(),
@@ -616,87 +616,87 @@ const props = defineProps({
 </script>
 ```
 
-### Component Organization
+### Organización de Componentes
 
 **Pages** (`resources/js/Pages/`):
-- Route-specific components
-- Receive props from controllers
-- One per route (Dashboard.vue, POS.vue, etc.)
+- Componentes específicos de ruta
+- Reciben props de controladores
+- Uno por ruta (Dashboard.vue, POS.vue, etc.)
 
 **Components** (`resources/js/Components/`):
-- Reusable UI elements
-- Form inputs, modals, dropdowns, etc.
-- No route-specific logic
+- Elementos de UI reutilizables
+- Inputs de formulario, modales, dropdowns, etc.
+- Sin lógica específica de ruta
 
 **Layouts** (`resources/js/Layouts/`):
-- Page wrappers
-- `AuthenticatedLayout.vue` - For logged-in users (sidebar, header)
-- `GuestLayout.vue` - For auth pages
+- Envolturas de página
+- `AuthenticatedLayout.vue` - Para usuarios logueados (sidebar, header)
+- `GuestLayout.vue` - Para páginas de autenticación
 
-### Ziggy Route Helpers
+### Helpers de Rutas Ziggy
 
-**Usage in Vue**:
+**Uso en Vue**:
 ```vue
 <script setup>
 import { router } from '@inertiajs/vue3';
 
-// Navigate to route
+// Navegar a ruta
 router.visit(route('sales.show', saleId));
 
-// Generate URL
+// Generar URL
 const url = route('api.products.search', { query: 'coca' });
 </script>
 
 <template>
     <Link :href="route('sales.index')" class="btn">
-        View Sales
+        Ver Ventas
     </Link>
 </template>
 ```
 
-**Available globally** via Ziggy plugin in `app.js`.
+**Disponible globalmente** vía plugin Ziggy en `app.js`.
 
-### Tailwind Conventions
+### Convenciones de Tailwind
 
-**Utility-First Approach**:
+**Enfoque Utility-First**:
 ```vue
 <template>
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <h1 class="text-2xl font-semibold text-gray-900 mb-4">
-                Point of Sale
+                Punto de Venta
             </h1>
         </div>
     </div>
 </template>
 ```
 
-**No Custom CSS**: Avoid creating `.css` files. Use Tailwind utilities.
+**Sin CSS Personalizado**: Evitar crear archivos `.css`. Usar utilidades de Tailwind.
 
-**Form Styling**: `@tailwindcss/forms` plugin provides base styles.
+**Estilo de Formularios**: El plugin `@tailwindcss/forms` provee estilos base.
 
 ---
 
-## Testing Guidelines
+## Guías de Testing
 
-### Current Test Coverage
+### Cobertura Actual de Tests
 
-**Existing Tests**:
-- `tests/Feature/ExampleTest.php` - Basic application test
-- `tests/Feature/ProfileTest.php` - User profile management
-- Laravel Breeze auth tests (login, registration, password reset)
+**Tests Existentes**:
+- `tests/Feature/ExampleTest.php` - Test básico de aplicación
+- `tests/Feature/ProfileTest.php` - Gestión de perfil de usuario
+- Tests de autenticación Laravel Breeze (login, registro, reset de contraseña)
 
-**Coverage Gaps** (Opportunities):
-- ❌ POS transaction processing
-- ❌ Inventory deduction logic
-- ❌ Stock availability calculations
-- ❌ Sales return processing
-- ❌ Role middleware enforcement
-- ❌ Thermal printer service
+**Brechas de Cobertura** (Oportunidades):
+- ❌ Procesamiento de transacciones POS
+- ❌ Lógica de deducción de inventario
+- ❌ Cálculos de disponibilidad de stock
+- ❌ Procesamiento de devoluciones de ventas
+- ❌ Aplicación de middleware de roles
+- ❌ Servicio de impresora térmica
 
-### Writing Tests
+### Escribiendo Tests
 
-**Feature Test Template**:
+**Plantilla de Feature Test**:
 ```php
 <?php
 
@@ -729,41 +729,41 @@ class InventoryTest extends TestCase
 }
 ```
 
-**Running Tests**:
+**Ejecutar Tests**:
 ```bash
-php artisan test                    # Run all tests
-php artisan test --filter=Inventory # Run specific test
-php artisan test --coverage         # With coverage report
+php artisan test                    # Ejecutar todos los tests
+php artisan test --filter=Inventory # Ejecutar test específico
+php artisan test --coverage         # Con reporte de cobertura
 ```
 
-**Test Database**:
-- Uses separate `testing` database (from `phpunit.xml`)
-- Recommend SQLite in-memory: `:memory:`
-- Migrations run automatically via `RefreshDatabase` trait
+**Base de Datos de Test**:
+- Usa base de datos `testing` separada (desde `phpunit.xml`)
+- Recomendado SQLite en memoria: `:memory:`
+- Migraciones se ejecutan automáticamente vía trait `RefreshDatabase`
 
 ---
 
-## Deployment Considerations
+## Consideraciones de Despliegue
 
-### Pre-Deployment Checklist
+### Checklist Pre-Despliegue
 
-**Environment**:
-- [ ] Set `APP_ENV=production`
-- [ ] Set `APP_DEBUG=false`
-- [ ] Generate production key: `php artisan key:generate`
-- [ ] Configure database (MySQL recommended)
-- [ ] Set correct `APP_URL`
+**Entorno**:
+- [ ] Establecer `APP_ENV=production`
+- [ ] Establecer `APP_DEBUG=false`
+- [ ] Generar clave de producción: `php artisan key:generate`
+- [ ] Configurar base de datos (MySQL recomendado)
+- [ ] Establecer `APP_URL` correcto
 
-**Database**:
-- [ ] Run migrations: `php artisan migrate --force`
-- [ ] Seed initial data if needed
-- [ ] Backup strategy in place
+**Base de Datos**:
+- [ ] Ejecutar migraciones: `php artisan migrate --force`
+- [ ] Sembrar datos iniciales si es necesario
+- [ ] Estrategia de respaldo en su lugar
 
 **Assets**:
-- [ ] Build frontend: `npm run build`
-- [ ] Verify assets in `public/build/`
+- [ ] Construir frontend: `npm run build`
+- [ ] Verificar assets en `public/build/`
 
-**Optimization**:
+**Optimización**:
 ```bash
 php artisan config:cache
 php artisan route:cache
@@ -771,42 +771,42 @@ php artisan view:cache
 composer install --optimize-autoloader --no-dev
 ```
 
-**Permissions**:
+**Permisos**:
 ```bash
 chmod -R 755 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 ```
 
-**Queue Worker** (required for async operations):
+**Worker de Colas** (requerido para operaciones asíncronas):
 ```bash
-# Systemd service or Supervisor
+# Servicio Systemd o Supervisor
 php artisan queue:work --tries=3 --timeout=90
 ```
 
-**Thermal Printers**:
-- [ ] Configure printer IPs in `.env`
-- [ ] Test network connectivity to printers
-- [ ] Verify ESC/POS command compatibility
-- [ ] Set `AUTO_PRINT_KITCHEN` and `AUTO_PRINT_CUSTOMER` flags
+**Impresoras Térmicas**:
+- [ ] Configurar IPs de impresora en `.env`
+- [ ] Probar conectividad de red a impresoras
+- [ ] Verificar compatibilidad de comandos ESC/POS
+- [ ] Establecer banderas `AUTO_PRINT_KITCHEN` y `AUTO_PRINT_CUSTOMER`
 
-**Web Server**:
-- Document root: `/public`
-- Nginx/Apache configuration for Laravel
-- HTTPS recommended (Let's Encrypt)
+**Servidor Web**:
+- Raíz de documentos: `/public`
+- Configuración Nginx/Apache para Laravel
+- HTTPS recomendado (Let's Encrypt)
 
-### Production .env Example
+### Ejemplo de .env de Producción
 
 ```env
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://yourrestaurant.com
+APP_URL=https://turestaurante.com
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=restaurant_pos
 DB_USERNAME=restaurant_user
-DB_PASSWORD=secure_password_here
+DB_PASSWORD=contraseña_segura_aqui
 
 CACHE_STORE=redis
 SESSION_DRIVER=redis
@@ -821,78 +821,78 @@ AUTO_PRINT_CUSTOMER=true
 
 ---
 
-## Common Tasks & Workflows
+## Tareas y Flujos Comunes
 
-### Creating a New Product
+### Crear un Nuevo Producto
 
 ```bash
-# 1. Via Seeder (development)
+# 1. Vía Seeder (desarrollo)
 php artisan db:seed --class=ProductSeeder
 
-# 2. Via UI (production)
-# Login as admin or almacenero
-# Navigate to /inventory/products
-# Click "Add Product"
+# 2. Vía UI (producción)
+# Login como admin o almacenero
+# Navegar a /inventory/products
+# Click "Agregar Producto"
 ```
 
-### Processing a Sale
+### Procesar una Venta
 
 ```bash
-# Via UI only (no artisan command)
-# Login as admin or cajero
-# Navigate to /sales/pos
-# Select items, process payment
+# Solo vía UI (sin comando artisan)
+# Login como admin o cajero
+# Navegar a /sales/pos
+# Seleccionar items, procesar pago
 ```
 
-### Adding a New Menu Item with Recipe
+### Agregar un Nuevo Item del Menú con Receta
 
 ```bash
-# 1. Create menu item (admin or chef)
-# Navigate to /menu/items/create
+# 1. Crear menu item (admin o chef)
+# Navegar a /menu/items/create
 
-# 2. Define recipe
-# In menu item form, add products with quantities
-# Example: "Tacos de Pollo"
+# 2. Definir receta
+# En formulario de menu item, agregar productos con cantidades
+# Ejemplo: "Tacos de Pollo"
 #   - Pollo: 0.2 kg
 #   - Tortillas: 0.1 kg
 #   - Salsa: 0.05 lt
 ```
 
-### Viewing Reports
+### Ver Reportes
 
 ```bash
-# Cash Flow Report
-# Navigate to /cashflow (admin only)
-# Filter by date range
+# Reporte de Flujo de Efectivo
+# Navegar a /cashflow (solo admin)
+# Filtrar por rango de fechas
 
-# Inventory Report
-# Navigate to /inventory (admin or almacenero)
-# View low stock items, movements
+# Reporte de Inventario
+# Navegar a /inventory (admin o almacenero)
+# Ver items con stock bajo, movimientos
 ```
 
-### Database Reset (Development)
+### Reset de Base de Datos (Desarrollo)
 
 ```bash
-# ⚠️ DESTRUCTIVE - Deletes all data
+# ⚠️ DESTRUCTIVO - Elimina todos los datos
 php artisan migrate:fresh --seed
 
-# Creates fresh database with sample data
+# Crea base de datos nueva con datos de ejemplo
 ```
 
-### Code Style Fixing
+### Arreglar Estilo de Código
 
 ```bash
-# Run Laravel Pint
+# Ejecutar Laravel Pint
 ./vendor/bin/pint
 
-# Fix specific file
+# Arreglar archivo específico
 ./vendor/bin/pint app/Http/Controllers/POSController.php
 ```
 
 ### Debugging
 
 ```bash
-# Real-time logs
+# Logs en tiempo real
 php artisan pail
 
 # Tinker REPL
@@ -904,47 +904,47 @@ php artisan tinker
 
 ---
 
-## Code Conventions & Patterns
+## Convenciones y Patrones de Código
 
-### Naming Conventions
+### Convenciones de Nomenclatura
 
-**PHP (Laravel Standards)**:
-- Models: `PascalCase`, singular (Product, MenuItem)
-- Controllers: `PascalCase` + `Controller` suffix (ProductController)
-- Methods: `camelCase` (processMenuItemInventoryDeduction)
-- Database tables: `snake_case`, plural (menu_items, sale_returns)
-- Migrations: Timestamp + description (2025_06_10_001727_create_categories_table.php)
+**PHP (Estándares Laravel)**:
+- Modelos: `PascalCase`, singular (Product, MenuItem)
+- Controladores: `PascalCase` + sufijo `Controller` (ProductController)
+- Métodos: `camelCase` (processMenuItemInventoryDeduction)
+- Tablas de base de datos: `snake_case`, plural (menu_items, sale_returns)
+- Migraciones: Timestamp + descripción (2025_06_10_001727_create_categories_table.php)
 
 **JavaScript/Vue**:
-- Components: `PascalCase` (ApplicationLogo.vue, TextInput.vue)
+- Componentes: `PascalCase` (ApplicationLogo.vue, TextInput.vue)
 - Props/variables: `camelCase` (menuItems, currentStock)
-- Events: `kebab-case` (@click, @update:model-value)
+- Eventos: `kebab-case` (@click, @update:model-value)
 
-**Business Terms (Spanish)**:
-- Use Spanish for domain-specific terms in code
-- Examples: `cajero`, `almacenero`, `devoluciones`, `comandas`
-- Comments can be Spanish or English
+**Términos de Negocio (Español)**:
+- Usar español para términos específicos del dominio en código
+- Ejemplos: `cajero`, `almacenero`, `devoluciones`, `comandas`
+- Los comentarios pueden ser en español o inglés
 
-### Design Patterns
+### Patrones de Diseño
 
-**Service Layer**:
+**Capa de Servicio**:
 ```php
 // app/Services/ThermalTicketService.php
 class ThermalTicketService
 {
     public function printKitchenOrder(Sale $sale): void
     {
-        // Centralized printer logic
+        // Lógica centralizada de impresora
     }
 }
 
-// Usage in controller
+// Uso en controlador
 app(ThermalTicketService::class)->printKitchenOrder($sale);
 ```
 
-**Repository Pattern** (Not implemented, but recommended):
+**Patrón Repository** (No implementado, pero recomendado):
 ```php
-// Future improvement
+// Mejora futura
 interface ProductRepositoryInterface
 {
     public function getLowStockProducts(): Collection;
@@ -952,9 +952,9 @@ interface ProductRepositoryInterface
 }
 ```
 
-**Polymorphic Relationships**:
+**Relaciones Polimórficas**:
 ```php
-// SaleItem can reference MenuItem OR SimpleProduct
+// SaleItem puede referenciar MenuItem O SimpleProduct
 class SaleItem extends Model
 {
     public function menuItem()
@@ -967,7 +967,7 @@ class SaleItem extends Model
         return $this->belongsTo(SimpleProduct::class);
     }
 
-    // Accessor for unified interface
+    // Accessor para interfaz unificada
     public function getProductNameAttribute()
     {
         return $this->product_type === 'menu'
@@ -977,32 +977,32 @@ class SaleItem extends Model
 }
 ```
 
-### Database Conventions
+### Convenciones de Base de Datos
 
-**Decimal Precision**:
-- Stock quantities: `decimal(10, 3)` - Supports grams/milliliters
-- Prices/costs: `decimal(10, 2)` - Standard currency
-- Usage: Always use decimals for quantities (never integers)
+**Precisión Decimal**:
+- Cantidades de stock: `decimal(10, 3)` - Soporta gramos/mililitros
+- Precios/costos: `decimal(10, 2)` - Moneda estándar
+- Uso: Siempre usar decimales para cantidades (nunca enteros)
 
 **Timestamps**:
-- Use `timestamps()` in migrations (created_at, updated_at)
-- Business dates separate: `movement_date`, `flow_date`, `return_date`
+- Usar `timestamps()` en migraciones (created_at, updated_at)
+- Fechas de negocio separadas: `movement_date`, `flow_date`, `return_date`
 
-**Foreign Keys**:
-- Always define: `$table->foreignId('product_id')->constrained()`
-- Cascade deletes where appropriate: `->onDelete('cascade')`
-- Set null for historical data: `->onDelete('set null')`
+**Claves Foráneas**:
+- Siempre definir: `$table->foreignId('product_id')->constrained()`
+- Eliminaciones en cascada donde sea apropiado: `->onDelete('cascade')`
+- Establecer null para datos históricos: `->onDelete('set null')`
 
-**Unique Constraints**:
+**Restricciones Únicas**:
 ```php
 $table->unique('email');
 $table->unique('sale_number');
-$table->unique(['menu_item_id', 'product_id']); // Composite
+$table->unique(['menu_item_id', 'product_id']); // Compuesta
 ```
 
-### Error Handling
+### Manejo de Errores
 
-**Controller Validation**:
+**Validación en Controlador**:
 ```php
 $request->validate([
     'name' => 'required|string|max:255',
@@ -1011,13 +1011,13 @@ $request->validate([
 ]);
 ```
 
-**Try-Catch for Transactions**:
+**Try-Catch para Transacciones**:
 ```php
 DB::beginTransaction();
 try {
-    // Create sale
-    // Deduct inventory
-    // Create cash flow
+    // Crear venta
+    // Deducir inventario
+    // Crear flujo de efectivo
     DB::commit();
 } catch (\Exception $e) {
     DB::rollBack();
@@ -1025,14 +1025,14 @@ try {
 }
 ```
 
-**Flash Messages** (Inertia):
+**Mensajes Flash** (Inertia):
 ```php
-return redirect()->route('sales.index')->with('success', 'Sale completed successfully');
+return redirect()->route('sales.index')->with('success', 'Venta completada exitosamente');
 ```
 
-### Security Best Practices
+### Mejores Prácticas de Seguridad
 
-**Mass Assignment Protection**:
+**Protección de Asignación Masiva**:
 ```php
 class Product extends Model
 {
@@ -1041,30 +1041,30 @@ class Product extends Model
         'current_stock', 'min_stock', 'max_stock', 'unit_cost',
     ];
 
-    // NEVER use $guarded = [];
+    // NUNCA usar $guarded = [];
 }
 ```
 
-**SQL Injection Prevention**:
-- Use Eloquent ORM (auto-escapes)
-- Use query builder with bindings
-- NEVER concatenate user input into raw SQL
+**Prevención de Inyección SQL**:
+- Usar Eloquent ORM (auto-escapa)
+- Usar query builder con bindings
+- NUNCA concatenar input de usuario en SQL crudo
 
-**XSS Prevention**:
-- Blade/Vue auto-escapes: `{{ $variable }}`
-- Raw HTML (careful): `{!! $html !!}` or `v-html`
-- Sanitize user input before storage
+**Prevención de XSS**:
+- Blade/Vue auto-escapa: `{{ $variable }}`
+- HTML crudo (cuidado): `{!! $html !!}` o `v-html`
+- Sanitizar input de usuario antes de almacenar
 
-**CSRF Protection**:
-- Enabled by default in Laravel
-- Inertia handles tokens automatically
-- Forms include `@csrf` directive
+**Protección CSRF**:
+- Habilitada por defecto en Laravel
+- Inertia maneja tokens automáticamente
+- Formularios incluyen directiva `@csrf`
 
 ---
 
-## Troubleshooting
+## Solución de Problemas
 
-### Common Issues
+### Problemas Comunes
 
 **1. "Class 'X' not found"**
 ```bash
@@ -1073,75 +1073,75 @@ composer dump-autoload
 
 **2. Vite connection refused (HMR)**
 ```bash
-# Check Vite is running
+# Verificar que Vite esté ejecutándose
 npm run dev
 
-# In .env, verify:
+# En .env, verificar:
 APP_URL=http://localhost
 ```
 
-**3. Inertia version mismatch**
+**3. Desajuste de versión de Inertia**
 ```bash
-# Update both server and client
+# Actualizar servidor y cliente
 composer update inertiajs/inertia-laravel
 npm update @inertiajs/vue3
 ```
 
-**4. Database locked (SQLite)**
+**4. Base de datos bloqueada (SQLite)**
 ```bash
-# Stop queue workers
-# Check for other PHP processes accessing DB
+# Detener workers de cola
+# Verificar otros procesos PHP accediendo a BD
 ps aux | grep artisan
 ```
 
-**5. Thermal printer not responding**
+**5. Impresora térmica no responde**
 ```bash
-# Test network connectivity
+# Probar conectividad de red
 ping 192.168.1.100
 
-# Check port
+# Verificar puerto
 nc -zv 192.168.1.100 9100
 
-# Verify in logs
+# Verificar en logs
 php artisan pail --filter=printer
 ```
 
-**6. Stock not deducting**
+**6. Stock no se deduce**
 ```bash
-# Check inventory movements
+# Verificar movimientos de inventario
 php artisan tinker
 >>> \App\Models\InventoryMovement::where('reason', 'venta_automatica')->latest()->take(10)->get();
 
-# Verify queue is running
+# Verificar que la cola esté ejecutándose
 php artisan queue:work
 ```
 
-**7. Permission denied (storage/logs)**
+**7. Permiso denegado (storage/logs)**
 ```bash
 chmod -R 775 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 ```
 
-### Debugging Tools
+### Herramientas de Debugging
 
-**Laravel Debugbar** (optional, install if needed):
+**Laravel Debugbar** (opcional, instalar si es necesario):
 ```bash
 composer require barryvdh/laravel-debugbar --dev
 ```
 
-**Ray** (optional, premium debugging tool):
+**Ray** (opcional, herramienta premium de debugging):
 ```bash
 composer require spatie/laravel-ray
 ```
 
-**Database Queries**:
+**Consultas de Base de Datos**:
 ```php
 DB::enableQueryLog();
-// ... run code
+// ... ejecutar código
 dd(DB::getQueryLog());
 ```
 
-**Inertia Debug**:
+**Debug de Inertia**:
 ```vue
 <script setup>
 const props = defineProps({
@@ -1154,45 +1154,45 @@ console.log('Props:', props);
 
 ---
 
-## Additional Resources
+## Recursos Adicionales
 
-### Laravel Documentation
+### Documentación de Laravel
 - Framework: https://laravel.com/docs
 - Eloquent ORM: https://laravel.com/docs/eloquent
-- Migrations: https://laravel.com/docs/migrations
-- Validation: https://laravel.com/docs/validation
+- Migraciones: https://laravel.com/docs/migrations
+- Validación: https://laravel.com/docs/validation
 
-### Inertia.js Documentation
-- Main Docs: https://inertiajs.com
-- Vue 3 Integration: https://inertiajs.com/client-side-setup
+### Documentación de Inertia.js
+- Docs Principales: https://inertiajs.com
+- Integración Vue 3: https://inertiajs.com/client-side-setup
 
-### Vue 3 Documentation
-- Official Docs: https://vuejs.org
+### Documentación de Vue 3
+- Docs Oficiales: https://vuejs.org
 - Composition API: https://vuejs.org/api/composition-api-setup.html
 
-### Tailwind CSS Documentation
+### Documentación de Tailwind CSS
 - Framework: https://tailwindcss.com/docs
-- Forms Plugin: https://github.com/tailwindlabs/tailwindcss-forms
+- Plugin de Forms: https://github.com/tailwindlabs/tailwindcss-forms
 
-### Thermal Printing
+### Impresión Térmica
 - ESC/POS PHP: https://github.com/mike42/escpos-php
-- Command Reference: https://reference.epson-biz.com/modules/ref_escpos/
+- Referencia de Comandos: https://reference.epson-biz.com/modules/ref_escpos/
 
 ---
 
-## Repository Maintenance Notes
+## Notas de Mantenimiento del Repositorio
 
-### Known Technical Debt
+### Deuda Técnica Conocida
 
-1. **Testing Coverage**: Minimal feature tests (only auth/profile)
-2. **API Layer**: None (all Inertia-based)
-3. **Type Safety**: No TypeScript (pure JavaScript)
-4. **Repository Pattern**: Not implemented (controllers directly use models)
-5. **Form Requests**: Not extensively used (validation in controllers)
+1. **Cobertura de Testing**: Tests de features mínimos (solo auth/profile)
+2. **Capa API**: Ninguna (todo basado en Inertia)
+3. **Seguridad de Tipos**: Sin TypeScript (JavaScript puro)
+4. **Patrón Repository**: No implementado (controladores usan modelos directamente)
+5. **Form Requests**: No usado extensivamente (validación en controladores)
 
-### Junk Files to Clean Up
+### Archivos Basura para Limpiar
 
-The following files in the root directory should be removed:
+Los siguientes archivos en el directorio raíz deben ser eliminados:
 - `CashFlow::where('category', 'devoluciones')->latest()->first();`
 - `CashFlow::where('category', 'gastos_operativos')`
 - `InventoryMovement::where('reason', 'devolucion_producto_simple')->get();`
@@ -1200,63 +1200,63 @@ The following files in the root directory should be removed:
 - `product`
 - `t()->first();exi`
 
-These appear to be debugging artifacts from development.
+Estos parecen ser artefactos de debugging del desarrollo.
 
-### Future Enhancements (Suggested)
+### Mejoras Futuras (Sugeridas)
 
-1. **Dashboard Analytics**: Charts for sales trends, popular items
-2. **Multi-Store Support**: Franchise/chain restaurant management
-3. **Employee Time Tracking**: Clock in/out for staff
-4. **Table Management**: Restaurant floor plan, table assignments
-5. **Online Orders**: Integration with delivery platforms
-6. **Loyalty Program**: Customer points/rewards system
-7. **Supplier Management**: Purchase orders, delivery tracking
-8. **Production Planning**: Ingredient forecasting based on sales
-9. **Mobile App**: Native iOS/Android for POS
-10. **Real-Time Notifications**: WebSockets for kitchen display system
+1. **Analíticas de Dashboard**: Gráficas de tendencias de ventas, items populares
+2. **Soporte Multi-Tienda**: Gestión de restaurantes en franquicia/cadena
+3. **Seguimiento de Tiempo de Empleados**: Check-in/out para personal
+4. **Gestión de Mesas**: Plano del restaurante, asignación de mesas
+5. **Órdenes Online**: Integración con plataformas de delivery
+6. **Programa de Lealtad**: Sistema de puntos/recompensas para clientes
+7. **Gestión de Proveedores**: Órdenes de compra, seguimiento de entregas
+8. **Planeación de Producción**: Pronóstico de ingredientes basado en ventas
+9. **App Móvil**: iOS/Android nativo para POS
+10. **Notificaciones en Tiempo Real**: WebSockets para sistema de display de cocina
 
 ---
 
-## Quick Reference Commands
+## Comandos de Referencia Rápida
 
 ```bash
-# Development
-composer run dev              # Start all dev servers
-php artisan serve            # HTTP server
+# Desarrollo
+composer run dev              # Iniciar todos los servidores de desarrollo
+php artisan serve            # Servidor HTTP
 npm run dev                  # Vite HMR
-php artisan queue:work       # Queue worker
-php artisan pail             # Log viewer
+php artisan queue:work       # Worker de colas
+php artisan pail             # Visor de logs
 
-# Database
-php artisan migrate          # Run migrations
-php artisan migrate:fresh    # Reset database
-php artisan db:seed          # Seed data
-php artisan migrate:fresh --seed  # Reset + seed
+# Base de Datos
+php artisan migrate          # Ejecutar migraciones
+php artisan migrate:fresh    # Resetear base de datos
+php artisan db:seed          # Sembrar datos
+php artisan migrate:fresh --seed  # Resetear + sembrar
 
 # Testing
-php artisan test             # Run tests
-php artisan test --filter=X  # Run specific test
-composer test                # Via composer script
+php artisan test             # Ejecutar tests
+php artisan test --filter=X  # Ejecutar test específico
+composer test                # Vía script de composer
 
-# Optimization
-php artisan optimize         # Optimize everything
-php artisan config:cache     # Cache config
-php artisan route:cache      # Cache routes
-php artisan view:cache       # Cache views
-php artisan optimize:clear   # Clear all caches
+# Optimización
+php artisan optimize         # Optimizar todo
+php artisan config:cache     # Cachear configuración
+php artisan route:cache      # Cachear rutas
+php artisan view:cache       # Cachear vistas
+php artisan optimize:clear   # Limpiar todos los cachés
 
-# Code Quality
-./vendor/bin/pint           # Fix code style
+# Calidad de Código
+./vendor/bin/pint           # Arreglar estilo de código
 
 # Docker (Sail)
-./vendor/bin/sail up -d     # Start containers
-./vendor/bin/sail down      # Stop containers
-./vendor/bin/sail artisan   # Run artisan in container
-./vendor/bin/sail composer  # Run composer in container
+./vendor/bin/sail up -d     # Iniciar contenedores
+./vendor/bin/sail down      # Detener contenedores
+./vendor/bin/sail artisan   # Ejecutar artisan en contenedor
+./vendor/bin/sail composer  # Ejecutar composer en contenedor
 ```
 
 ---
 
-**End of Documentation**
+**Fin de la Documentación**
 
-For questions or clarifications about this codebase, please refer to specific sections above or consult the inline code comments in critical files marked with ⚠️.
+Para preguntas o aclaraciones sobre este código base, por favor referirse a las secciones específicas arriba o consultar los comentarios en línea en los archivos críticos marcados con ⚠️.
