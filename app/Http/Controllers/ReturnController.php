@@ -9,6 +9,7 @@ use App\Models\SaleItem;
 use App\Models\CashFlow;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Http\Requests\ProcessReturnRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -243,19 +244,9 @@ class ReturnController extends Controller
     /**
      * 💾 Procesar nueva devolución (IMPLEMENTACIÓN COMPLETA)
      */
-    public function store(Request $request)
+    public function store(ProcessReturnRequest $request)
     {
-        $this->authorize('processReturn', SaleReturn::class);
-
-        $validated = $request->validate([
-            'sale_id' => 'required|exists:sales,id',
-            'reason' => 'required|in:defective,wrong_order,customer_request,error,other',
-            'notes' => 'nullable|string|max:1000',
-            'refund_method' => 'required|in:efectivo,tarjeta,transferencia,credito',
-            'items' => 'required|array|min:1',
-            'items.*.sale_item_id' => 'required|exists:sale_items,id',
-            'items.*.quantity' => 'required|integer|min:1'
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 

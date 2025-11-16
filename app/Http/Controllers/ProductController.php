@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -58,23 +60,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $this->authorize('create', Product::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'description' => 'nullable|string',
-            'unit_type' => 'required|string|max:50',
-            'current_stock' => 'required|numeric|min:0',
-            'min_stock' => 'required|numeric|min:0',
-            'max_stock' => 'nullable|numeric|min:0',
-            'unit_cost' => 'required|numeric|min:0',
-            'expiry_date' => 'nullable|date',
-        ]);
-
-        Product::create($validated);
+        Product::create($request->validated());
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto creado exitosamente.');
@@ -103,24 +91,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $this->authorize('update', $product);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'description' => 'nullable|string',
-            'unit_type' => 'required|string|max:50',
-            'current_stock' => 'required|numeric|min:0',
-            'min_stock' => 'required|numeric|min:0',
-            'max_stock' => 'nullable|numeric|min:0',
-            'unit_cost' => 'required|numeric|min:0',
-            'expiry_date' => 'nullable|date',
-            'is_active' => 'boolean'
-        ]);
-
-        $product->update($validated);
+        $product->update($request->validated());
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto actualizado exitosamente.');

@@ -9,6 +9,7 @@ use App\Models\SimpleProduct;
 use App\Models\CashFlow;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Http\Requests\ProcessSaleRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -72,23 +73,12 @@ class POSController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(ProcessSaleRequest $request)
     {
-        $this->authorize('processSale', \App\Models\Sale::class);
-
         // Debug para ver qué datos llegan
         \Log::info('Datos recibidos en POS:', $request->all());
 
-        $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'required',
-            'items.*.product_type' => 'sometimes|in:menu,simple',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:efectivo,tarjeta,transferencia,mixto',
-            'discount' => 'nullable|numeric|min:0',
-            'tax' => 'nullable|numeric|min:0',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
