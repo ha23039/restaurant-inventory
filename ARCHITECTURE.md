@@ -1271,96 +1271,420 @@ Servidor (MySQL)
 
 ## 🚀 Infraestructura y Deployment
 
-### Entorno de Producción
+### Entorno de Desarrollo (Debian 12)
 
-**Servidor Recomendado**:
-- **CPU**: 2-4 cores
-- **RAM**: 4-8 GB
-- **Disco**: 50-100 GB SSD
-- **OS**: Ubuntu 22.04 LTS
+**Tu Máquina Local**:
+- **OS**: Debian 12 (Bookworm)
+- **Método**: Laravel Sail (Docker) ✅ **RECOMENDADO**
+- **Alternativa**: Desarrollo nativo (si prefieres)
 
-**Stack**:
-```
-Nginx → PHP-FPM 8.2 → Laravel
-         ↓
-       MySQL 8.0
-         ↓
-       Redis 7.x
-```
+#### Instalación en Debian 12
 
-### Configuración Nginx
-
-```nginx
-server {
-    listen 80;
-    server_name turestaurante.com;
-    root /var/www/restaurant-pos/public;
-
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-
-    index index.php;
-
-    charset utf-8;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location = /robots.txt  { access_log off; log_not_found off; }
-
-    error_page 404 /index.php;
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
-```
-
-### Proceso de Deployment
+**Opción 1: Laravel Sail con Docker (✅ RECOMENDADO)**
 
 ```bash
-# 1. Clonar repositorio
+# 1. Instalar Docker en Debian 12
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# 2. Agregar tu usuario al grupo docker (para no usar sudo)
+sudo usermod -aG docker $USER
+
+# 3. IMPORTANTE: Cerrar sesión y volver a entrar
+# O ejecutar: newgrp docker
+
+# 4. Verificar Docker
+docker --version
+docker-compose --version
+
+# 5. Clonar proyecto
+git clone https://github.com/ha23039/restaurant-inventory.git
+cd restaurant-inventory
+
+# 6. Instalar dependencias (primera vez)
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php82-composer:latest \
+    composer install --ignore-platform-reqs
+
+# 7. Configurar entorno
+cp .env.example .env
+
+# 8. Iniciar Sail
+./vendor/bin/sail up -d
+
+# 9. Generar clave
+./vendor/bin/sail artisan key:generate
+
+# 10. Ejecutar migraciones
+./vendor/bin/sail artisan migrate --seed
+
+# 11. Instalar dependencias NPM
+./vendor/bin/sail npm install
+
+# 12. Iniciar Vite (desarrollo)
+./vendor/bin/sail npm run dev
+
+# Aplicación disponible en:
+# - http://localhost (Laravel)
+# - http://localhost:5173 (Vite HMR)
+
+# Comandos útiles de Sail:
+./vendor/bin/sail up -d          # Iniciar contenedores
+./vendor/bin/sail down           # Detener contenedores
+./vendor/bin/sail artisan        # Ejecutar artisan
+./vendor/bin/sail composer       # Ejecutar composer
+./vendor/bin/sail npm            # Ejecutar npm
+./vendor/bin/sail mysql          # Conectar a MySQL
+./vendor/bin/sail shell          # Shell dentro del contenedor
+
+# Crear alias para facilitar (opcional):
+echo "alias sail='./vendor/bin/sail'" >> ~/.bashrc
+source ~/.bashrc
+# Ahora puedes usar: sail up -d, sail artisan, etc.
+```
+
+**Servicios incluidos en Sail**:
+- PHP 8.4
+- MySQL 8.0
+- Redis
+- Mailpit (email testing)
+- Selenium (para tests browser)
+
+**Opción 2: Nativo (Alternativa)**
+
+```bash
+# 1. Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# 2. Instalar PHP 8.2 y extensiones necesarias
+sudo apt install -y php8.2 php8.2-cli php8.2-fpm php8.2-mysql php8.2-sqlite3 \
+    php8.2-curl php8.2-gd php8.2-mbstring php8.2-xml php8.2-zip php8.2-bcmath \
+    php8.2-intl php8.2-redis
+
+# 3. Instalar Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# 4. Instalar Node.js 18 LTS
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 5. Instalar MySQL (opcional, si no usas SQLite)
+sudo apt install -y mysql-server
+sudo mysql_secure_installation
+
+# 6. Clonar proyecto
 git clone https://github.com/tuusuario/restaurant-pos.git
 cd restaurant-pos
 
-# 2. Instalar dependencias
-composer install --optimize-autoloader --no-dev
-npm install && npm run build
+# 7. Instalar dependencias
+composer install
+npm install
 
-# 3. Configurar entorno
+# 8. Configurar entorno
 cp .env.example .env
 php artisan key:generate
 
-# 4. Configurar base de datos
-php artisan migrate --force
-# NO seed en producción, datos reales
+# Para SQLite (recomendado desarrollo):
+touch database/database.sqlite
 
-# 5. Optimizar
+# Para MySQL:
+# Crear base de datos: mysql -u root -p
+# CREATE DATABASE restaurant_pos;
+# Editar .env con credenciales MySQL
+
+# 9. Migrar base de datos
+php artisan migrate --seed
+
+# 10. Compilar assets
+npm run dev
+
+# 11. Iniciar servidor de desarrollo
+php artisan serve
+# http://localhost:8000
+
+# En otra terminal, iniciar Vite
+npm run dev
+# http://localhost:5173
+```
+
+**Opción 2: Laravel Sail (Docker)**
+
+```bash
+# Instalar Docker en Debian 12
+sudo apt install -y docker.io docker-compose
+sudo usermod -aG docker $USER
+# Cerrar sesión y volver a entrar
+
+# Iniciar proyecto
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate --seed
+./vendor/bin/sail npm install && ./vendor/bin/sail npm run dev
+```
+
+### Entorno de Producción (WebEmpresa - Hosting Compartido)
+
+**Características de WebEmpresa**:
+- ✅ cPanel
+- ✅ PHP 8.1/8.2 disponible
+- ✅ MySQL 8.0
+- ✅ SSL gratuito (Let's Encrypt)
+- ✅ Backups diarios automáticos
+- ✅ Dominio incluido
+- ⚠️ NO tiene acceso SSH completo (o limitado)
+- ⚠️ NO puede instalar Redis (cache database fallback)
+- ⚠️ NO puede configurar Supervisor (queue database fallback)
+- ⚠️ NO puede configurar Nginx (usa Apache)
+- ⚠️ Límites de recursos compartidos
+
+#### Configuración Específica para WebEmpresa
+
+**Paso 1: Preparar el Proyecto Localmente**
+
+```bash
+# En tu Debian 12
+
+# 1. Limpiar y optimizar
+composer install --optimize-autoloader --no-dev
+npm run build
+
+# 2. Crear .env de producción
+cp .env.example .env.production
+
+# Editar .env.production:
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://tudominio.com
+
+# Base de datos (WebEmpresa te dará estos datos)
+DB_CONNECTION=mysql
+DB_HOST=localhost  # O el que te den
+DB_PORT=3306
+DB_DATABASE=tu_usuario_restaurantpos
+DB_USERNAME=tu_usuario
+DB_PASSWORD=contraseña_segura
+
+# IMPORTANTE: No usar Redis en hosting compartido
+CACHE_STORE=database
+SESSION_DRIVER=database
+QUEUE_CONNECTION=database  # NO "redis" o "sync"
+
+# Configuración de impresoras
+KITCHEN_PRINTER_IP=192.168.1.100
+CUSTOMER_PRINTER_IP=192.168.1.101
+# etc...
+
+# 3. Crear archivo ZIP para subir
+zip -r restaurant-pos.zip . -x "*.git*" "node_modules/*" "tests/*" "storage/logs/*"
+```
+
+**Paso 2: Configurar en cPanel de WebEmpresa**
+
+**A. Crear Base de Datos MySQL**:
+1. Login a cPanel
+2. Ir a "Bases de datos MySQL"
+3. Crear nueva base de datos: `tuusuario_restaurantpos`
+4. Crear usuario: `tuusuario_admin`
+5. Asignar todos los privilegios al usuario en esa BD
+6. Anotar credenciales para `.env`
+
+**B. Configurar Dominio y Directorio**:
+1. En cPanel → "Administrador de archivos"
+2. Ir a `public_html` (o el directorio de tu dominio)
+3. **IMPORTANTE**: El directorio público de Laravel debe ser `public/`
+4. Configurar dominio para apuntar a `public_html/tudominio/public`
+
+**Estructura recomendada**:
+```
+/home/tuusuario/
+├── public_html/
+│   └── tudominio.com/     ← Aquí va el proyecto
+│       ├── app/
+│       ├── bootstrap/
+│       ├── config/
+│       ├── database/
+│       ├── public/        ← Document root del dominio
+│       ├── resources/
+│       ├── routes/
+│       ├── storage/
+│       └── vendor/
+```
+
+**C. Subir Archivos**:
+
+**Opción 1: Via cPanel File Manager**:
+1. Subir `restaurant-pos.zip`
+2. Extraer en el directorio del dominio
+3. Eliminar el ZIP
+
+**Opción 2: Via FTP** (si tienes acceso):
+```bash
+# Desde tu Debian
+lftp -u tuusuario ftp.tudominio.com
+cd public_html/tudominio.com
+mirror -R --exclude .git/ --exclude node_modules/ .
+```
+
+**Opción 3: Via SSH** (si WebEmpresa lo permite):
+```bash
+# Solo si tienes SSH habilitado
+ssh tuusuario@tudominio.com
+cd public_html/tudominio.com
+git clone https://github.com/tuusuario/restaurant-pos.git .
+composer install --no-dev
+```
+
+**D. Configurar Permisos**:
+```bash
+# Via SSH o terminal de cPanel
+chmod -R 755 storage
+chmod -R 755 bootstrap/cache
+```
+
+**E. Ejecutar Migraciones**:
+```bash
+# Via SSH
+php artisan migrate --force
+
+# O crear un script temporal: install.php
+<?php
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
+$app->make('Illuminate\Contracts\Console\Kernel')->call('migrate', ['--force' => true]);
+echo "Migraciones completadas\n";
+
+# Ejecutar desde browser: https://tudominio.com/install.php
+# ¡BORRAR DESPUÉS!
+```
+
+**F. Optimizar Laravel**:
+```bash
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-php artisan event:cache
+```
 
-# 6. Permisos
-sudo chown -R www-data:www-data storage bootstrap/cache
-sudo chmod -R 775 storage bootstrap/cache
+#### Configuración de .htaccess (Apache)
 
-# 7. Configurar supervisor para queue worker
-sudo nano /etc/supervisor/conf.d/restaurant-pos-worker.conf
+WebEmpresa usa Apache, crear/verificar `.htaccess` en `public/`:
 
-# 8. Configurar cron para schedule
-* * * * * cd /var/www/restaurant-pos && php artisan schedule:run >> /dev/null 2>&1
+```apache
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
 
-# 9. SSL con Let's Encrypt
-sudo certbot --nginx -d turestaurante.com
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Seguridad adicional
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Proteger .env
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Cache control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+```
+
+#### Limitaciones y Workarounds en Hosting Compartido
+
+**1. Queue Workers (NO Supervisor disponible)**
+
+**Problema**: No puedes ejecutar `php artisan queue:work` permanentemente
+
+**Solución**: Usar Cron Jobs de cPanel
+
+```bash
+# En cPanel → Cron Jobs
+# Agregar tarea cada minuto:
+
+* * * * * cd /home/tuusuario/public_html/tudominio.com && php artisan queue:work --stop-when-empty
+
+# O configurar schedule:
+* * * * * cd /home/tuusuario/public_html/tudominio.com && php artisan schedule:run >> /dev/null 2>&1
+```
+
+**2. Redis NO Disponible**
+
+**Solución**: Usar database driver (ya configurado en .env)
+
+```env
+# En .env
+CACHE_STORE=database
+SESSION_DRIVER=database
+QUEUE_CONNECTION=database
+```
+
+**3. Límite de Memoria PHP**
+
+**Problema**: Hosting compartido suele tener límite de 128-256MB
+
+**Solución**: Crear `php.ini` o `.user.ini` en la raíz:
+
+```ini
+memory_limit = 256M
+upload_max_filesize = 10M
+post_max_size = 10M
+max_execution_time = 300
+```
+
+**4. Permisos de Archivos**
+
+**Solución**: Usar permisos 755/644 (NO 777)
+
+```bash
+find . -type d -exec chmod 755 {} \;
+find . -type f -exec chmod 644 {} \;
+chmod -R 755 storage bootstrap/cache
+```
+
+**5. SSL Gratuito**
+
+WebEmpresa incluye Let's Encrypt gratis:
+1. cPanel → SSL/TLS
+2. Activar AutoSSL
+3. Forzar HTTPS en `.htaccess`:
+
+```apache
+# Redirigir HTTP a HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 ```
 
 ### Backups Automatizados
