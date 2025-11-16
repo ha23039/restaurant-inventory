@@ -39,7 +39,16 @@ class SaleService
                 'status' => 'completada',
             ]);
 
-            Log::info('Venta creada exitosamente:', ['sale_id' => $sale->id, 'sale_number' => $sale->sale_number]);
+            Log::info('Venta creada exitosamente', [
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'user_id' => $userId,
+                'total' => $sale->total,
+                'payment_method' => $sale->payment_method,
+                'items_count' => count($validatedData['items']),
+                'ip' => request()->ip(),
+                'timestamp' => now()->toIso8601String(),
+            ]);
 
             // Procesar items y deducir inventario
             $this->processSaleItems($sale, $validatedData['items']);
@@ -48,13 +57,28 @@ class SaleService
             $this->recordCashFlow($sale);
 
             DB::commit();
-            Log::info('Transacción completada exitosamente');
+
+            Log::info('Transacción de venta completada', [
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'duration_ms' => (microtime(true) - LARAVEL_START) * 1000,
+            ]);
 
             return $sale;
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error en venta: ' . $e->getMessage());
+
+            Log::error('Error procesando venta', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $userId,
+                'items_count' => count($validatedData['items'] ?? []),
+                'payment_method' => $validatedData['payment_method'] ?? null,
+                'ip' => request()->ip(),
+                'timestamp' => now()->toIso8601String(),
+            ]);
+
             throw $e;
         }
     }
@@ -135,7 +159,13 @@ class SaleService
                 ]);
 
                 $this->processMenuItemInventoryDeduction($saleItem);
-                Log::info('Item del menú procesado:', ['menu_item_id' => $item['id']]);
+
+                Log::info('Item del menú procesado', [
+                    'sale_id' => $sale->id,
+                    'menu_item_id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                    'total_price' => $saleItem->total_price,
+                ]);
             } else {
                 $saleItem = SaleItem::create([
                     'sale_id' => $sale->id,
@@ -148,7 +178,13 @@ class SaleService
                 ]);
 
                 $this->processSimpleProductInventoryDeduction($saleItem);
-                Log::info('Producto simple procesado:', ['simple_product_id' => $item['id']]);
+
+                Log::info('Producto simple procesado', [
+                    'sale_id' => $sale->id,
+                    'simple_product_id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                    'total_price' => $saleItem->total_price,
+                ]);
             }
         }
     }
