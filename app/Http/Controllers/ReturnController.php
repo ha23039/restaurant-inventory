@@ -64,7 +64,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * 📝 Mostrar formulario de nueva devolución (ACTUALIZADO PARA LIVE SEARCH Y SALE_ID)
+     * Mostrar formulario de nueva devolución (ACTUALIZADO PARA LIVE SEARCH Y SALE_ID)
      */
     public function create(Request $request)
     {
@@ -73,13 +73,13 @@ class ReturnController extends Controller
         $sale = null;
         $searchResults = collect([]);
 
-        // 🔄 MEJORADO: Si hay sale_id específico (modo directo desde historial)
+        // MEJORADO: Si hay sale_id específico (modo directo desde historial)
         if ($saleId) {
             $sale = Sale::with([
                 'user:id,name',
                 'saleItems.menuItem:id,name,description',
                 'saleItems.simpleProduct:id,name,description',
-                'completedReturns' // 🔄 NUEVA: Cargar devoluciones
+                'completedReturns' // NUEVA: Cargar devoluciones
             ])->findOrFail($saleId);
 
             // Agregar información completa de devoluciones
@@ -98,7 +98,7 @@ class ReturnController extends Controller
                 $item->can_return = $item->can_return_quantity > 0;
             });
 
-            // 🔄 NUEVO: Auto-buscar también para mostrar en resultados si se quiere cambiar
+            // NUEVO: Auto-buscar también para mostrar en resultados si se quiere cambiar
             if (!$search) {
                 $search = $sale->sale_number; // Auto-llenar búsqueda con el número de venta
                 $searchResults = collect([$sale]); // Mostrar la venta actual en resultados
@@ -109,7 +109,7 @@ class ReturnController extends Controller
         if ($search && strlen($search) >= 1 && !$saleId) {
             $searchResults = $this->performSearch($search);
             
-            \Log::info('🔍 Live Search - GET request:', [
+            \Log::info('Live Search - GET request:', [
                 'search_term' => $search,
                 'found_sales' => $searchResults->count()
             ]);
@@ -123,7 +123,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * 🔍 Buscar venta para devolución (MANTENER PARA COMPATIBILIDAD POST)
+     * Buscar venta para devolución (MANTENER PARA COMPATIBILIDAD POST)
      */
     public function searchSale(Request $request)
     {
@@ -133,8 +133,8 @@ class ReturnController extends Controller
 
         $search = $request->search;
         
-        // 🔍 DEBUG: Log inicial
-        \Log::info('🔍 INICIO - Búsqueda POST de ventas:', [
+        // DEBUG: Log inicial
+        \Log::info('INICIO - Búsqueda POST de ventas:', [
             'search_term' => $search,
             'search_length' => strlen($search),
             'is_ajax' => $request->ajax(),
@@ -144,7 +144,7 @@ class ReturnController extends Controller
 
         $sales = $this->performSearch($search);
 
-        \Log::info('🔍 POST Search:', [
+        \Log::info('POST Search:', [
             'search_term' => $search,
             'found_sales' => $sales->count()
         ]);
@@ -158,7 +158,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * 🔍 MÉTODO CENTRAL: Realizar búsqueda (PROFESIONAL)
+     * MÉTODO CENTRAL: Realizar búsqueda (PROFESIONAL)
      */
     private function performSearch(string $search)
     {
@@ -187,7 +187,7 @@ class ReturnController extends Controller
                           ->limit(10)
                           ->get();
 
-            \Log::info('🔍 DEBUG - Consulta SQL ejecutada:', [
+            \Log::info('DEBUG - Consulta SQL ejecutada:', [
                 'search_term' => $search,
                 'found_sales' => $sales->count(),
                 'found_numbers' => $sales->pluck('sale_number')->toArray()
@@ -212,7 +212,7 @@ class ReturnController extends Controller
                 });
             });
 
-            \Log::info('🔍 DEBUG - Resultado final:', [
+            \Log::info('DEBUG - Resultado final:', [
                 'sales_count' => $sales->count(),
                 'sales_with_return_info' => $sales->map(function($sale) {
                     return [
@@ -229,7 +229,7 @@ class ReturnController extends Controller
             return $sales;
 
         } catch (\Exception $e) {
-            \Log::error('❌ ERROR en búsqueda: ' . $e->getMessage());
+            \Log::error(' ERROR en búsqueda: ' . $e->getMessage());
             return collect([]);
         }
     }
@@ -382,49 +382,49 @@ class ReturnController extends Controller
 
             $saleReturn->markAsCompleted();
 
-            \Log::info('✅ Devolución procesada exitosamente', [
+            \Log::info('Devolución procesada exitosamente', [
                 'return_id' => $saleReturn->id,
                 'return_number' => $saleReturn->return_number,
                 'total' => $saleReturn->total_returned
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('❌ Error procesando devolución: ' . $e->getMessage());
+            \Log::error(' Error procesando devolución: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * 🔄 CORE: Gestión inteligente de inventario (REALISTA PARA RESTAURANTES)
+     * CORE: Gestión inteligente de inventario (REALISTA PARA RESTAURANTES)
      */
     private function restoreInventory(SaleReturn $saleReturn)
     {
-        \Log::info("🔄 INICIANDO restauración de inventario para devolución: {$saleReturn->return_number}");
-        
+        \Log::info("INICIANDO restauración de inventario para devolución: {$saleReturn->return_number}");
+
         foreach ($saleReturn->returnItems as $returnItem) {
             $saleItem = $returnItem->saleItem;
-            
+
             if ($saleItem->product_type === 'menu') {
-                // 🍔 PRODUCTOS PREPARADOS: Solo registro de pérdida operativa
-                \Log::info("🍔 PRODUCTO PREPARADO detectado: {$this->getItemName($saleItem)}");
+                // PRODUCTOS PREPARADOS: Solo registro de pérdida operativa
+                \Log::info("PRODUCTO PREPARADO detectado: {$this->getItemName($saleItem)}");
                 $this->recordOperationalLoss($returnItem);
-                \Log::info("✅ Pérdida operativa registrada - NO se restauran ingredientes");
-                
+                \Log::info("Pérdida operativa registrada - NO se restauran ingredientes");
+
             } elseif ($saleItem->product_type === 'simple') {
-                // 🥤 PRODUCTOS SIMPLES: Restaurar al inventario real
-                \Log::info("🥤 PRODUCTO SIMPLE detectado: {$this->getItemName($saleItem)}");
+                // PRODUCTOS SIMPLES: Restaurar al inventario real
+                \Log::info("PRODUCTO SIMPLE detectado: {$this->getItemName($saleItem)}");
                 $this->restoreSimpleProductInventory($returnItem);
-                \Log::info("✅ Producto simple restaurado al inventario físico");
+                \Log::info("Producto simple restaurado al inventario físico");
             }
-            
+
             $returnItem->markInventoryRestored();
         }
-        
-        \Log::info("🔄 COMPLETADA restauración de inventario para: {$saleReturn->return_number}");
+
+        \Log::info("COMPLETADA restauración de inventario para: {$saleReturn->return_number}");
     }
 
     /**
-     * 🍔 LÓGICA REALISTA: Registro de pérdida operativa para productos preparados
+     * LÓGICA REALISTA: Registro de pérdida operativa para productos preparados
      * 
      * Cuando un cliente devuelve una hamburguesa, pizza, etc., ya preparada:
      * - NO podemos recuperar los ingredientes (pan, carne, condimentos)
@@ -437,7 +437,7 @@ class ReturnController extends Controller
         $menuItem = $saleItem->menuItem;
         
         if (!$menuItem) {
-            \Log::warning("⚠️ No se encontró el menú item para el sale_item: {$saleItem->id}");
+            \Log::warning("No se encontró el menú item para el sale_item: {$saleItem->id}");
             return;
         }
 
@@ -455,7 +455,7 @@ class ReturnController extends Controller
             ]
         );
 
-        // 📝 Crear movimiento de inventario como "pérdida operativa"
+        // Crear movimiento de inventario como "pérdida operativa"
         InventoryMovement::create([
             'product_id' => $lossProduct->id,
             'user_id' => auth()->id(),
@@ -464,15 +464,15 @@ class ReturnController extends Controller
             'unit_cost' => $returnItem->unit_price,
             'total_cost' => $returnItem->total_price,
             'reason' => 'perdida_operativa',
-            'notes' => "🍔 PÉRDIDA OPERATIVA: {$menuItem->name} (Qty: {$returnItem->quantity_returned}) devuelto. 
-                        Return #{$returnItem->saleReturn->return_number}. 
-                        ⚠️ IMPORTANTE: Producto ya preparado no puede restaurarse al inventario. 
+            'notes' => "PÉRDIDA OPERATIVA: {$menuItem->name} (Qty: {$returnItem->quantity_returned}) devuelto.
+                        Return #{$returnItem->saleReturn->return_number}.
+                        IMPORTANTE: Producto ya preparado no puede restaurarse al inventario.
                         Los ingredientes utilizados se consideran pérdida total.",
             'movement_date' => now()->toDateString(),
         ]);
 
-        // 📊 Log detallado para auditoria
-        \Log::info("📝 PÉRDIDA OPERATIVA registrada:", [
+        // Log detallado para auditoria
+        \Log::info("PÉRDIDA OPERATIVA registrada:", [
             'producto' => $menuItem->name,
             'cantidad' => $returnItem->quantity_returned,
             'valor_perdido' => $returnItem->total_price,
@@ -482,7 +482,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * 🥤 LÓGICA REALISTA: Restaurar inventario de productos simples
+     * LÓGICA REALISTA: Restaurar inventario de productos simples
      * 
      * Cuando un cliente devuelve una soda, agua embotellada, etc.:
      * - SÍ podemos recuperar el producto físico
@@ -494,14 +494,14 @@ class ReturnController extends Controller
         $simpleProduct = $returnItem->saleItem->simpleProduct()->with('product')->first();
         
         if (!$simpleProduct || !$simpleProduct->product) {
-            \Log::warning("⚠️ No se encontró el producto base para: {$returnItem->saleItem->id}");
+            \Log::warning("No se encontró el producto base para: {$returnItem->saleItem->id}");
             return;
         }
 
         // 🔢 Calcular cantidad exacta a restaurar
         $quantityToRestore = $simpleProduct->cost_per_unit * $returnItem->quantity_returned;
         
-        // 📝 Crear movimiento de inventario (entrada)
+        // Crear movimiento de inventario (entrada)
         InventoryMovement::create([
             'product_id' => $simpleProduct->product_id,
             'user_id' => auth()->id(),
@@ -510,17 +510,17 @@ class ReturnController extends Controller
             'unit_cost' => $simpleProduct->product->unit_cost,
             'total_cost' => $quantityToRestore * $simpleProduct->product->unit_cost,
             'reason' => 'devolucion_producto_simple',
-            'notes' => "🥤 RESTAURACIÓN: {$simpleProduct->name} (Qty: {$returnItem->quantity_returned}) devuelto. 
-                        Return #{$returnItem->saleReturn->return_number}. 
-                        ✅ Producto físico recuperado y disponible para reventa.",
+            'notes' => "DEVOLUCIÓN: {$simpleProduct->name} (Qty: {$returnItem->quantity_returned}) devuelto.
+                        Return #{$returnItem->saleReturn->return_number}.
+                        Producto físico recuperado y disponible para reventa.",
             'movement_date' => now()->toDateString(),
         ]);
 
-        // ✅ Restaurar stock físico del producto
+        // Restaurar stock físico del producto
         $simpleProduct->product->increment('current_stock', $quantityToRestore);
 
-        // 📊 Log detallado para auditoria
-        \Log::info("📦 INVENTARIO RESTAURADO:", [
+        // Log detallado para auditoria
+        \Log::info("INVENTARIO RESTAURADO:", [
             'producto' => $simpleProduct->name,
             'cantidad_restaurada' => $quantityToRestore,
             'stock_anterior' => $simpleProduct->product->current_stock - $quantityToRestore,
@@ -531,25 +531,25 @@ class ReturnController extends Controller
     }
 
     /**
-     * 💰 CORE: Ajustar flujo de caja automáticamente (USANDO CATEGORÍA DEVOLUCIONES)
+     * CORE: Ajustar flujo de caja automáticamente (USANDO CATEGORÍA DEVOLUCIONES)
      */
     private function adjustCashFlow(SaleReturn $saleReturn)
     {
         // 🔧 DEBUG: Verificar qué categoría estamos usando
-        \Log::info("💰 Intentando crear cash flow con categoría: devoluciones");
+        \Log::info("Intentando crear cash flow con categoría: devoluciones");
         
         try {
             CashFlow::create([
                 'user_id' => auth()->id(),
                 'sale_id' => $saleReturn->sale_id,
                 'type' => 'salida',
-                'category' => 'devoluciones', // 🔧 CAMBIO: usar nueva categoría específica
+                'category' => 'devoluciones', // CAMBIO: usar nueva categoría específica
                 'amount' => $saleReturn->total_returned,
                 'description' => "Devolución #{$saleReturn->return_number} - {$this->getReasonText($saleReturn->reason)}",
                 'flow_date' => $saleReturn->return_date,
             ]);
 
-            \Log::info("✅ Flujo de caja ajustado exitosamente: -{$saleReturn->total_returned}");
+            \Log::info("Flujo de caja ajustado exitosamente: -{$saleReturn->total_returned}");
         } catch (\Exception $e) {
             \Log::error("❌ ERROR en cash flow: " . $e->getMessage());
             throw $e;
@@ -570,14 +570,14 @@ class ReturnController extends Controller
     }
 
     /**
-     * 📊 Obtener métricas avanzadas de devoluciones (MEJORADO CON PÉRDIDAS OPERATIVAS)
+     * Obtener métricas avanzadas de devoluciones (MEJORADO CON PÉRDIDAS OPERATIVAS)
      */
     public function getMetrics(Request $request)
     {
         $startDate = $request->get('start_date', today());
         $endDate = $request->get('end_date', today());
 
-        // 📊 Métricas básicas
+        // Métricas básicas
         $totalReturns = SaleReturn::whereBetween('return_date', [$startDate, $endDate])
                                  ->completed()
                                  ->sum('total_returned');
@@ -586,7 +586,7 @@ class ReturnController extends Controller
                                 ->completed()
                                 ->count();
 
-        // 🍔 Métricas de pérdidas operativas (productos preparados)
+        // Métricas de pérdidas operativas (productos preparados)
         $operationalLosses = InventoryMovement::whereBetween('movement_date', [$startDate, $endDate])
                                              ->where('reason', 'perdida_operativa')
                                              ->sum('total_cost');
@@ -595,7 +595,7 @@ class ReturnController extends Controller
                                                 ->where('reason', 'perdida_operativa')
                                                 ->sum('quantity');
 
-        // 🥤 Métricas de productos restaurados (productos simples)
+        // Métricas de productos restaurados (productos simples)
         $restoredValue = InventoryMovement::whereBetween('movement_date', [$startDate, $endDate])
                                          ->where('reason', 'devolucion_producto_simple')
                                          ->sum('total_cost');
@@ -611,12 +611,12 @@ class ReturnController extends Controller
             'pending_returns' => SaleReturn::where('status', 'pending')->count(),
             'return_rate' => $this->calculateReturnRate($startDate, $endDate),
             
-            // 🔄 NUEVAS: Métricas de pérdidas operativas
+            // NUEVAS: Métricas de pérdidas operativas
             'operational_losses' => $operationalLosses,
             'operational_loss_count' => $operationalLossCount,
             'operational_loss_percentage' => $totalReturns > 0 ? round(($operationalLosses / $totalReturns) * 100, 2) : 0,
             
-            // 🔄 NUEVAS: Métricas de productos restaurados
+            // NUEVAS: Métricas de productos restaurados
             'restored_value' => $restoredValue,
             'restored_count' => $restoredCount,
             'restored_percentage' => $totalReturns > 0 ? round(($restoredValue / $totalReturns) * 100, 2) : 0,
@@ -629,7 +629,7 @@ class ReturnController extends Controller
                                      ->orderBy('count', 'desc')
                                      ->get(),
 
-            // 🔄 NUEVO: Desglose por tipo de producto
+            // NUEVO: Desglose por tipo de producto
             'breakdown_by_type' => $this->getReturnBreakdownByType($startDate, $endDate)
         ];
 
@@ -637,7 +637,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * 🔄 NUEVO: Desglose de devoluciones por tipo de producto
+     * NUEVO: Desglose de devoluciones por tipo de producto
      */
     private function getReturnBreakdownByType($startDate, $endDate): array
     {
@@ -686,7 +686,7 @@ class ReturnController extends Controller
         $startDate = $request->get('start_date', today()->subDays(30));
         $endDate = $request->get('end_date', today());
 
-        // 📊 Pérdidas por producto preparado
+        // Pérdidas por producto preparado
         $lossesByProduct = DB::table('inventory_movements')
             ->join('sale_return_items', function($join) {
                 $join->on('inventory_movements.notes', 'like', DB::raw("CONCAT('%Return #', (SELECT return_number FROM sale_returns WHERE id = sale_return_items.sale_return_id), '%')"));
@@ -704,7 +704,7 @@ class ReturnController extends Controller
             ->orderBy('total_loss', 'desc')
             ->get();
 
-        // 📊 Resumen general
+        // Resumen general
         $summary = [
             'total_loss_value' => $lossesByProduct->sum('total_loss'),
             'total_units_lost' => $lossesByProduct->sum('total_quantity'),

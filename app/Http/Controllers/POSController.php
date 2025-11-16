@@ -53,7 +53,7 @@ public function index()
             }
         });
 
-        \Log::info('🧪 POSController@index - Productos simples:', 
+        \Log::info('POSController@index - Productos simples:',
             $simpleProducts->map(function($item) {
                 return [
                     'name' => $item->name,
