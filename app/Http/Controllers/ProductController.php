@@ -11,6 +11,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Product::class);
+
         $query = Product::with('category');
 
         // Filtros
@@ -46,6 +48,8 @@ class ProductController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Product::class);
+
         $categories = Category::all();
         
         return Inertia::render('Inventory/ProductForm', [
@@ -56,6 +60,8 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Product::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -76,6 +82,8 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
+        $this->authorize('view', $product);
+
         $product->load(['category', 'inventoryMovements.user', 'recipes.menuItem']);
         
         return Inertia::render('Inventory/ProductDetail', [
@@ -85,6 +93,8 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        $this->authorize('update', $product);
+
         $categories = Category::all();
         
         return Inertia::render('Inventory/ProductForm', [
@@ -95,6 +105,8 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        $this->authorize('update', $product);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -116,6 +128,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $this->authorize('delete', $product);
+
         // Verificar que no tenga movimientos recientes o recetas activas
         if ($product->inventoryMovements()->count() > 0 || $product->recipes()->count() > 0) {
             return back()->with('error', 'No se puede eliminar: el producto tiene movimientos o está en recetas.');
@@ -130,6 +144,8 @@ class ProductController extends Controller
     // Método para alertas
     public function alerts()
     {
+        $this->authorize('viewAny', Product::class);
+
         $lowStock = Product::whereRaw('current_stock <= min_stock')->with('category')->get();
         $expired = Product::where('expiry_date', '<', now())->with('category')->get();
         $expiringSoon = Product::whereBetween('expiry_date', [now(), now()->addDays(7)])->with('category')->get();

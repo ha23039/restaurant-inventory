@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class POSController extends Controller
 {
-public function index()
+    public function index()
     {
+        $this->authorize('processSale', \App\Models\Sale::class);
+
         // Platillos del menú (combos)
         $menuItems = MenuItem::where('is_available', true)
                            ->with(['recipes.product'])
@@ -72,6 +74,8 @@ public function index()
 
     public function store(Request $request)
     {
+        $this->authorize('processSale', \App\Models\Sale::class);
+
         // Debug para ver qué datos llegan
         \Log::info('Datos recibidos en POS:', $request->all());
 

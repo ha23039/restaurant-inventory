@@ -16,6 +16,8 @@ class SaleController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Sale::class);
+
         // 🔄 ACTUALIZADO: Incluir devoluciones en la consulta
         $query = Sale::with([
             'user', 
@@ -117,6 +119,8 @@ class SaleController extends Controller
 
     public function show(Sale $sale)
     {
+        $this->authorize('view', $sale);
+
         // DEBUG: Log la venta que se está mostrando
         \Log::info('🧪 SaleController@show - Venta solicitada:', ['sale_id' => $sale->id]);
         
@@ -306,6 +310,8 @@ class SaleController extends Controller
      */
     public function getMetrics(Request $request)
     {
+        $this->authorize('viewReports', Sale::class);
+
         $startDate = $request->get('start_date', today());
         $endDate = $request->get('end_date', today());
 

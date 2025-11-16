@@ -20,6 +20,8 @@ class ReturnController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', SaleReturn::class);
+
         $query = SaleReturn::with([
             'sale:id,sale_number,total,created_at',
             'processedByUser:id,name',
@@ -68,6 +70,8 @@ class ReturnController extends Controller
      */
     public function create(Request $request)
     {
+        $this->authorize('processReturn', SaleReturn::class);
+
         $saleId = $request->get('sale_id');
         $search = $request->get('search');
         $sale = null;
@@ -127,6 +131,8 @@ class ReturnController extends Controller
      */
     public function searchSale(Request $request)
     {
+        $this->authorize('processReturn', SaleReturn::class);
+
         $request->validate([
             'search' => 'required|string|min:1'
         ]);
@@ -239,6 +245,8 @@ class ReturnController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('processReturn', SaleReturn::class);
+
         $validated = $request->validate([
             'sale_id' => 'required|exists:sales,id',
             'reason' => 'required|in:defective,wrong_order,customer_request,error,other',
@@ -346,6 +354,8 @@ class ReturnController extends Controller
      */
     public function show(SaleReturn $return)
     {
+        $this->authorize('view', $return);
+
         $return->load([
             'sale.user:id,name',
             'processedByUser:id,name',
@@ -574,6 +584,8 @@ class ReturnController extends Controller
      */
     public function getMetrics(Request $request)
     {
+        $this->authorize('viewReports', SaleReturn::class);
+
         $startDate = $request->get('start_date', today());
         $endDate = $request->get('end_date', today());
 
@@ -683,6 +695,8 @@ class ReturnController extends Controller
      */
     public function getOperationalLossReport(Request $request)
     {
+        $this->authorize('viewOperationalLosses', SaleReturn::class);
+
         $startDate = $request->get('start_date', today()->subDays(30));
         $endDate = $request->get('end_date', today());
 
