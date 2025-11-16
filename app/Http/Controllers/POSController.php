@@ -83,26 +83,36 @@ class POSController extends Controller
         DB::beginTransaction();
 
         try {
-            // Verificar disponibilidad antes de procesar
+            // Verificar disponibilidad antes de procesar CON LOCKS PESIMISTAS
             foreach ($validated['items'] as $item) {
                 $productType = $item['product_type'] ?? 'menu';
-                
+
                 if ($productType === 'menu') {
-                    $menuItem = MenuItem::with('recipes.product')->find($item['id']);
+                    // Bloquear menu item y productos relacionados
+                    $menuItem = MenuItem::with(['recipes' => function($query) {
+                        $query->with(['product' => function($productQuery) {
+                            $productQuery->lockForUpdate();
+                        }]);
+                    }])->lockForUpdate()->find($item['id']);
+
                     if (!$menuItem) {
                         throw new \Exception("Platillo no encontrado");
                     }
                     $availableQty = $this->calculateAvailableQuantity($menuItem);
-                    
+
                     if ($availableQty < $item['quantity']) {
                         throw new \Exception("No hay suficiente stock para {$menuItem->name}. Disponible: {$availableQty}");
                     }
                 } else {
-                    $simpleProduct = SimpleProduct::with('product')->find($item['id']);
+                    // Bloquear producto simple y su producto base
+                    $simpleProduct = SimpleProduct::with(['product' => function($query) {
+                        $query->lockForUpdate();
+                    }])->lockForUpdate()->find($item['id']);
+
                     if (!$simpleProduct) {
                         throw new \Exception("Producto no encontrado");
                     }
-                    
+
                     if ($simpleProduct->available_quantity < $item['quantity']) {
                         throw new \Exception("No hay suficiente stock para {$simpleProduct->name}. Disponible: {$simpleProduct->available_quantity}");
                     }

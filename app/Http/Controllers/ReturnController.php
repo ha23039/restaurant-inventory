@@ -251,16 +251,18 @@ class ReturnController extends Controller
         DB::beginTransaction();
 
         try {
-            // Verificar que la venta existe y está completada
-            $sale = Sale::findOrFail($validated['sale_id']);
-            
+            // Verificar que la venta existe y está completada CON LOCK
+            $sale = Sale::lockForUpdate()->findOrFail($validated['sale_id']);
+
             if ($sale->status !== 'completada') {
                 throw new \Exception('Solo se pueden hacer devoluciones de ventas completadas');
             }
 
-            // Validar que las cantidades sean válidas
+            // Validar que las cantidades sean válidas CON LOCKS
             foreach ($validated['items'] as $itemData) {
-                $saleItem = SaleItem::findOrFail($itemData['sale_item_id']);
+                $saleItem = SaleItem::with(['menuItem.recipes.product', 'simpleProduct.product'])
+                                   ->lockForUpdate()
+                                   ->findOrFail($itemData['sale_item_id']);
                 
                 // Verificar que pertenece a la venta correcta
                 if ($saleItem->sale_id !== $sale->id) {
@@ -286,7 +288,7 @@ class ReturnController extends Controller
             $totalReturned = 0;
 
             foreach ($validated['items'] as $itemData) {
-                $saleItem = SaleItem::findOrFail($itemData['sale_item_id']);
+                $saleItem = SaleItem::lockForUpdate()->findOrFail($itemData['sale_item_id']);
                 $itemTotal = $saleItem->unit_price * $itemData['quantity'];
                 $subtotalReturned += $itemTotal;
                 $totalReturned += $itemTotal;
