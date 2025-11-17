@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,6 +13,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Product::class);
+
         $query = Product::with('category');
 
         // Filtros
@@ -46,6 +50,8 @@ class ProductController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Product::class);
+
         $categories = Category::all();
         
         return Inertia::render('Inventory/ProductForm', [
@@ -54,21 +60,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'description' => 'nullable|string',
-            'unit_type' => 'required|string|max:50',
-            'current_stock' => 'required|numeric|min:0',
-            'min_stock' => 'required|numeric|min:0',
-            'max_stock' => 'nullable|numeric|min:0',
-            'unit_cost' => 'required|numeric|min:0',
-            'expiry_date' => 'nullable|date',
-        ]);
-
-        Product::create($validated);
+        Product::create($request->validated());
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto creado exitosamente.');
@@ -76,6 +70,8 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
+        $this->authorize('view', $product);
+
         $product->load(['category', 'inventoryMovements.user', 'recipes.menuItem']);
         
         return Inertia::render('Inventory/ProductDetail', [
@@ -85,6 +81,8 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        $this->authorize('update', $product);
+
         $categories = Category::all();
         
         return Inertia::render('Inventory/ProductForm', [
@@ -93,22 +91,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'description' => 'nullable|string',
-            'unit_type' => 'required|string|max:50',
-            'current_stock' => 'required|numeric|min:0',
-            'min_stock' => 'required|numeric|min:0',
-            'max_stock' => 'nullable|numeric|min:0',
-            'unit_cost' => 'required|numeric|min:0',
-            'expiry_date' => 'nullable|date',
-            'is_active' => 'boolean'
-        ]);
-
-        $product->update($validated);
+        $product->update($request->validated());
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto actualizado exitosamente.');
@@ -116,6 +101,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $this->authorize('delete', $product);
+
         // Verificar que no tenga movimientos recientes o recetas activas
         if ($product->inventoryMovements()->count() > 0 || $product->recipes()->count() > 0) {
             return back()->with('error', 'No se puede eliminar: el producto tiene movimientos o está en recetas.');
@@ -130,6 +117,8 @@ class ProductController extends Controller
     // Método para alertas
     public function alerts()
     {
+        $this->authorize('viewAny', Product::class);
+
         $lowStock = Product::whereRaw('current_stock <= min_stock')->with('category')->get();
         $expired = Product::where('expiry_date', '<', now())->with('category')->get();
         $expiringSoon = Product::whereBetween('expiry_date', [now(), now()->addDays(7)])->with('category')->get();

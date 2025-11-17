@@ -4,21 +4,26 @@
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    📊 Historial de Ventas
-                </h2>
+                <div class="flex items-center">
+                    <component :is="icons.chart" class="w-6 h-6 text-gray-800 mr-2" />
+                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                        Historial de Ventas
+                    </h2>
+                </div>
                 <div class="flex space-x-2">
-                    <Link 
+                    <Link
                         :href="route('returns.index')"
-                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                     >
-                        🔄 Devoluciones
+                        <component :is="icons.returns" class="w-4 h-4 mr-2" />
+                        Devoluciones
                     </Link>
-                    <Link 
+                    <Link
                         :href="route('sales.pos')"
-                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                     >
-                        💰 Ir al POS
+                        <component :is="icons.pos" class="w-4 h-4 mr-2" />
+                        Ir al POS
                     </Link>
                 </div>
             </div>
@@ -33,7 +38,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                        <span class="text-green-600 text-lg">💰</span>
+                                        <component :is="icons.sales" class="w-5 h-5 text-green-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -49,7 +54,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span class="text-blue-600 text-lg">🧾</span>
+                                        <component :is="icons.receipt" class="w-5 h-5 text-blue-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -65,7 +70,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                        <span class="text-purple-600 text-lg">📈</span>
+                                        <component :is="icons.chart" class="w-5 h-5 text-purple-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -78,13 +83,13 @@
                         </div>
                     </div>
 
-                    <!-- 🔄 MÉTRICA: Devoluciones del día -->
+                    <!-- MÉTRICA: Devoluciones del día -->
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                        <span class="text-red-600 text-lg">↩️</span>
+                                        <component :is="icons.refund" class="w-5 h-5 text-red-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -96,13 +101,13 @@
                         </div>
                     </div>
 
-                    <!-- 🔄 NUEVA: Ventas Netas -->
+                    <!-- Ventas Netas -->
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                        <span class="text-emerald-600 text-lg">💵</span>
+                                        <component :is="icons.cash" class="w-5 h-5 text-emerald-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -220,9 +225,10 @@
                                             <div class="text-sm font-medium text-gray-900">
                                                 #{{ sale.sale_number }}
                                             </div>
-                                            <!-- 🔄 MEJORADO: Indicador visual de devoluciones -->
+                                            <!-- Indicador visual de devoluciones -->
                                             <div v-if="sale.has_returns" class="text-xs text-orange-600 font-medium flex items-center">
-                                                🔄 {{ sale.return_percentage }}% devuelto
+                                                <component :is="icons.returns" class="w-3 h-3 mr-1" />
+                                                {{ sale.return_percentage }}% devuelto
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -258,25 +264,28 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex flex-col space-y-1">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    {{ getPaymentIcon(sale.payment_method) }} {{ sale.payment_method }}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 gap-1">
+                                                    <component :is="getPaymentIcon(sale.payment_method)" class="w-3 h-3" />
+                                                    {{ sale.payment_method }}
                                                 </span>
-                                                <!-- 🔄 MEJORADO: Badge de devoluciones más informativo -->
-                                                <span v-if="sale.has_returns" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                                    ↩️ ${{ formatPrice(sale.total_returned) }}
+                                                <!-- Badge de devoluciones más informativo -->
+                                                <span v-if="sale.has_returns" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 gap-1">
+                                                    <component :is="icons.refund" class="w-3 h-3" />
+                                                    ${{ formatPrice(sale.total_returned) }}
                                                 </span>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium gap-1"
                                                 :class="{
                                                     'bg-green-100 text-green-800': sale.status === 'completada',
                                                     'bg-yellow-100 text-yellow-800': sale.status === 'pendiente',
                                                     'bg-red-100 text-red-800': sale.status === 'cancelada'
                                                 }"
                                             >
-                                                {{ getStatusIcon(sale.status) }} {{ sale.status }}
+                                                <component :is="getStatusIcon(sale.status, true)" class="w-4 h-4" />
+                                                {{ sale.status }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -286,17 +295,19 @@
                                             <div class="flex flex-col space-y-1">
                                                 <Link
                                                     :href="route('sales.show', sale.id)"
-                                                    class="text-indigo-600 hover:text-indigo-900"
+                                                    class="text-indigo-600 hover:text-indigo-900 inline-flex items-center"
                                                 >
-                                                    👁️ Ver Detalle
+                                                    <component :is="icons.view" class="w-4 h-4 mr-1" />
+                                                    Ver Detalle
                                                 </Link>
-                                                <!-- 🔄 MEJORADO: Enlace a devoluciones más inteligente -->
+                                                <!-- Enlace a devoluciones -->
                                                 <Link
                                                     v-if="sale.can_return"
                                                     :href="route('returns.create', { sale_id: sale.id })"
-                                                    class="text-orange-600 hover:text-orange-900"
+                                                    class="text-orange-600 hover:text-orange-900 inline-flex items-center"
                                                 >
-                                                    ↩️ Devolver
+                                                    <component :is="icons.refund" class="w-4 h-4 mr-1" />
+                                                    Devolver
                                                 </Link>
                                                 <span v-else-if="sale.status === 'completada' && sale.has_returns" class="text-gray-400 text-xs">
                                                     {{ sale.total_returned >= sale.total ? 'Totalmente devuelto' : 'Parcialmente devuelto' }}
@@ -313,13 +324,14 @@
 
                         <!-- Mensaje si no hay ventas -->
                         <div v-if="sales.data.length === 0" class="text-center py-12 text-gray-500">
-                            <div class="text-4xl mb-4">🧾</div>
+                            <component :is="icons.receipt" class="w-16 h-16 mx-auto mb-4 text-gray-400" />
                             <div>No se encontraron ventas</div>
                             <Link
                                 :href="route('sales.pos')"
-                                class="mt-4 inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
+                                class="mt-4 inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded gap-2"
                             >
-                                💰 Realizar primera venta
+                                <component :is="icons.pos" class="w-5 h-5" />
+                                Realizar primera venta
                             </Link>
                         </div>
 
@@ -385,10 +397,11 @@
                     </div>
                 </div>
 
-                <!-- 🔄 MEJORADO: Resumen de devoluciones más detallado -->
+                <!-- Resumen de devoluciones más detallado -->
                 <div v-if="hasReturns || showReturnsSummary" class="mt-6 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-orange-900 mb-4 flex items-center">
-                        📊 Resumen de Devoluciones
+                        <component :is="icons.chart" class="w-5 h-5 mr-2" />
+                        Resumen de Devoluciones
                         <span v-if="activeFilters.has_returns" class="ml-2 text-sm bg-orange-200 text-orange-800 px-2 py-1 rounded">
                             Filtro: {{ getReturnFilterText(activeFilters.has_returns) }}
                         </span>
@@ -421,6 +434,7 @@
 import { reactive, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useIcons } from '@/composables/useIcons';
 
 // Props
 const props = defineProps({
@@ -429,12 +443,15 @@ const props = defineProps({
     metrics: Object
 });
 
+// Icons
+const { icons, getPaymentIcon, getStatusIcon } = useIcons();
+
 // Form para filtros ACTUALIZADO
 const form = reactive({
     date_from: props.filters.date_from || '',
     date_to: props.filters.date_to || '',
     status: props.filters.status || '',
-    has_returns: props.filters.has_returns || '' // 🔄 NUEVO FILTRO
+    has_returns: props.filters.has_returns || ''
 });
 
 // 🔄 NUEVO: Computed para filtros activos
@@ -510,26 +527,6 @@ const getTotalQuantity = (saleItems) => {
     return saleItems.reduce((total, item) => total + item.quantity, 0);
 };
 
-const getPaymentIcon = (method) => {
-    const icons = {
-        'efectivo': '💵',
-        'tarjeta': '💳',
-        'transferencia': '📱',
-        'mixto': '🔄'
-    };
-    return icons[method] || '💰';
-};
-
-const getStatusIcon = (status) => {
-    const icons = {
-        'completada': '✅',
-        'pendiente': '⏳',
-        'cancelada': '❌'
-    };
-    return icons[status] || '📋';
-};
-
-// 🔄 NUEVA: Función para texto de filtro de devoluciones
 const getReturnFilterText = (filterValue) => {
     const texts = {
         'with_returns': 'Con devoluciones',

@@ -3,9 +3,12 @@
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                📦 Dashboard de Inventario
-            </h2>
+            <div class="flex items-center">
+                <component :is="icons.inventory" class="w-6 h-6 text-gray-800 mr-2" />
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    Dashboard de Inventario
+                </h2>
+            </div>
         </template>
 
         <div class="py-12">
@@ -18,7 +21,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span class="text-blue-600 text-lg">📦</span>
+                                        <component :is="icons.product" class="w-5 h-5 text-blue-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -35,7 +38,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                        <span class="text-purple-600 text-lg">🏷️</span>
+                                        <component :is="icons.category" class="w-5 h-5 text-purple-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -52,7 +55,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                        <span class="text-red-600 text-lg">⚠️</span>
+                                        <component :is="icons.warning" class="w-5 h-5 text-red-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -69,7 +72,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                        <span class="text-red-600 text-lg">🗓️</span>
+                                        <component :is="icons.calendar" class="w-5 h-5 text-red-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -86,7 +89,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                        <span class="text-yellow-600 text-lg">⏰</span>
+                                        <component :is="icons.pending" class="w-5 h-5 text-yellow-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -100,43 +103,43 @@
 
                 <!-- Acciones rápidas -->
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-                    <Link 
+                    <Link
                         :href="route('inventory.products.index')"
                         class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-center transition-colors"
                     >
-                        <div class="text-2xl mb-2">📋</div>
+                        <component :is="icons.list" class="w-8 h-8 mx-auto mb-2" />
                         <div>Ver Productos</div>
                     </Link>
 
-                    <Link 
+                    <Link
                         :href="route('inventory.products.create')"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-center transition-colors"
                     >
-                        <div class="text-2xl mb-2">➕</div>
+                        <component :is="icons.add" class="w-8 h-8 mx-auto mb-2" />
                         <div>Nuevo Producto</div>
                     </Link>
 
-                    <Link 
+                    <Link
                         :href="route('inventory.categories.index')"
                         class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg text-center transition-colors"
                     >
-                        <div class="text-2xl mb-2">🏷️</div>
+                        <component :is="icons.category" class="w-8 h-8 mx-auto mb-2" />
                         <div>Gestionar Categorías</div>
                     </Link>
 
-                    <Link 
+                    <Link
                         :href="route('inventory.products.index', { low_stock: 1 })"
                         class="bg-red-500 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-center transition-colors"
                     >
-                        <div class="text-2xl mb-2">⚠️</div>
+                        <component :is="icons.alert" class="w-8 h-8 mx-auto mb-2" />
                         <div>Ver Alertas</div>
                     </Link>
 
-                    <Link 
+                    <Link
                         :href="route('inventory.movements.index')"
                         class="bg-green-500 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-center transition-colors"
                     >
-                        <div class="text-2xl mb-2">📋</div>
+                        <component :is="icons.list" class="w-8 h-8 mx-auto mb-2" />
                         <div>Ver Movimientos</div>
                     </Link>
                 </div>
@@ -146,17 +149,21 @@
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-900">🚨 Productos con Alertas</h3>
-                                <Link 
+                                <div class="flex items-center">
+                                    <component :is="icons.alert" class="w-5 h-5 text-gray-900 mr-2" />
+                                    <h3 class="text-lg font-semibold text-gray-900">Productos con Alertas</h3>
+                                </div>
+                                <Link
                                     :href="route('inventory.products.index', { low_stock: 1 })"
                                     class="text-blue-600 hover:text-blue-800 text-sm"
                                 >
                                     Ver todos
                                 </Link>
                             </div>
-                            
-                            <div v-if="alert_products.length === 0" class="text-gray-500 text-center py-8">
-                                ✅ No hay productos con alertas
+
+                            <div v-if="alert_products.length === 0" class="text-gray-500 text-center py-8 flex flex-col items-center">
+                                <component :is="icons.success" class="w-8 h-8 text-green-500 mb-2" />
+                                No hay productos con alertas
                             </div>
                             
                             <div v-else class="space-y-3">
@@ -200,8 +207,11 @@
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-900">📊 Productos por Categoría</h3>
-                                <Link 
+                                <div class="flex items-center">
+                                    <component :is="icons.pie" class="w-5 h-5 text-gray-900 mr-2" />
+                                    <h3 class="text-lg font-semibold text-gray-900">Productos por Categoría</h3>
+                                </div>
+                                <Link
                                     :href="route('inventory.categories.index')"
                                     class="text-blue-600 hover:text-blue-800 text-sm"
                                 >
@@ -235,17 +245,21 @@
                 <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">📋 Últimos Movimientos</h3>
-                            <Link 
+                            <div class="flex items-center">
+                                <component :is="icons.list" class="w-5 h-5 text-gray-900 mr-2" />
+                                <h3 class="text-lg font-semibold text-gray-900">Últimos Movimientos</h3>
+                            </div>
+                            <Link
                                 :href="route('inventory.movements.index')"
                                 class="text-blue-600 hover:text-blue-800 text-sm"
                             >
                                 Ver historial completo
                             </Link>
                         </div>
-                        
-                        <div v-if="recent_movements.length === 0" class="text-gray-500 text-center py-8">
-                            📝 No hay movimientos registrados
+
+                        <div v-if="recent_movements.length === 0" class="text-gray-500 text-center py-8 flex flex-col items-center">
+                            <component :is="icons.list" class="w-8 h-8 text-gray-400 mb-2" />
+                            No hay movimientos registrados
                         </div>
                         
                         <div v-else class="overflow-x-auto">
@@ -309,6 +323,9 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useIcons } from '@/composables/useIcons';
+
+const { icons } = useIcons();
 
 // Props
 defineProps({

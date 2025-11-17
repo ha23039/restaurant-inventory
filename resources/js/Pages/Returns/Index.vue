@@ -4,21 +4,26 @@
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    🔄 Sistema de Devoluciones
-                </h2>
+                <div class="flex items-center">
+                    <component :is="icons.returns" class="w-6 h-6 text-gray-800 mr-2" />
+                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                        Sistema de Devoluciones
+                    </h2>
+                </div>
                 <div class="flex space-x-2">
-                    <Link 
+                    <Link
                         :href="route('sales.index')"
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                     >
-                        📊 Historial de Ventas
+                        <component :is="icons.chart" class="w-4 h-4 mr-2" />
+                        Historial de Ventas
                     </Link>
-                    <Link 
+                    <Link
                         :href="route('returns.create')"
-                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                     >
-                        ➕ Nueva Devolución
+                        <component :is="icons.add" class="w-4 h-4 mr-2" />
+                        Nueva Devolución
                     </Link>
                 </div>
             </div>
@@ -34,7 +39,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                        <span class="text-red-600 text-lg">💰</span>
+                                        <component :is="icons.refund" class="w-5 h-5 text-red-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -50,7 +55,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span class="text-blue-600 text-lg">📊</span>
+                                        <component :is="icons.chart" class="w-5 h-5 text-blue-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -66,7 +71,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                        <span class="text-orange-600 text-lg">⏳</span>
+                                        <component :is="icons.pending" class="w-5 h-5 text-orange-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -82,7 +87,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                        <span class="text-green-600 text-lg">✅</span>
+                                        <component :is="icons.success" class="w-5 h-5 text-green-600" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
@@ -221,15 +226,16 @@
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span 
-                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium gap-1"
                                                     :class="{
                                                         'bg-green-100 text-green-800': returnItem.status === 'completed',
                                                         'bg-yellow-100 text-yellow-800': returnItem.status === 'pending',
                                                         'bg-red-100 text-red-800': returnItem.status === 'cancelled'
                                                     }"
                                                 >
-                                                    {{ getStatusIcon(returnItem.status) }} {{ getStatusText(returnItem.status) }}
+                                                    <component :is="getStatusIcon(returnItem.status, true)" class="w-4 h-4" />
+                                                    {{ getStatusText(returnItem.status) }}
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -238,9 +244,10 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <Link
                                                     :href="route('returns.show', returnItem.id)"
-                                                    class="text-orange-600 hover:text-orange-900"
+                                                    class="text-orange-600 hover:text-orange-900 inline-flex items-center"
                                                 >
-                                                    👁️ Ver Detalle
+                                                    <component :is="icons.view" class="w-4 h-4 mr-1" />
+                                                    Ver Detalle
                                                 </Link>
                                             </td>
                                         </tr>
@@ -311,14 +318,15 @@
                         
                         <!-- Estado vacío -->
                         <div v-else class="text-center py-12 text-gray-500">
-                            <div class="text-4xl mb-4">🔄</div>
+                            <component :is="icons.returns" class="w-16 h-16 mx-auto mb-4 text-gray-400" />
                             <div class="text-lg font-medium">No hay devoluciones registradas</div>
                             <div class="text-sm mt-2">El sistema está listo para procesar devoluciones</div>
-                            <Link 
-                                :href="route('returns.create')" 
-                                class="mt-4 inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-700 text-white font-bold rounded"
+                            <Link
+                                :href="route('returns.create')"
+                                class="mt-4 inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-700 text-white font-bold rounded gap-2"
                             >
-                                ➕ Procesar Primera Devolución
+                                <component :is="icons.add" class="w-5 h-5" />
+                                Procesar Primera Devolución
                             </Link>
                         </div>
                     </div>
@@ -332,6 +340,7 @@
 import { reactive } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useIcons } from '@/composables/useIcons';
 
 // Props del controlador
 const props = defineProps({
@@ -339,6 +348,9 @@ const props = defineProps({
     filters: Object,
     metrics: Object
 });
+
+// Icons
+const { icons, getStatusIcon } = useIcons();
 
 // Form para filtros
 const form = reactive({
@@ -400,16 +412,4 @@ const getStatusText = (status) => {
     };
     return statuses[status] || status;
 };
-
-const getStatusIcon = (status) => {
-    const icons = {
-        'pending': '⏳',
-        'completed': '✅',
-        'cancelled': '❌'
-    };
-    return icons[status] || '📋';
-};
-
-// Debug
-console.log('🔍 Returns Index - Props:', props);
 </script>
