@@ -25,7 +25,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-500">Productos con Stock Bajo</div>
-                                    <div class="text-2xl font-bold text-gray-900">3</div>
+                                    <div class="text-2xl font-bold text-gray-900">{{ metrics.low_stock_products }}</div>
                                 </div>
                             </div>
                         </div>
@@ -44,14 +44,14 @@
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-500">Ventas del Día</div>
-                                    <div class="text-2xl font-bold text-gray-900">$1,250.00</div>
+                                    <div class="text-2xl font-bold text-gray-900">{{ formatCurrency(metrics.today_sales) }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Platillos Más Vendidos (Admin + Chef) -->
-                    <div v-if="canAccess(['admin', 'chef'])" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <!-- Transacciones del Día (Admin + Cajero) -->
+                    <div v-if="canAccess(['admin', 'cajero'])" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -62,8 +62,8 @@
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500">Platillo Top</div>
-                                    <div class="text-lg font-bold text-gray-900">Hamburguesa Clásica</div>
+                                    <div class="text-sm font-medium text-gray-500">Transacciones del Día</div>
+                                    <div class="text-2xl font-bold text-gray-900">{{ metrics.today_transactions }}</div>
                                 </div>
                             </div>
                         </div>
@@ -83,11 +83,30 @@
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-500">Saldo del Día</div>
-                                    <div class="text-2xl font-bold text-gray-900">$890.50</div>
+                                    <div class="text-2xl font-bold text-gray-900">{{ formatCurrency(metrics.today_cash_flow) }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Gráficas de Análisis (Admin + Cajero) -->
+                <div v-if="canAccess(['admin', 'cajero'])" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Gráfica de Ventas Semanales -->
+                    <SalesChart
+                        :data="chartData.weekSales"
+                        :labels="chartData.weekLabels"
+                    />
+
+                    <!-- Gráfica de Productos Más Vendidos -->
+                    <TopProductsChart
+                        :products="chartData.topProducts"
+                    />
+
+                    <!-- Gráfica de Métodos de Pago -->
+                    <PaymentMethodsChart
+                        :paymentMethods="chartData.paymentMethods"
+                    />
                 </div>
 
                 <!-- Panel de acceso rápido -->
@@ -185,6 +204,14 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { useIcons } from '@/composables/useIcons';
+import SalesChart from '@/Components/Charts/SalesChart.vue';
+import TopProductsChart from '@/Components/Charts/TopProductsChart.vue';
+import PaymentMethodsChart from '@/Components/Charts/PaymentMethodsChart.vue';
+
+const props = defineProps({
+    metrics: Object,
+    chartData: Object,
+});
 
 const page = usePage();
 const { icons } = useIcons();
@@ -193,5 +220,13 @@ const { icons } = useIcons();
 const canAccess = (allowedRoles) => {
     const userRole = page.props.auth.user.role;
     return allowedRoles.includes(userRole);
+};
+
+// Formatear moneda
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(amount);
 };
 </script>
