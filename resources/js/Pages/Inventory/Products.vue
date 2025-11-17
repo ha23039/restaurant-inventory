@@ -375,7 +375,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 
 // Props
 const props = defineProps({
