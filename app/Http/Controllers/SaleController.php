@@ -4,13 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\MenuItem;
-use App\Models\CashFlow;
-use App\Models\InventoryMovement;
 use App\Models\SaleReturn; // 🔄 NUEVA IMPORTACIÓN
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class SaleController extends Controller
 {
@@ -20,10 +17,10 @@ class SaleController extends Controller
 
         // 🔄 ACTUALIZADO: Incluir devoluciones en la consulta
         $query = Sale::with([
-            'user', 
-            'saleItems.menuItem', 
+            'user',
+            'saleItems.menuItem',
             'saleItems.simpleProduct',
-            'completedReturns'  // 🔄 NUEVA RELACIÓN
+            'completedReturns',  // 🔄 NUEVA RELACIÓN
         ]);
 
         // Filtros existentes
@@ -46,21 +43,21 @@ class SaleController extends Controller
             } elseif ($request->has_returns === 'without_returns') {
                 $query->whereDoesntHave('completedReturns');
             } elseif ($request->has_returns === 'partial_returns') {
-                $query->whereHas('completedReturns', function($q) {
+                $query->whereHas('completedReturns', function ($q) {
                     $q->selectRaw('SUM(total_returned) as total_ret')
-                      ->havingRaw('total_ret < (SELECT total FROM sales WHERE sales.id = sale_returns.sale_id)');
+                        ->havingRaw('total_ret < (SELECT total FROM sales WHERE sales.id = sale_returns.sale_id)');
                 });
             } elseif ($request->has_returns === 'full_returns') {
-                $query->whereHas('completedReturns', function($q) {
+                $query->whereHas('completedReturns', function ($q) {
                     $q->selectRaw('SUM(total_returned) as total_ret')
-                      ->havingRaw('total_ret >= (SELECT total FROM sales WHERE sales.id = sale_returns.sale_id)');
+                        ->havingRaw('total_ret >= (SELECT total FROM sales WHERE sales.id = sale_returns.sale_id)');
                 });
             }
         }
 
         $sales = $query->orderBy('created_at', 'desc')
-                      ->paginate(20)
-                      ->withQueryString();
+            ->paginate(20)
+            ->withQueryString();
 
         // 🔄 MEJORADO: Calcular información de devoluciones para cada venta
         $sales->getCollection()->transform(function ($sale) {
@@ -69,35 +66,36 @@ class SaleController extends Controller
             $sale->net_total = $sale->total - $sale->total_returned;
             $sale->return_percentage = $sale->total > 0 ? round(($sale->total_returned / $sale->total) * 100, 1) : 0;
             $sale->can_return = ($sale->status === 'completada') && ($sale->total_returned < $sale->total);
+
             return $sale;
         });
 
         // 📊 Métricas mejoradas del día
         $today = today();
-        
+
         // Ventas del día
         $todaySales = Sale::whereDate('created_at', $today)
-                         ->where('status', 'completada')
-                         ->sum('total');
+            ->where('status', 'completada')
+            ->sum('total');
 
         $todayTransactions = Sale::whereDate('created_at', $today)
-                               ->where('status', 'completada')
-                               ->count();
+            ->where('status', 'completada')
+            ->count();
 
         // 🔄 MEJORADO: Métricas de devoluciones del día
         $todayReturns = SaleReturn::whereDate('return_date', $today)
-                                 ->where('status', 'completed')
-                                 ->sum('total_returned');
+            ->where('status', 'completed')
+            ->sum('total_returned');
 
         $todayReturnCount = SaleReturn::whereDate('return_date', $today)
-                                    ->where('status', 'completed')
-                                    ->count();
+            ->where('status', 'completed')
+            ->count();
 
         // 🔄 NUEVA: Métricas adicionales
         $salesWithReturnsToday = Sale::whereDate('created_at', $today)
-                                    ->where('status', 'completada')
-                                    ->whereHas('completedReturns')
-                                    ->count();
+            ->where('status', 'completada')
+            ->whereHas('completedReturns')
+            ->count();
 
         $netSalesToday = $todaySales - $todayReturns;
         $returnRateToday = $todaySales > 0 ? round(($todayReturns / $todaySales) * 100, 2) : 0;
@@ -113,7 +111,7 @@ class SaleController extends Controller
                 'sales_with_returns_today' => $salesWithReturnsToday, // 🔄 NUEVO
                 'net_sales_today' => $netSalesToday, // 🔄 NUEVO
                 'return_rate_today' => $returnRateToday, // 🔄 NUEVO
-            ]
+            ],
         ]);
     }
 
@@ -123,22 +121,22 @@ class SaleController extends Controller
 
         // DEBUG: Log la venta que se está mostrando
         \Log::info('🧪 SaleController@show - Venta solicitada:', ['sale_id' => $sale->id]);
-        
+
         // 🔄 ACTUALIZADO: Cargar todas las relaciones necesarias incluyendo devoluciones
         $sale = Sale::with([
             'user:id,name,email',
-            'saleItems' => function($query) {
+            'saleItems' => function ($query) {
                 $query->with([
                     'menuItem:id,name,description,price',
-                    'menuItem.recipes' => function($recipeQuery) {
+                    'menuItem.recipes' => function ($recipeQuery) {
                         $recipeQuery->with('product:id,name,unit_type');
                     },
-                    'simpleProduct:id,name,description,sale_price,category'
+                    'simpleProduct:id,name,description,sale_price,category',
                 ]);
             },
-            'completedReturns.returnItems.saleItem' // 🔄 NUEVA: Cargar devoluciones completas
+            'completedReturns.returnItems.saleItem', // 🔄 NUEVA: Cargar devoluciones completas
         ])->findOrFail($sale->id);
-        
+
         // TRANSFORMAR DATOS: Asegurar estructura consistente
         $transformedSale = [
             'id' => $sale->id,
@@ -151,20 +149,20 @@ class SaleController extends Controller
             'status' => $sale->status,
             'created_at' => $sale->created_at->toISOString(),
             'updated_at' => $sale->updated_at->toISOString(),
-            
+
             // 🔄 MEJORADO: Información de devoluciones
             'total_returned' => $sale->completedReturns->sum('total_returned'),
             'has_returns' => $sale->completedReturns->count() > 0,
             'net_total' => $sale->total - $sale->completedReturns->sum('total_returned'),
             'can_return' => ($sale->status === 'completada') && ($sale->completedReturns->sum('total_returned') < $sale->total),
-            
+
             // Usuario
             'user' => [
                 'id' => $sale->user->id,
                 'name' => $sale->user->name,
-                'email' => $sale->user->email
+                'email' => $sale->user->email,
             ],
-            
+
             // Items transformados
             'sale_items' => $sale->saleItems->map(function ($item) use ($sale) {
                 $baseItem = [
@@ -172,15 +170,15 @@ class SaleController extends Controller
                     'quantity' => intval($item->quantity),
                     'unit_price' => floatval($item->unit_price),
                     'total_price' => floatval($item->total_price ?? ($item->quantity * $item->unit_price)),
-                    'product_type' => $item->product_type
+                    'product_type' => $item->product_type,
                 ];
 
                 // 🔄 NUEVO: Agregar información de devoluciones por item
                 $quantityReturned = DB::table('sale_return_items')
-                                     ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
-                                     ->where('sale_return_items.sale_item_id', $item->id)
-                                     ->where('sale_returns.status', '!=', 'cancelled')
-                                     ->sum('sale_return_items.quantity_returned');
+                    ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
+                    ->where('sale_return_items.sale_item_id', $item->id)
+                    ->where('sale_returns.status', '!=', 'cancelled')
+                    ->sum('sale_return_items.quantity_returned');
 
                 $baseItem['quantity_returned'] = intval($quantityReturned);
                 $baseItem['can_return_quantity'] = $item->quantity - $quantityReturned;
@@ -200,10 +198,10 @@ class SaleController extends Controller
                                 'product' => $recipe->product ? [
                                     'id' => $recipe->product->id,
                                     'name' => $recipe->product->name,
-                                    'unit_type' => $recipe->product->unit_type
-                                ] : null
+                                    'unit_type' => $recipe->product->unit_type,
+                                ] : null,
                             ];
-                        })->toArray()
+                        })->toArray(),
                     ];
                 } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
                     $baseItem['simple_product'] = [
@@ -211,13 +209,13 @@ class SaleController extends Controller
                         'name' => $item->simpleProduct->name,
                         'description' => $item->simpleProduct->description,
                         'sale_price' => floatval($item->simpleProduct->sale_price),
-                        'category' => $item->simpleProduct->category
+                        'category' => $item->simpleProduct->category,
                     ];
                 }
 
                 return $baseItem;
             })->toArray(),
-            
+
             // 🔄 MEJORADO: Información detallada de devoluciones
             'returns' => $sale->completedReturns->map(function ($return) {
                 return [
@@ -228,11 +226,11 @@ class SaleController extends Controller
                     'return_date' => $return->return_date,
                     'items_count' => $return->returnItems->count(),
                     'return_type' => $return->return_type,
-                    'refund_method' => $return->refund_method
+                    'refund_method' => $return->refund_method,
                 ];
-            })->toArray()
+            })->toArray(),
         ];
-        
+
         // DEBUG: Log los datos transformados
         \Log::info('🧪 SaleController@show - Datos transformados:', [
             'sale_id' => $transformedSale['id'],
@@ -241,11 +239,11 @@ class SaleController extends Controller
             'user_name' => $transformedSale['user']['name'],
             'total_returned' => $transformedSale['total_returned'], // 🔄 NUEVO DEBUG
             'net_total' => $transformedSale['net_total'], // 🔄 NUEVO DEBUG
-            'can_return' => $transformedSale['can_return'] // 🔄 NUEVO DEBUG
+            'can_return' => $transformedSale['can_return'], // 🔄 NUEVO DEBUG
         ]);
-        
+
         return Inertia::render('Sales/SaleDetail', [
-            'sale' => $transformedSale
+            'sale' => $transformedSale,
         ]);
     }
 
@@ -276,7 +274,8 @@ class SaleController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Stock actualizado']);
         } catch (\Exception $e) {
-            \Log::error('Error al actualizar stock: ' . $e->getMessage());
+            \Log::error('Error al actualizar stock: '.$e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Error al actualizar stock'], 500);
         }
     }
@@ -295,7 +294,7 @@ class SaleController extends Controller
         foreach ($menuItem->recipes as $recipe) {
             $product = $recipe->product;
             $neededQuantity = $recipe->quantity_needed;
-            
+
             if ($neededQuantity > 0) {
                 $possibleQuantity = floor($product->current_stock / $neededQuantity);
                 $minQuantity = min($minQuantity, $possibleQuantity);
@@ -317,43 +316,46 @@ class SaleController extends Controller
 
         // 🔄 MEJORADO: Incluir métricas completas de devoluciones
         $totalSales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                         ->where('status', 'completada')
-                         ->sum('total');
+            ->where('status', 'completada')
+            ->sum('total');
 
         $totalReturns = SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                 ->where('status', 'completed')
-                                 ->sum('total_returned');
+            ->where('status', 'completed')
+            ->sum('total_returned');
 
         $metrics = [
             'total_sales' => $totalSales,
             'total_transactions' => Sale::whereBetween('created_at', [$startDate, $endDate])
-                                      ->where('status', 'completada')
-                                      ->count(),
+                ->where('status', 'completada')
+                ->count(),
             'average_ticket' => Sale::whereBetween('created_at', [$startDate, $endDate])
-                                  ->where('status', 'completada')
-                                  ->avg('total'),
-            
+                ->where('status', 'completada')
+                ->avg('total'),
+
             // 🔄 MEJORADO: Métricas de devoluciones
             'total_returns' => $totalReturns,
             'net_sales' => $totalSales - $totalReturns,
             'return_count' => SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                      ->where('status', 'completed')
-                                      ->count(),
+                ->where('status', 'completed')
+                ->count(),
             'return_rate' => $this->calculateReturnRate($startDate, $endDate),
             'sales_with_returns' => Sale::whereBetween('created_at', [$startDate, $endDate])
-                                       ->where('status', 'completada')
-                                       ->whereHas('completedReturns')
-                                       ->count(),
-            
+                ->where('status', 'completada')
+                ->whereHas('completedReturns')
+                ->count(),
+
             'top_selling_items' => SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
-                                          ->whereBetween('sales.created_at', [$startDate, $endDate])
-                                          ->where('sales.status', 'completada')
-                                          ->select('sale_items.menu_item_id', 'sale_items.simple_product_id', 
-                                                 DB::raw('SUM(sale_items.quantity) as total_quantity'))
-                                          ->groupBy('sale_items.menu_item_id', 'sale_items.simple_product_id')
-                                          ->orderBy('total_quantity', 'desc')
-                                          ->limit(10)
-                                          ->get()
+                ->whereBetween('sales.created_at', [$startDate, $endDate])
+                ->where('sales.status', 'completada')
+                ->select(
+                    'sale_items.menu_item_id',
+                    'sale_items.simple_product_id',
+                    DB::raw('SUM(sale_items.quantity) as total_quantity')
+                )
+                ->groupBy('sale_items.menu_item_id', 'sale_items.simple_product_id')
+                ->orderBy('total_quantity', 'desc')
+                ->limit(10)
+                ->get(),
         ];
 
         return response()->json($metrics);
@@ -365,12 +367,12 @@ class SaleController extends Controller
     private function calculateReturnRate($startDate, $endDate): float
     {
         $totalSales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                         ->where('status', 'completada')
-                         ->sum('total');
+            ->where('status', 'completada')
+            ->sum('total');
 
         $totalReturns = SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                 ->where('status', 'completed')
-                                 ->sum('total_returned');
+            ->where('status', 'completed')
+            ->sum('total_returned');
 
         return $totalSales > 0 ? round(($totalReturns / $totalSales) * 100, 2) : 0;
     }
@@ -381,42 +383,42 @@ class SaleController extends Controller
     public function getReturnableSales(Request $request)
     {
         $search = $request->get('search', '');
-        
+
         $query = Sale::with([
             'user:id,name',
             'saleItems.menuItem:id,name',
             'saleItems.simpleProduct:id,name',
-            'completedReturns'
+            'completedReturns',
         ])
-        ->where('status', 'completada');
+            ->where('status', 'completada');
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('sale_number', 'like', "%{$search}%")
-                  ->orWhere('id', $search)
-                  ->orWhereRaw("SUBSTRING(sale_number, -4) = ?", [$search]);
+                    ->orWhere('id', $search)
+                    ->orWhereRaw('SUBSTRING(sale_number, -4) = ?', [$search]);
             });
         }
 
         $sales = $query->orderBy('created_at', 'desc')
-                      ->limit(10)
-                      ->get();
+            ->limit(10)
+            ->get();
 
         // 🔄 MEJORADO: Agregar información completa de devoluciones
-        $sales->each(function($sale) {
+        $sales->each(function ($sale) {
             $sale->total_returned = $sale->completedReturns->sum('total_returned');
             $sale->can_return = $sale->total_returned < $sale->total;
             $sale->net_total = $sale->total - $sale->total_returned;
             $sale->return_percentage = $sale->total > 0 ? round(($sale->total_returned / $sale->total) * 100, 1) : 0;
-            
+
             // Agregar info de items que pueden devolverse
-            $sale->saleItems->each(function($item) {
+            $sale->saleItems->each(function ($item) {
                 $quantityReturned = DB::table('sale_return_items')
-                                     ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
-                                     ->where('sale_return_items.sale_item_id', $item->id)
-                                     ->where('sale_returns.status', '!=', 'cancelled')
-                                     ->sum('sale_return_items.quantity_returned');
-                
+                    ->join('sale_returns', 'sale_return_items.sale_return_id', '=', 'sale_returns.id')
+                    ->where('sale_return_items.sale_item_id', $item->id)
+                    ->where('sale_returns.status', '!=', 'cancelled')
+                    ->sum('sale_return_items.quantity_returned');
+
                 $item->quantity_returned = $quantityReturned;
                 $item->can_return_quantity = $item->quantity - $quantityReturned;
                 $item->can_return = $item->can_return_quantity > 0;

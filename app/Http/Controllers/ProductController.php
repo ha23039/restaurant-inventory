@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Category;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,7 +19,7 @@ class ProductController extends Controller
 
         // Filtros
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('category_id')) {
@@ -44,7 +44,7 @@ class ProductController extends Controller
         return Inertia::render('Inventory/Products', [
             'products' => $products,
             'categories' => $categories,
-            'filters' => $request->only(['search', 'category_id', 'low_stock', 'expired', 'expiring_soon'])
+            'filters' => $request->only(['search', 'category_id', 'low_stock', 'expired', 'expiring_soon']),
         ]);
     }
 
@@ -53,10 +53,10 @@ class ProductController extends Controller
         $this->authorize('create', Product::class);
 
         $categories = Category::all();
-        
+
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,
-            'product' => null
+            'product' => null,
         ]);
     }
 
@@ -73,9 +73,9 @@ class ProductController extends Controller
         $this->authorize('view', $product);
 
         $product->load(['category', 'inventoryMovements.user', 'recipes.menuItem']);
-        
+
         return Inertia::render('Inventory/ProductDetail', [
-            'product' => $product
+            'product' => $product,
         ]);
     }
 
@@ -84,10 +84,10 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $categories = Category::all();
-        
+
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,
-            'product' => $product
+            'product' => $product,
         ]);
     }
 
@@ -126,7 +126,7 @@ class ProductController extends Controller
         return response()->json([
             'low_stock' => $lowStock,
             'expired' => $expired,
-            'expiring_soon' => $expiringSoon
+            'expiring_soon' => $expiringSoon,
         ]);
     }
 }

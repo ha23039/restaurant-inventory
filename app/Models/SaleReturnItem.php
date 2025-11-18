@@ -14,7 +14,7 @@ class SaleReturnItem extends Model
         'original_quantity',
         'unit_price',
         'total_price',
-        'inventory_restored'
+        'inventory_restored',
     ];
 
     protected $casts = [
@@ -22,7 +22,7 @@ class SaleReturnItem extends Model
         'original_quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'total_price' => 'decimal:2',
-        'inventory_restored' => 'boolean'
+        'inventory_restored' => 'boolean',
     ];
 
     /**
@@ -47,11 +47,11 @@ class SaleReturnItem extends Model
     public function canReturnMore(): bool
     {
         $totalReturned = self::where('sale_item_id', $this->sale_item_id)
-                            ->whereHas('saleReturn', function($query) {
-                                $query->where('status', '!=', 'cancelled');
-                            })
-                            ->sum('quantity_returned');
-        
+            ->whereHas('saleReturn', function ($query) {
+                $query->where('status', '!=', 'cancelled');
+            })
+            ->sum('quantity_returned');
+
         return $totalReturned < $this->original_quantity;
     }
 

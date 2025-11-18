@@ -29,7 +29,7 @@ class ProcessReturnRequest extends FormRequest
             'refund_method' => 'required|in:efectivo,tarjeta,transferencia,credito',
             'items' => 'required|array|min:1',
             'items.*.sale_item_id' => 'required|exists:sale_items,id',
-            'items.*.quantity' => 'required|integer|min:1'
+            'items.*.quantity' => 'required|integer|min:1',
         ];
     }
 }

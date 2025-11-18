@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Category;
 use App\Models\InventoryMovement;
-use Illuminate\Http\Request;
+use App\Models\Product;
 use Inertia\Inertia;
 
 class InventoryController extends Controller
@@ -21,10 +20,10 @@ class InventoryController extends Controller
 
         // Productos con alertas
         $alertProducts = Product::with('category')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereRaw('current_stock <= min_stock')
-                      ->orWhere('expiry_date', '<', now())
-                      ->orWhereBetween('expiry_date', [now(), now()->addDays(7)]);
+                    ->orWhere('expiry_date', '<', now())
+                    ->orWhereBetween('expiry_date', [now(), now()->addDays(7)]);
             })
             ->limit(10)
             ->get();

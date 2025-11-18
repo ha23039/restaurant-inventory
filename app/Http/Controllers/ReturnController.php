@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
-use App\Models\SaleReturn;
-use App\Models\SaleReturnItem;
-use App\Models\SaleItem;
+use App\Http\Requests\ProcessReturnRequest;
 use App\Models\CashFlow;
 use App\Models\InventoryMovement;
-use App\Models\Product;
-use App\Http\Requests\ProcessReturnRequest;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\SaleReturn;
+use App\Models\SaleReturnItem;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class ReturnController extends Controller
 {
@@ -26,7 +25,7 @@ class ReturnController extends Controller
         $query = SaleReturn::with([
             'sale:id,sale_number,total,created_at',
             'processedByUser:id,name',
-            'returnItems'
+            'returnItems',
         ]);
 
         // Filtros avanzados
@@ -47,8 +46,8 @@ class ReturnController extends Controller
         }
 
         $returns = $query->orderBy('created_at', 'desc')
-                        ->paginate(20)
-                        ->withQueryString();
+            ->paginate(20)
+            ->withQueryString();
 
         // Métricas avanzadas del día
         $todayReturns = SaleReturn::today()->completed()->sum('total_returned');
@@ -62,7 +61,7 @@ class ReturnController extends Controller
                 'today_returns' => $todayReturns,
                 'today_count' => $todayCount,
                 'pending_count' => $pendingCount,
-            ]
+            ],
         ]);
     }
 
@@ -84,20 +83,20 @@ class ReturnController extends Controller
                 'user:id,name',
                 'saleItems.menuItem:id,name,description',
                 'saleItems.simpleProduct:id,name,description',
-                'completedReturns' // NUEVA: Cargar devoluciones
+                'completedReturns', // NUEVA: Cargar devoluciones
             ])->findOrFail($saleId);
 
             // Agregar información completa de devoluciones
             $sale->total_returned = $sale->completedReturns->sum('total_returned');
             $sale->can_return = $sale->total_returned < $sale->total;
 
-            $sale->saleItems->each(function($item) {
+            $sale->saleItems->each(function ($item) {
                 $totalReturned = SaleReturnItem::where('sale_item_id', $item->id)
-                                             ->whereHas('saleReturn', function($query) {
-                                                 $query->where('status', '!=', 'cancelled');
-                                             })
-                                             ->sum('quantity_returned');
-                
+                    ->whereHas('saleReturn', function ($query) {
+                        $query->where('status', '!=', 'cancelled');
+                    })
+                    ->sum('quantity_returned');
+
                 $item->quantity_returned = $totalReturned;
                 $item->can_return_quantity = $item->quantity - $totalReturned;
                 $item->can_return = $item->can_return_quantity > 0;
@@ -113,17 +112,17 @@ class ReturnController extends Controller
         // Si hay parámetro de búsqueda (live search)
         if ($search && strlen($search) >= 1 && !$saleId) {
             $searchResults = $this->performSearch($search);
-            
+
             \Log::info('Live Search - GET request:', [
                 'search_term' => $search,
-                'found_sales' => $searchResults->count()
+                'found_sales' => $searchResults->count(),
             ]);
         }
 
         return Inertia::render('Returns/Create', [
             'sale' => $sale,
             'searchResults' => $searchResults,
-            'searchTerm' => $search
+            'searchTerm' => $search,
         ]);
     }
 
@@ -135,32 +134,32 @@ class ReturnController extends Controller
         $this->authorize('processReturn', SaleReturn::class);
 
         $request->validate([
-            'search' => 'required|string|min:1'
+            'search' => 'required|string|min:1',
         ]);
 
         $search = $request->search;
-        
+
         // DEBUG: Log inicial
         \Log::info('INICIO - Búsqueda POST de ventas:', [
             'search_term' => $search,
             'search_length' => strlen($search),
             'is_ajax' => $request->ajax(),
             'wants_json' => $request->wantsJson(),
-            'is_inertia' => $request->header('X-Inertia')
+            'is_inertia' => $request->header('X-Inertia'),
         ]);
 
         $sales = $this->performSearch($search);
 
         \Log::info('POST Search:', [
             'search_term' => $search,
-            'found_sales' => $sales->count()
+            'found_sales' => $sales->count(),
         ]);
 
         // 🎯 RESPUESTA PROFESIONAL PARA INERTIA
         return Inertia::render('Returns/Create', [
             'searchResults' => $sales,
             'searchTerm' => $search,
-            'success' => "Se encontraron {$sales->count()} ventas para '{$search}'"
+            'success' => "Se encontraron {$sales->count()} ventas para '{$search}'",
         ]);
     }
 
@@ -174,45 +173,45 @@ class ReturnController extends Controller
                 'user:id,name',
                 'saleItems.menuItem:id,name,description',
                 'saleItems.simpleProduct:id,name,description',
-                'completedReturns'
+                'completedReturns',
             ])
-            ->where('status', 'completada');
+                ->where('status', 'completada');
 
             // Búsqueda inteligente y flexible
             if (is_numeric($search)) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('id', $search)
-                      ->orWhere('sale_number', 'like', "%{$search}")
-                      ->orWhere('sale_number', 'like', "%{$search}%")
-                      ->orWhereRaw("RIGHT(sale_number, LENGTH(?)) = ?", [$search, $search]);
+                        ->orWhere('sale_number', 'like', "%{$search}")
+                        ->orWhere('sale_number', 'like', "%{$search}%")
+                        ->orWhereRaw('RIGHT(sale_number, LENGTH(?)) = ?', [$search, $search]);
                 });
             } else {
                 $query->where('sale_number', 'like', "%{$search}%");
             }
 
             $sales = $query->orderBy('created_at', 'desc')
-                          ->limit(10)
-                          ->get();
+                ->limit(10)
+                ->get();
 
             \Log::info('DEBUG - Consulta SQL ejecutada:', [
                 'search_term' => $search,
                 'found_sales' => $sales->count(),
-                'found_numbers' => $sales->pluck('sale_number')->toArray()
+                'found_numbers' => $sales->pluck('sale_number')->toArray(),
             ]);
 
             // Agregar información completa de devoluciones
-            $sales->each(function($sale) {
+            $sales->each(function ($sale) {
                 $sale->total_returned = $sale->completedReturns->sum('total_returned');
                 $sale->can_return = $sale->total_returned < $sale->total;
-                
+
                 // Info detallada de items
-                $sale->saleItems->each(function($item) {
+                $sale->saleItems->each(function ($item) {
                     $totalReturned = \App\Models\SaleReturnItem::where('sale_item_id', $item->id)
-                                                 ->whereHas('saleReturn', function($query) {
-                                                     $query->where('status', '!=', 'cancelled');
-                                                 })
-                                                 ->sum('quantity_returned');
-                    
+                        ->whereHas('saleReturn', function ($query) {
+                            $query->where('status', '!=', 'cancelled');
+                        })
+                        ->sum('quantity_returned');
+
                     $item->quantity_returned = $totalReturned;
                     $item->can_return_quantity = $item->quantity - $totalReturned;
                     $item->can_return = $item->can_return_quantity > 0;
@@ -221,22 +220,23 @@ class ReturnController extends Controller
 
             \Log::info('DEBUG - Resultado final:', [
                 'sales_count' => $sales->count(),
-                'sales_with_return_info' => $sales->map(function($sale) {
+                'sales_with_return_info' => $sales->map(function ($sale) {
                     return [
                         'id' => $sale->id,
                         'sale_number' => $sale->sale_number,
                         'total' => $sale->total,
                         'total_returned' => $sale->total_returned,
                         'can_return' => $sale->can_return,
-                        'user_name' => $sale->user->name
+                        'user_name' => $sale->user->name,
                     ];
-                })->toArray()
+                })->toArray(),
             ]);
 
             return $sales;
 
         } catch (\Exception $e) {
-            \Log::error(' ERROR en búsqueda: ' . $e->getMessage());
+            \Log::error(' ERROR en búsqueda: '.$e->getMessage());
+
             return collect([]);
         }
     }
@@ -261,9 +261,9 @@ class ReturnController extends Controller
             // Validar que las cantidades sean válidas CON LOCKS
             foreach ($validated['items'] as $itemData) {
                 $saleItem = SaleItem::with(['menuItem.recipes.product', 'simpleProduct.product'])
-                                   ->lockForUpdate()
-                                   ->findOrFail($itemData['sale_item_id']);
-                
+                    ->lockForUpdate()
+                    ->findOrFail($itemData['sale_item_id']);
+
                 // Verificar que pertenece a la venta correcta
                 if ($saleItem->sale_id !== $sale->id) {
                     throw new \Exception('El item no pertenece a esta venta');
@@ -271,13 +271,13 @@ class ReturnController extends Controller
 
                 // Verificar cantidad disponible para devolución
                 $totalReturned = SaleReturnItem::where('sale_item_id', $saleItem->id)
-                                             ->whereHas('saleReturn', function($query) {
-                                                 $query->where('status', '!=', 'cancelled');
-                                             })
-                                             ->sum('quantity_returned');
+                    ->whereHas('saleReturn', function ($query) {
+                        $query->where('status', '!=', 'cancelled');
+                    })
+                    ->sum('quantity_returned');
 
                 $availableToReturn = $saleItem->quantity - $totalReturned;
-                
+
                 if ($itemData['quantity'] > $availableToReturn) {
                     throw new \Exception("Solo se pueden devolver {$availableToReturn} unidades del producto");
                 }
@@ -310,20 +310,20 @@ class ReturnController extends Controller
                 'total_returned' => $totalReturned,
                 'status' => 'pending',
                 'refund_method' => $validated['refund_method'],
-                'return_date' => now()->toDateString()
+                'return_date' => now()->toDateString(),
             ]);
 
             // Crear los items de devolución
             foreach ($validated['items'] as $itemData) {
                 $saleItem = SaleItem::findOrFail($itemData['sale_item_id']);
-                
+
                 SaleReturnItem::create([
                     'sale_return_id' => $saleReturn->id,
                     'sale_item_id' => $saleItem->id,
                     'quantity_returned' => $itemData['quantity'],
                     'original_quantity' => $saleItem->quantity,
                     'unit_price' => $saleItem->unit_price,
-                    'total_price' => $saleItem->unit_price * $itemData['quantity']
+                    'total_price' => $saleItem->unit_price * $itemData['quantity'],
                 ]);
             }
 
@@ -333,11 +333,12 @@ class ReturnController extends Controller
             DB::commit();
 
             return redirect()->route('returns.show', $saleReturn)
-                           ->with('success', 'Devolución procesada exitosamente');
+                ->with('success', 'Devolución procesada exitosamente');
 
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error en devolución: ' . $e->getMessage());
+            \Log::error('Error en devolución: '.$e->getMessage());
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -353,11 +354,11 @@ class ReturnController extends Controller
             'sale.user:id,name',
             'processedByUser:id,name',
             'returnItems.saleItem.menuItem:id,name,description',
-            'returnItems.saleItem.simpleProduct:id,name,description'
+            'returnItems.saleItem.simpleProduct:id,name,description',
         ]);
 
         return Inertia::render('Returns/Show', [
-            'return' => $return
+            'return' => $return,
         ]);
     }
 
@@ -380,7 +381,7 @@ class ReturnController extends Controller
             // 3. Marcar como completada
             $saleReturn->update([
                 'inventory_restored' => true,
-                'cash_flow_adjusted' => true
+                'cash_flow_adjusted' => true,
             ]);
 
             $saleReturn->markAsCompleted();
@@ -388,11 +389,11 @@ class ReturnController extends Controller
             \Log::info('Devolución procesada exitosamente', [
                 'return_id' => $saleReturn->id,
                 'return_number' => $saleReturn->return_number,
-                'total' => $saleReturn->total_returned
+                'total' => $saleReturn->total_returned,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error(' Error procesando devolución: ' . $e->getMessage());
+            \Log::error(' Error procesando devolución: '.$e->getMessage());
             throw $e;
         }
     }
@@ -411,13 +412,13 @@ class ReturnController extends Controller
                 // PRODUCTOS PREPARADOS: Solo registro de pérdida operativa
                 \Log::info("PRODUCTO PREPARADO detectado: {$this->getItemName($saleItem)}");
                 $this->recordOperationalLoss($returnItem);
-                \Log::info("Pérdida operativa registrada - NO se restauran ingredientes");
+                \Log::info('Pérdida operativa registrada - NO se restauran ingredientes');
 
             } elseif ($saleItem->product_type === 'simple') {
                 // PRODUCTOS SIMPLES: Restaurar al inventario real
                 \Log::info("PRODUCTO SIMPLE detectado: {$this->getItemName($saleItem)}");
                 $this->restoreSimpleProductInventory($returnItem);
-                \Log::info("Producto simple restaurado al inventario físico");
+                \Log::info('Producto simple restaurado al inventario físico');
             }
 
             $returnItem->markInventoryRestored();
@@ -428,7 +429,7 @@ class ReturnController extends Controller
 
     /**
      * LÓGICA REALISTA: Registro de pérdida operativa para productos preparados
-     * 
+     *
      * Cuando un cliente devuelve una hamburguesa, pizza, etc., ya preparada:
      * - NO podemos recuperar los ingredientes (pan, carne, condimentos)
      * - Registramos como "pérdida operativa" para contabilidad
@@ -438,9 +439,10 @@ class ReturnController extends Controller
     {
         $saleItem = $returnItem->saleItem;
         $menuItem = $saleItem->menuItem;
-        
+
         if (!$menuItem) {
             \Log::warning("No se encontró el menú item para el sale_item: {$saleItem->id}");
+
             return;
         }
 
@@ -454,7 +456,7 @@ class ReturnController extends Controller
                 'unit_cost' => 0,
                 'current_stock' => 0,
                 'min_stock' => 0,
-                'max_stock' => 0
+                'max_stock' => 0,
             ]
         );
 
@@ -475,18 +477,18 @@ class ReturnController extends Controller
         ]);
 
         // Log detallado para auditoria
-        \Log::info("PÉRDIDA OPERATIVA registrada:", [
+        \Log::info('PÉRDIDA OPERATIVA registrada:', [
             'producto' => $menuItem->name,
             'cantidad' => $returnItem->quantity_returned,
             'valor_perdido' => $returnItem->total_price,
             'razon' => 'Producto preparado no recuperable',
-            'return_number' => $returnItem->saleReturn->return_number
+            'return_number' => $returnItem->saleReturn->return_number,
         ]);
     }
 
     /**
      * LÓGICA REALISTA: Restaurar inventario de productos simples
-     * 
+     *
      * Cuando un cliente devuelve una soda, agua embotellada, etc.:
      * - SÍ podemos recuperar el producto físico
      * - Lo restauramos al inventario para reventa
@@ -495,15 +497,16 @@ class ReturnController extends Controller
     private function restoreSimpleProductInventory(SaleReturnItem $returnItem)
     {
         $simpleProduct = $returnItem->saleItem->simpleProduct()->with('product')->first();
-        
+
         if (!$simpleProduct || !$simpleProduct->product) {
             \Log::warning("No se encontró el producto base para: {$returnItem->saleItem->id}");
+
             return;
         }
 
         // 🔢 Calcular cantidad exacta a restaurar
         $quantityToRestore = $simpleProduct->cost_per_unit * $returnItem->quantity_returned;
-        
+
         // Crear movimiento de inventario (entrada)
         InventoryMovement::create([
             'product_id' => $simpleProduct->product_id,
@@ -523,13 +526,13 @@ class ReturnController extends Controller
         $simpleProduct->product->increment('current_stock', $quantityToRestore);
 
         // Log detallado para auditoria
-        \Log::info("INVENTARIO RESTAURADO:", [
+        \Log::info('INVENTARIO RESTAURADO:', [
             'producto' => $simpleProduct->name,
             'cantidad_restaurada' => $quantityToRestore,
             'stock_anterior' => $simpleProduct->product->current_stock - $quantityToRestore,
             'stock_actual' => $simpleProduct->product->current_stock,
             'valor_recuperado' => $quantityToRestore * $simpleProduct->product->unit_cost,
-            'return_number' => $returnItem->saleReturn->return_number
+            'return_number' => $returnItem->saleReturn->return_number,
         ]);
     }
 
@@ -539,8 +542,8 @@ class ReturnController extends Controller
     private function adjustCashFlow(SaleReturn $saleReturn)
     {
         // 🔧 DEBUG: Verificar qué categoría estamos usando
-        \Log::info("Intentando crear cash flow con categoría: devoluciones");
-        
+        \Log::info('Intentando crear cash flow con categoría: devoluciones');
+
         try {
             CashFlow::create([
                 'user_id' => auth()->id(),
@@ -554,7 +557,7 @@ class ReturnController extends Controller
 
             \Log::info("Flujo de caja ajustado exitosamente: -{$saleReturn->total_returned}");
         } catch (\Exception $e) {
-            \Log::error("❌ ERROR en cash flow: " . $e->getMessage());
+            \Log::error('❌ ERROR en cash flow: '.$e->getMessage());
             throw $e;
         }
     }
@@ -569,6 +572,7 @@ class ReturnController extends Controller
         } elseif ($saleItem->product_type === 'simple' && $saleItem->simpleProduct) {
             return $saleItem->simpleProduct->name;
         }
+
         return 'Producto desconocido';
     }
 
@@ -584,30 +588,30 @@ class ReturnController extends Controller
 
         // Métricas básicas
         $totalReturns = SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                 ->completed()
-                                 ->sum('total_returned');
-        
+            ->completed()
+            ->sum('total_returned');
+
         $returnCount = SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                ->completed()
-                                ->count();
+            ->completed()
+            ->count();
 
         // Métricas de pérdidas operativas (productos preparados)
         $operationalLosses = InventoryMovement::whereBetween('movement_date', [$startDate, $endDate])
-                                             ->where('reason', 'perdida_operativa')
-                                             ->sum('total_cost');
+            ->where('reason', 'perdida_operativa')
+            ->sum('total_cost');
 
         $operationalLossCount = InventoryMovement::whereBetween('movement_date', [$startDate, $endDate])
-                                                ->where('reason', 'perdida_operativa')
-                                                ->sum('quantity');
+            ->where('reason', 'perdida_operativa')
+            ->sum('quantity');
 
         // Métricas de productos restaurados (productos simples)
         $restoredValue = InventoryMovement::whereBetween('movement_date', [$startDate, $endDate])
-                                         ->where('reason', 'devolucion_producto_simple')
-                                         ->sum('total_cost');
+            ->where('reason', 'devolucion_producto_simple')
+            ->sum('total_cost');
 
         $restoredCount = InventoryMovement::whereBetween('movement_date', [$startDate, $endDate])
-                                         ->where('reason', 'devolucion_producto_simple')
-                                         ->sum('quantity');
+            ->where('reason', 'devolucion_producto_simple')
+            ->sum('quantity');
 
         $metrics = [
             // Métricas básicas
@@ -615,27 +619,27 @@ class ReturnController extends Controller
             'return_count' => $returnCount,
             'pending_returns' => SaleReturn::where('status', 'pending')->count(),
             'return_rate' => $this->calculateReturnRate($startDate, $endDate),
-            
+
             // NUEVAS: Métricas de pérdidas operativas
             'operational_losses' => $operationalLosses,
             'operational_loss_count' => $operationalLossCount,
             'operational_loss_percentage' => $totalReturns > 0 ? round(($operationalLosses / $totalReturns) * 100, 2) : 0,
-            
+
             // NUEVAS: Métricas de productos restaurados
             'restored_value' => $restoredValue,
             'restored_count' => $restoredCount,
             'restored_percentage' => $totalReturns > 0 ? round(($restoredValue / $totalReturns) * 100, 2) : 0,
-            
+
             // Razones más comunes
             'top_reasons' => SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                     ->completed()
-                                     ->select('reason', DB::raw('COUNT(*) as count'))
-                                     ->groupBy('reason')
-                                     ->orderBy('count', 'desc')
-                                     ->get(),
+                ->completed()
+                ->select('reason', DB::raw('COUNT(*) as count'))
+                ->groupBy('reason')
+                ->orderBy('count', 'desc')
+                ->get(),
 
             // NUEVO: Desglose por tipo de producto
-            'breakdown_by_type' => $this->getReturnBreakdownByType($startDate, $endDate)
+            'breakdown_by_type' => $this->getReturnBreakdownByType($startDate, $endDate),
         ];
 
         return response()->json($metrics);
@@ -647,9 +651,9 @@ class ReturnController extends Controller
     private function getReturnBreakdownByType($startDate, $endDate): array
     {
         // Obtener devoluciones del período
-        $returnItems = SaleReturnItem::whereHas('saleReturn', function($query) use ($startDate, $endDate) {
+        $returnItems = SaleReturnItem::whereHas('saleReturn', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('return_date', [$startDate, $endDate])
-                  ->where('status', 'completed');
+                ->where('status', 'completed');
         })->with(['saleItem.menuItem', 'saleItem.simpleProduct'])->get();
 
         $menuReturns = 0;
@@ -672,14 +676,14 @@ class ReturnController extends Controller
                 'count' => $menuReturns,
                 'value' => $menuValue,
                 'type' => 'Productos Preparados (Pérdida Total)',
-                'icon' => '🍔'
+                'icon' => '🍔',
             ],
             'simple_products' => [
                 'count' => $simpleReturns,
                 'value' => $simpleValue,
                 'type' => 'Productos Simples (Recuperables)',
-                'icon' => '🥤'
-            ]
+                'icon' => '🥤',
+            ],
         ];
     }
 
@@ -695,7 +699,7 @@ class ReturnController extends Controller
 
         // Pérdidas por producto preparado
         $lossesByProduct = DB::table('inventory_movements')
-            ->join('sale_return_items', function($join) {
+            ->join('sale_return_items', function ($join) {
                 $join->on('inventory_movements.notes', 'like', DB::raw("CONCAT('%Return #', (SELECT return_number FROM sale_returns WHERE id = sale_return_items.sale_return_id), '%')"));
             })
             ->join('sale_items', 'sale_return_items.sale_item_id', '=', 'sale_items.id')
@@ -718,14 +722,14 @@ class ReturnController extends Controller
             'most_returned_product' => $lossesByProduct->first()?->name ?? 'N/A',
             'period' => [
                 'start' => $startDate,
-                'end' => $endDate
-            ]
+                'end' => $endDate,
+            ],
         ];
 
         return response()->json([
             'summary' => $summary,
             'losses_by_product' => $lossesByProduct,
-            'period_days' => now()->parse($startDate)->diffInDays($endDate) + 1
+            'period_days' => now()->parse($startDate)->diffInDays($endDate) + 1,
         ]);
     }
 
@@ -735,12 +739,12 @@ class ReturnController extends Controller
     private function calculateReturnRate($startDate, $endDate): float
     {
         $totalSales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                         ->where('status', 'completada')
-                         ->sum('total');
+            ->where('status', 'completada')
+            ->sum('total');
 
         $totalReturns = SaleReturn::whereBetween('return_date', [$startDate, $endDate])
-                                 ->completed()
-                                 ->sum('total_returned');
+            ->completed()
+            ->sum('total_returned');
 
         return $totalSales > 0 ? round(($totalReturns / $totalSales) * 100, 2) : 0;
     }
@@ -755,7 +759,7 @@ class ReturnController extends Controller
             'wrong_order' => 'Orden incorrecta',
             'customer_request' => 'Solicitud del cliente',
             'error' => 'Error del sistema',
-            'other' => 'Otra razón'
+            'other' => 'Otra razón',
         ];
 
         return $reasons[$reason] ?? 'Razón desconocida';

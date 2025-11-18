@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class SimpleProduct extends Model
 {
@@ -12,17 +12,17 @@ class SimpleProduct extends Model
     protected $fillable = [
         'product_id',
         'name',
-        'description', 
+        'description',
         'sale_price',
         'cost_per_unit',
         'is_available',
-        'category'
+        'category',
     ];
 
     protected $casts = [
         'sale_price' => 'decimal:2',
         'cost_per_unit' => 'decimal:3',
-        'is_available' => 'boolean'
+        'is_available' => 'boolean',
     ];
 
     // Relación con producto del inventario
@@ -38,19 +38,19 @@ class SimpleProduct extends Model
         if (!$this->relationLoaded('product') || !$this->product) {
             return 0;
         }
-        
+
         // Si no hay stock en el producto base, devolver 0
         $currentStock = floatval($this->product->current_stock);
         if ($currentStock <= 0) {
             return 0;
         }
-        
+
         // Si cost_per_unit es 0 o negativo, devolver 0
         $costPerUnit = floatval($this->cost_per_unit);
         if ($costPerUnit <= 0) {
             return 0;
         }
-        
+
         // Calcular cuántas unidades se pueden vender
         return floor($currentStock / $costPerUnit);
     }

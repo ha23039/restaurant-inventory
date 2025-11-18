@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Sale;
-use App\Models\SaleItem;
-use App\Models\MenuItem;
-use App\Models\SimpleProduct;
 use App\Models\CashFlow;
 use App\Models\InventoryMovement;
+use App\Models\MenuItem;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\SimpleProduct;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -92,14 +92,14 @@ class SaleService
             $productType = $item['product_type'] ?? 'menu';
 
             if ($productType === 'menu') {
-                $menuItem = MenuItem::with(['recipes' => function($query) {
-                    $query->with(['product' => function($productQuery) {
+                $menuItem = MenuItem::with(['recipes' => function ($query) {
+                    $query->with(['product' => function ($productQuery) {
                         $productQuery->lockForUpdate();
                     }]);
                 }])->lockForUpdate()->find($item['id']);
 
                 if (!$menuItem) {
-                    throw new \Exception("Platillo no encontrado");
+                    throw new \Exception('Platillo no encontrado');
                 }
 
                 $availableQty = $this->calculateMenuItemAvailability($menuItem);
@@ -108,12 +108,12 @@ class SaleService
                     throw new \Exception("No hay suficiente stock para {$menuItem->name}. Disponible: {$availableQty}");
                 }
             } else {
-                $simpleProduct = SimpleProduct::with(['product' => function($query) {
+                $simpleProduct = SimpleProduct::with(['product' => function ($query) {
                     $query->lockForUpdate();
                 }])->lockForUpdate()->find($item['id']);
 
                 if (!$simpleProduct) {
-                    throw new \Exception("Producto no encontrado");
+                    throw new \Exception('Producto no encontrado');
                 }
 
                 if ($simpleProduct->available_quantity < $item['quantity']) {
@@ -285,6 +285,7 @@ class SaleService
     {
         $date = now()->format('Ymd');
         $count = Sale::whereDate('created_at', today())->count() + 1;
-        return $date . sprintf('%04d', $count);
+
+        return $date.sprintf('%04d', $count);
     }
 }

@@ -18,7 +18,7 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 1.50,
                 'cost_per_unit' => 1,
                 'category' => 'bebida',
-                'is_available' => true
+                'is_available' => true,
             ],
             [
                 'product_id' => 7, // Pepsi
@@ -27,7 +27,7 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 1.40,
                 'cost_per_unit' => 1,
                 'category' => 'bebida',
-                'is_available' => true
+                'is_available' => true,
             ],
             [
                 'product_id' => 8, // Agua
@@ -36,9 +36,9 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 0.75,
                 'cost_per_unit' => 1,
                 'category' => 'bebida',
-                'is_available' => true
+                'is_available' => true,
             ],
-            
+
             // Extras/Acompañantes
             [
                 'product_id' => 12, // Queso Amarillo
@@ -47,7 +47,7 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 0.50,
                 'cost_per_unit' => 1,
                 'category' => 'extra',
-                'is_available' => true
+                'is_available' => true,
             ],
             [
                 'product_id' => 1, // Pan de Hamburguesa
@@ -56,9 +56,9 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 1.00,
                 'cost_per_unit' => 1,
                 'category' => 'extra',
-                'is_available' => true
+                'is_available' => true,
             ],
-            
+
             // Condimentos en porciones
             [
                 'product_id' => 9, // Ketchup
@@ -67,7 +67,7 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 0.25,
                 'cost_per_unit' => 20, // 20 gramos por porción
                 'category' => 'condimento',
-                'is_available' => true
+                'is_available' => true,
             ],
             [
                 'product_id' => 10, // Mayonesa
@@ -76,7 +76,7 @@ class SimpleProductSeeder extends Seeder
                 'sale_price' => 0.25,
                 'cost_per_unit' => 20, // 20 gramos por porción
                 'category' => 'condimento',
-                'is_available' => true
+                'is_available' => true,
             ],
         ];
 
@@ -84,6 +84,6 @@ class SimpleProductSeeder extends Seeder
             SimpleProduct::create($product);
         }
 
-        echo "✅ Se crearon " . count($simpleProducts) . " productos simples\n";
+        echo '✅ Se crearon '.count($simpleProducts)." productos simples\n";
     }
 }

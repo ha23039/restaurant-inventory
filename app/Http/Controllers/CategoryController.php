@@ -13,7 +13,7 @@ class CategoryController extends Controller
         $categories = Category::withCount('products')->get();
 
         return Inertia::render('Inventory/Categories', [
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
 
@@ -22,7 +22,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories',
             'description' => 'nullable|string',
-            'color' => 'required|string|max:7'
+            'color' => 'required|string|max:7',
         ]);
 
         Category::create($validated);
@@ -33,9 +33,9 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'name' => 'required|string|max:255|unique:categories,name,'.$category->id,
             'description' => 'nullable|string',
-            'color' => 'required|string|max:7'
+            'color' => 'required|string|max:7',
         ]);
 
         $category->update($validated);

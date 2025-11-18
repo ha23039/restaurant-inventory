@@ -31,7 +31,7 @@ class UpdateProductRequest extends FormRequest
             'max_stock' => 'nullable|numeric|min:0',
             'unit_cost' => 'required|numeric|min:0',
             'expiry_date' => 'nullable|date',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ];
     }
 }

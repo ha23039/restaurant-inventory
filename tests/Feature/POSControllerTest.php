@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\SimpleProduct;
-use App\Models\Category;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class POSControllerTest extends TestCase
 {
@@ -63,7 +63,7 @@ class POSControllerTest extends TestCase
                     'product_type' => 'simple',
                     'quantity' => 5,
                     'unit_price' => 50,
-                ]
+                ],
             ],
             'payment_method' => 'efectivo',
             'discount' => 0,
@@ -112,7 +112,7 @@ class POSControllerTest extends TestCase
                     'product_type' => 'simple',
                     'quantity' => 10, // Intentar vender 10 cuando solo hay 2
                     'unit_price' => 50,
-                ]
+                ],
             ],
             'payment_method' => 'efectivo',
         ];
@@ -147,7 +147,7 @@ class POSControllerTest extends TestCase
         // Intento de venta sin método de pago
         $response = $this->actingAs($cajero)->post(route('pos.store'), [
             'items' => [
-                ['id' => 1, 'quantity' => 1, 'unit_price' => 50]
+                ['id' => 1, 'quantity' => 1, 'unit_price' => 50],
             ],
         ]);
 

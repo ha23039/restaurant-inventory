@@ -2,18 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
-use App\Models\SaleItem;
+use App\Http\Requests\ProcessSaleRequest;
 use App\Models\MenuItem;
 use App\Models\SimpleProduct;
-use App\Models\CashFlow;
-use App\Models\InventoryMovement;
-use App\Models\Product;
-use App\Http\Requests\ProcessSaleRequest;
 use App\Services\SaleService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 
 class POSController extends Controller
 {
@@ -23,8 +16,8 @@ class POSController extends Controller
 
         // Platillos del menú (combos)
         $menuItems = MenuItem::where('is_available', true)
-                           ->with(['recipes.product'])
-                           ->get();
+            ->with(['recipes.product'])
+            ->get();
 
         $menuItems->each(function ($item) {
             $item->available_quantity = $this->calculateAvailableQuantity($item);
@@ -34,21 +27,21 @@ class POSController extends Controller
 
         // Productos simples (bebidas individuales, extras) - FORZAR CARGA DE RELACIONES
         $simpleProducts = SimpleProduct::where('is_available', true)
-                                     ->with('product') // Cargar relación
-                                     ->get();
+            ->with('product') // Cargar relación
+            ->get();
 
         $simpleProducts->each(function ($item) {
             $item->product_type = 'simple'; // Identificador
-            
+
             // Agregar propiedades para compatibilidad con el frontend
             $item->price = $item->sale_price;
-            
+
             // FORZAR recalcular disponibilidad
             if ($item->product) {
                 $currentStock = floatval($item->product->current_stock);
                 $costPerUnit = floatval($item->cost_per_unit);
                 $available = $costPerUnit > 0 ? floor($currentStock / $costPerUnit) : 0;
-                
+
                 $item->available_quantity = $available;
                 $item->is_in_stock = $available > 0;
             } else {
@@ -57,13 +50,14 @@ class POSController extends Controller
             }
         });
 
-        \Log::info('POSController@index - Productos simples:',
-            $simpleProducts->map(function($item) {
+        \Log::info(
+            'POSController@index - Productos simples:',
+            $simpleProducts->map(function ($item) {
                 return [
                     'name' => $item->name,
                     'stock_base' => $item->product?->current_stock,
                     'available_quantity' => $item->available_quantity,
-                    'is_in_stock' => $item->is_in_stock
+                    'is_in_stock' => $item->is_in_stock,
                 ];
             })->toArray()
         );
@@ -80,7 +74,7 @@ class POSController extends Controller
             $sale = $saleService->processSale($request->validated(), auth()->id());
 
             return redirect()->route('sales.show', $sale)
-                           ->with('success', 'Venta procesada exitosamente');
+                ->with('success', 'Venta procesada exitosamente');
 
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
