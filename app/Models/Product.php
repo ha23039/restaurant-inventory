@@ -20,7 +20,7 @@ class Product extends Model
         'max_stock',
         'unit_cost',
         'expiry_date',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -29,7 +29,7 @@ class Product extends Model
         'current_stock' => 'decimal:3',
         'min_stock' => 'decimal:3',
         'max_stock' => 'decimal:3',
-        'unit_cost' => 'decimal:2'
+        'unit_cost' => 'decimal:2',
     ];
 
     // RELACIONES

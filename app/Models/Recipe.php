@@ -13,11 +13,11 @@ class Recipe extends Model
         'menu_item_id',
         'product_id',
         'quantity_needed',
-        'unit'
+        'unit',
     ];
 
     protected $casts = [
-        'quantity_needed' => 'decimal:3'
+        'quantity_needed' => 'decimal:3',
     ];
 
     public function menuItem()

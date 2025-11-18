@@ -30,13 +30,13 @@ class InventoryMovementController extends Controller
         }
 
         $movements = $query->orderBy('movement_date', 'desc')
-                          ->orderBy('created_at', 'desc')
-                          ->paginate(20)
-                          ->withQueryString();
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('Inventory/Movements', [
             'movements' => $movements,
-            'filters' => $request->only(['product_id', 'movement_type', 'date_from', 'date_to'])
+            'filters' => $request->only(['product_id', 'movement_type', 'date_from', 'date_to']),
         ]);
     }
 }

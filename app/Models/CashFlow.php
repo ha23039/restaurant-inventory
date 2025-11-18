@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CashFlow extends Model
 {
@@ -20,12 +20,12 @@ class CashFlow extends Model
         'amount',
         'description',
         'notes',
-        'flow_date'
+        'flow_date',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'flow_date' => 'date'
+        'flow_date' => 'date',
     ];
 
     // Relaciones

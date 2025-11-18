@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\Product;
-use App\Models\SaleReturn;
+use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -19,14 +17,14 @@ class DashboardController extends Controller
         $metrics = [
             'low_stock_products' => Product::whereRaw('current_stock <= min_stock')->count(),
             'today_sales' => Sale::whereDate('created_at', $today)
-                                ->where('status', 'completada')
-                                ->sum('total'),
+                ->where('status', 'completada')
+                ->sum('total'),
             'today_transactions' => Sale::whereDate('created_at', $today)
-                                       ->where('status', 'completada')
-                                       ->count(),
+                ->where('status', 'completada')
+                ->count(),
             'today_cash_flow' => Sale::whereDate('created_at', $today)
-                                    ->where('status', 'completada')
-                                    ->sum('total'),
+                ->where('status', 'completada')
+                ->sum('total'),
         ];
 
         // Datos para gráfica de ventas semanales (últimos 7 días)
@@ -37,20 +35,20 @@ class DashboardController extends Controller
             $date = today()->subDays($i);
             $weekLabels[] = $date->format('D');
             $weekSales[] = Sale::whereDate('created_at', $date)
-                              ->where('status', 'completada')
-                              ->sum('total');
+                ->where('status', 'completada')
+                ->sum('total');
         }
 
         // Productos más vendidos (top 5)
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->leftJoin('menu_items', function($join) {
+            ->leftJoin('menu_items', function ($join) {
                 $join->on('sale_items.menu_item_id', '=', 'menu_items.id')
-                     ->where('sale_items.product_type', '=', 'menu');
+                    ->where('sale_items.product_type', '=', 'menu');
             })
-            ->leftJoin('simple_products', function($join) {
+            ->leftJoin('simple_products', function ($join) {
                 $join->on('sale_items.simple_product_id', '=', 'simple_products.id')
-                     ->where('sale_items.product_type', '=', 'simple');
+                    ->where('sale_items.product_type', '=', 'simple');
             })
             ->where('sales.status', 'completada')
             ->where('sales.created_at', '>=', today()->subDays(7))
@@ -62,10 +60,10 @@ class DashboardController extends Controller
             ->orderBy('quantity', 'desc')
             ->limit(5)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 return [
                     'name' => $item->name,
-                    'quantity' => (int) $item->quantity
+                    'quantity' => (int) $item->quantity,
                 ];
             });
 

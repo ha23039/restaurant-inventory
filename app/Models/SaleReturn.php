@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SaleReturn extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'sale_id',
         'processed_by_user_id',
@@ -25,7 +26,7 @@ class SaleReturn extends Model
         'inventory_restored',
         'cash_flow_adjusted',
         'return_date',
-        'processed_at'
+        'processed_at',
     ];
 
     protected $casts = [
@@ -35,7 +36,7 @@ class SaleReturn extends Model
         'inventory_restored' => 'boolean',
         'cash_flow_adjusted' => 'boolean',
         'return_date' => 'date',
-        'processed_at' => 'datetime'
+        'processed_at' => 'datetime',
     ];
 
     /**
@@ -69,7 +70,8 @@ class SaleReturn extends Model
     {
         $date = now()->format('Ymd');
         $count = self::whereDate('created_at', today())->count() + 1;
-        return 'RET' . $date . sprintf('%04d', $count);
+
+        return 'RET'.$date.sprintf('%04d', $count);
     }
 
     /**
@@ -77,7 +79,7 @@ class SaleReturn extends Model
      */
     public function canBeProcessed(): bool
     {
-        return $this->status === 'pending' && 
+        return $this->status === 'pending' &&
                $this->sale->status === 'completada' &&
                $this->returnItems()->count() > 0;
     }
@@ -89,7 +91,7 @@ class SaleReturn extends Model
     {
         $this->update([
             'status' => 'completed',
-            'processed_at' => now()
+            'processed_at' => now(),
         ]);
     }
 

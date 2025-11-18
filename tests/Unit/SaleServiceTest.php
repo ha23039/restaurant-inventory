@@ -2,16 +2,16 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Services\SaleService;
-use App\Models\Sale;
+use App\Models\Category;
 use App\Models\MenuItem;
-use App\Models\SimpleProduct;
 use App\Models\Product;
 use App\Models\Recipe;
+use App\Models\Sale;
+use App\Models\SimpleProduct;
 use App\Models\User;
-use App\Models\Category;
+use App\Services\SaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SaleServiceTest extends TestCase
 {
@@ -22,7 +22,7 @@ class SaleServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->saleService = new SaleService();
+        $this->saleService = new SaleService;
     }
 
     /**
@@ -52,7 +52,7 @@ class SaleServiceTest extends TestCase
                     'product_type' => 'simple',
                     'quantity' => 5,
                     'unit_price' => 25,
-                ]
+                ],
             ],
             'payment_method' => 'efectivo',
             'discount' => 0,
@@ -102,7 +102,7 @@ class SaleServiceTest extends TestCase
                     'product_type' => 'simple',
                     'quantity' => 5, // Intentar vender 5 cuando solo hay 2
                     'unit_price' => 25,
-                ]
+                ],
             ],
             'payment_method' => 'efectivo',
             'discount' => 0,
@@ -137,7 +137,7 @@ class SaleServiceTest extends TestCase
                     'product_type' => 'simple',
                     'quantity' => 2,
                     'unit_price' => 100,
-                ]
+                ],
             ],
             'payment_method' => 'tarjeta',
             'discount' => 20,  // $20 descuento
@@ -177,7 +177,7 @@ class SaleServiceTest extends TestCase
                     'product_type' => 'simple',
                     'quantity' => 1,
                     'unit_price' => 50,
-                ]
+                ],
             ],
             'payment_method' => 'efectivo',
         ];
@@ -243,7 +243,7 @@ class SaleServiceTest extends TestCase
                     'product_type' => 'menu',
                     'quantity' => 3, // 3 órdenes
                     'unit_price' => 80,
-                ]
+                ],
             ],
             'payment_method' => 'efectivo',
         ];

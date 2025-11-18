@@ -2,49 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Category;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Http\Resources\ProductResource;
+use App\Models\Category;
+use App\Models\Product;
+use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private ProductRepositoryInterface $productRepository
+    ) {}
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', Product::class);
 
-        $query = Product::with('category');
+        $products = $this->productRepository->getAllWithCategory();
 
-        // Filtros
+        // Aplicar filtros usando el repositorio
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $products = $this->productRepository->search($request->search);
         }
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $products = $this->productRepository->getByCategory($request->category_id);
         }
 
         if ($request->boolean('low_stock')) {
-            $query->whereRaw('current_stock <= min_stock');
+            $products = $this->productRepository->getLowStockProducts();
         }
 
         if ($request->boolean('expired')) {
-            $query->where('expiry_date', '<', now());
+            $products = $this->productRepository->getExpiredProducts();
         }
 
         if ($request->boolean('expiring_soon')) {
-            $query->whereBetween('expiry_date', [now(), now()->addDays(7)]);
+            $products = $this->productRepository->getExpiringSoonProducts();
         }
 
-        $products = $query->orderBy('name')->paginate(20)->withQueryString();
         $categories = Category::all();
 
         return Inertia::render('Inventory/Products', [
-            'products' => $products,
+            'products' => ProductResource::collection($products),
             'categories' => $categories,
-            'filters' => $request->only(['search', 'category_id', 'low_stock', 'expired', 'expiring_soon'])
+            'filters' => $request->only(['search', 'category_id', 'low_stock', 'expired', 'expiring_soon']),
         ]);
     }
 
@@ -53,16 +58,16 @@ class ProductController extends Controller
         $this->authorize('create', Product::class);
 
         $categories = Category::all();
-        
+
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,
-            'product' => null
+            'product' => null,
         ]);
     }
 
     public function store(StoreProductRequest $request)
     {
-        Product::create($request->validated());
+        $this->productRepository->create($request->validated());
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto creado exitosamente.');
@@ -73,9 +78,9 @@ class ProductController extends Controller
         $this->authorize('view', $product);
 
         $product->load(['category', 'inventoryMovements.user', 'recipes.menuItem']);
-        
+
         return Inertia::render('Inventory/ProductDetail', [
-            'product' => $product
+            'product' => new ProductResource($product),
         ]);
     }
 
@@ -84,16 +89,16 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $categories = Category::all();
-        
+
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,
-            'product' => $product
+            'product' => new ProductResource($product),
         ]);
     }
 
     public function update(UpdateProductRequest $request, Product $product)
     {
-        $product->update($request->validated());
+        $this->productRepository->update($product->id, $request->validated());
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto actualizado exitosamente.');
@@ -108,25 +113,20 @@ class ProductController extends Controller
             return back()->with('error', 'No se puede eliminar: el producto tiene movimientos o está en recetas.');
         }
 
-        $product->delete();
+        $this->productRepository->delete($product->id);
 
         return redirect()->route('inventory.products.index')
             ->with('success', 'Producto eliminado exitosamente.');
     }
 
-    // Método para alertas
     public function alerts()
     {
         $this->authorize('viewAny', Product::class);
 
-        $lowStock = Product::whereRaw('current_stock <= min_stock')->with('category')->get();
-        $expired = Product::where('expiry_date', '<', now())->with('category')->get();
-        $expiringSoon = Product::whereBetween('expiry_date', [now(), now()->addDays(7)])->with('category')->get();
-
         return response()->json([
-            'low_stock' => $lowStock,
-            'expired' => $expired,
-            'expiring_soon' => $expiringSoon
+            'low_stock' => ProductResource::collection($this->productRepository->getLowStockProducts()),
+            'expired' => ProductResource::collection($this->productRepository->getExpiredProducts()),
+            'expiring_soon' => ProductResource::collection($this->productRepository->getExpiringSoonProducts()),
         ]);
     }
 }

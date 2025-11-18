@@ -14,12 +14,13 @@ class ReturnSeeder extends Seeder
     {
         // Obtener ventas completadas para crear devoluciones de prueba
         $sales = Sale::where('status', 'completada')
-                    ->with('saleItems')
-                    ->take(3) // Solo 3 ventas para no saturar
-                    ->get();
+            ->with('saleItems')
+            ->take(3) // Solo 3 ventas para no saturar
+            ->get();
 
         if ($sales->isEmpty()) {
-            $this->command->info("⚠️  No hay ventas completadas para crear devoluciones de prueba");
+            $this->command->info('⚠️  No hay ventas completadas para crear devoluciones de prueba');
+
             return;
         }
 
@@ -29,7 +30,7 @@ class ReturnSeeder extends Seeder
         foreach ($sales as $sale) {
             // Crear diferentes tipos de devoluciones
             $isPartialReturn = $returnNumber % 2 === 1; // Alternar entre parcial y total
-            
+
             if ($isPartialReturn) {
                 // Devolución parcial: solo algunos items
                 $itemsToReturn = $sale->saleItems->take(1); // Solo el primer item
@@ -55,7 +56,7 @@ class ReturnSeeder extends Seeder
                     'original_quantity' => $saleItem->quantity,
                     'unit_price' => $saleItem->unit_price,
                     'total_price' => $itemTotal,
-                    'inventory_restored' => true
+                    'inventory_restored' => true,
                 ];
             }
 
@@ -63,7 +64,7 @@ class ReturnSeeder extends Seeder
             $return = SaleReturn::create([
                 'sale_id' => $sale->id,
                 'processed_by_user_id' => $user->id,
-                'return_number' => 'RET' . now()->format('Ymd') . sprintf('%04d', $returnNumber++),
+                'return_number' => 'RET'.now()->format('Ymd').sprintf('%04d', $returnNumber++),
                 'return_type' => $isPartialReturn ? 'partial' : 'total',
                 'reason' => $this->getRandomReason(),
                 'notes' => $this->getRandomNotes(),
@@ -75,7 +76,7 @@ class ReturnSeeder extends Seeder
                 'inventory_restored' => true,
                 'cash_flow_adjusted' => true,
                 'return_date' => now()->subDays(rand(0, 7))->toDateString(),
-                'processed_at' => now()->subDays(rand(0, 7))
+                'processed_at' => now()->subDays(rand(0, 7)),
             ]);
 
             // Crear los items de devolución
@@ -94,12 +95,14 @@ class ReturnSeeder extends Seeder
     private function getRandomReason(): string
     {
         $reasons = ['defective', 'wrong_order', 'customer_request', 'error', 'other'];
+
         return $reasons[array_rand($reasons)];
     }
 
     private function getRandomRefundMethod(): string
     {
         $methods = ['efectivo', 'tarjeta', 'transferencia', 'credito'];
+
         return $methods[array_rand($methods)];
     }
 
@@ -115,9 +118,9 @@ class ReturnSeeder extends Seeder
             'Error del sistema al procesar la orden',
             'Cliente alérgico a uno de los ingredientes',
             'Temperatura del producto no era la adecuada',
-            'Devolución autorizada por el gerente'
+            'Devolución autorizada por el gerente',
         ];
-        
+
         return $notes[array_rand($notes)];
     }
 }

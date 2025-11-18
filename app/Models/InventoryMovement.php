@@ -19,14 +19,14 @@ class InventoryMovement extends Model
         'total_cost',
         'reason',
         'notes',
-        'movement_date'
+        'movement_date',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:3',
         'unit_cost' => 'decimal:2',
         'total_cost' => 'decimal:2',
-        'movement_date' => 'date'
+        'movement_date' => 'date',
     ];
 
     public function product()

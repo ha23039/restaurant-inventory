@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class SaleItem extends Model
 {
@@ -16,7 +16,7 @@ class SaleItem extends Model
         'quantity',
         'unit_price',
         'total_price',
-        'product_type'
+        'product_type',
     ];
 
     protected $casts = [

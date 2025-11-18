@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -47,11 +47,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/users', function () {
         return Inertia::render('Admin/Users');
     })->name('users');
-    
+
     Route::get('/reports', function () {
         return Inertia::render('Admin/Reports');
     })->name('reports');
-    
+
     Route::get('/settings', function () {
         return Inertia::render('Admin/Settings');
     })->name('settings');
@@ -66,7 +66,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'role:admin,almacenero'])->prefix('inventory')->name('inventory.')->group(function () {
     // Dashboard de inventario
     Route::get('/', [App\Http\Controllers\InventoryController::class, 'index'])->name('index');
-    
+
     // Products
     Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
     Route::get('/products/create', [App\Http\Controllers\ProductController::class, 'create'])->name('products.create');
@@ -75,16 +75,16 @@ Route::middleware(['auth', 'role:admin,almacenero'])->prefix('inventory')->name(
     Route::get('/products/{product}/edit', [App\Http\Controllers\ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{product}', [App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
-    
+
     // Categories
     Route::get('/categories', [App\Http\Controllers\CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/categories/{category}', [App\Http\Controllers\CategoryController::class, 'destroy'])->name('categories.destroy');
-    
+
     // Movements
     Route::get('/movements', [App\Http\Controllers\InventoryMovementController::class, 'index'])->name('movements.index');
-    
+
     // API para alertas
     Route::get('/alerts', [App\Http\Controllers\ProductController::class, 'alerts'])->name('alerts');
 });
@@ -98,11 +98,11 @@ Route::middleware(['auth', 'role:admin,almacenero'])->prefix('inventory')->name(
 Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.')->group(function () {
     // Dashboard de ventas
     Route::get('/', [App\Http\Controllers\SaleController::class, 'index'])->name('index');
-    
+
     // POS (Punto de Venta)
     Route::get('/pos', [App\Http\Controllers\POSController::class, 'index'])->name('pos');
     Route::post('/pos', [App\Http\Controllers\POSController::class, 'store'])->name('pos.store');
-    
+
     // Ver venta específica
     Route::get('/{sale}', [App\Http\Controllers\SaleController::class, 'show'])->name('show');
 });
@@ -117,11 +117,11 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
     Route::get('/', function () {
         return Inertia::render('Menu/Index');
     })->name('index');
-    
+
     Route::get('/items', function () {
         return Inertia::render('Menu/Items');
     })->name('items');
-    
+
     Route::get('/recipes', function () {
         return Inertia::render('Menu/Recipes');
     })->name('recipes');
@@ -137,11 +137,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('cashflow')->name('cashflow.')
     Route::get('/', function () {
         return Inertia::render('CashFlow/Index');
     })->name('index');
-    
+
     Route::get('/income', function () {
         return Inertia::render('CashFlow/Income');
     })->name('income');
-    
+
     Route::get('/expenses', function () {
         return Inertia::render('CashFlow/Expenses');
     })->name('expenses');
@@ -156,12 +156,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('cashflow')->name('cashflow.')
 Route::middleware(['auth', 'role:admin,cajero'])->prefix('returns')->name('returns.')->group(function () {
     // Lista de devoluciones
     Route::get('/', [App\Http\Controllers\ReturnController::class, 'index'])->name('index');
-    
+
     // Crear nueva devolución
     Route::get('/create', [App\Http\Controllers\ReturnController::class, 'create'])->name('create');
     Route::post('/search-sale', [App\Http\Controllers\ReturnController::class, 'searchSale'])->name('search-sale');
     Route::post('/', [App\Http\Controllers\ReturnController::class, 'store'])->name('store');
-    
+
     // Ver devolución específica
     Route::get('/{return}', [App\Http\Controllers\ReturnController::class, 'show'])->name('show');
     //  NUEVAS RUTAS PARA REPORTES
@@ -177,34 +177,34 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('returns')->name('retur
 */
 
 Route::middleware(['auth', 'role:admin,cajero'])->prefix('tickets')->name('tickets.')->group(function () {
-    
-  // Rutas existentes de impresión
+
+    // Rutas existentes de impresión
     Route::post('/kitchen/{sale}', [App\Http\Controllers\TicketController::class, 'printKitchenOrder'])
-         ->name('kitchen');
-    
+        ->name('kitchen');
+
     Route::post('/customer/{sale}', [App\Http\Controllers\TicketController::class, 'printCustomerReceipt'])
-         ->name('customer');
-    
+        ->name('customer');
+
     Route::post('/return/{return}', [App\Http\Controllers\TicketController::class, 'printReturnReceipt'])
-         ->name('return');
-    
+        ->name('return');
+
     // 🆕 NUEVAS RUTAS DE VISTA PREVIA (AGREGAR ESTAS)
     Route::get('/preview/kitchen/{sale}', [App\Http\Controllers\TicketController::class, 'previewKitchenOrder'])
-         ->name('preview.kitchen');
-    
+        ->name('preview.kitchen');
+
     Route::get('/preview/customer/{sale}', [App\Http\Controllers\TicketController::class, 'previewCustomerReceipt'])
-         ->name('preview.customer');
-    
+        ->name('preview.customer');
+
     // Resto de rutas existentes
     Route::post('/autoprint/{sale}', [App\Http\Controllers\TicketController::class, 'autoprint'])
-         ->name('autoprint');
-    
+        ->name('autoprint');
+
     Route::post('/reprint/{sale}', [App\Http\Controllers\TicketController::class, 'reprint'])
-         ->name('reprint');
-    
+        ->name('reprint');
+
     Route::middleware('role:admin')->group(function () {
         Route::get('/stats', [App\Http\Controllers\TicketController::class, 'getPrintingStats'])
-             ->name('stats');
+            ->name('stats');
     });
 });
 
@@ -219,47 +219,47 @@ if (app()->environment(['local', 'development'])) {
     Route::middleware(['auth'])->prefix('dev')->name('dev.')->group(function () {
         // Test de impresoras
         Route::get('/test-printers', [App\Http\Controllers\TicketController::class, 'testPrinters'])
-             ->name('test.printers');
-        
+            ->name('test.printers');
+
         // Ver archivos de tickets generados (desarrollo)
         Route::get('/tickets', function () {
             $ticketPath = storage_path('app/tickets/');
             $files = [];
-            
+
             if (is_dir($ticketPath)) {
-                $files = array_map(function($file) use ($ticketPath) {
+                $files = array_map(function ($file) {
                     return [
                         'name' => basename($file),
                         'content' => file_get_contents($file),
                         'size' => filesize($file),
-                        'created' => date('Y-m-d H:i:s', filemtime($file))
+                        'created' => date('Y-m-d H:i:s', filemtime($file)),
                     ];
-                }, glob($ticketPath . '*.txt'));
+                }, glob($ticketPath.'*.txt'));
             }
-            
+
             return response()->json([
                 'files' => $files,
-                'total' => count($files)
+                'total' => count($files),
             ]);
         })->name('tickets.list');
-        
+
         // Limpiar archivos de desarrollo
         Route::delete('/tickets/clean', function () {
             $ticketPath = storage_path('app/tickets/');
             $deleted = 0;
-            
+
             if (is_dir($ticketPath)) {
-                foreach (glob($ticketPath . '*.txt') as $file) {
+                foreach (glob($ticketPath.'*.txt') as $file) {
                     if (unlink($file)) {
                         $deleted++;
                     }
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'deleted' => $deleted,
-                'message' => "Se eliminaron {$deleted} archivos de prueba"
+                'message' => "Se eliminaron {$deleted} archivos de prueba",
             ]);
         })->name('tickets.clean');
     });
