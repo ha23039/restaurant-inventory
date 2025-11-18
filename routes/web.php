@@ -165,6 +165,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('expenses')->name('expenses.')
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para DASHBOARD FINANCIERO (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('financial')->name('financial.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\FinancialDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/kpis', [App\Http\Controllers\FinancialDashboardController::class, 'getKpis'])->name('api.kpis');
+    Route::get('/api/trends', [App\Http\Controllers\FinancialDashboardController::class, 'getTrends'])->name('api.trends');
+});
+
+/*
+|--------------------------------------------------------------------------
 | 🔄 Rutas para DEVOLUCIONES (Admin + Cajero)
 |--------------------------------------------------------------------------
 */
