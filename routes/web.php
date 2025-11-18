@@ -149,6 +149,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('cashflow')->name('cashflow.')
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para GASTOS (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('expenses')->name('expenses.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ExpenseController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\ExpenseController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\ExpenseController::class, 'store'])->name('store');
+    Route::get('/{expense}', [App\Http\Controllers\ExpenseController::class, 'show'])->name('show');
+    Route::get('/{expense}/edit', [App\Http\Controllers\ExpenseController::class, 'edit'])->name('edit');
+    Route::put('/{expense}', [App\Http\Controllers\ExpenseController::class, 'update'])->name('update');
+    Route::delete('/{expense}', [App\Http\Controllers\ExpenseController::class, 'destroy'])->name('destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
 | 🔄 Rutas para DEVOLUCIONES (Admin + Cajero)
 |--------------------------------------------------------------------------
 */
