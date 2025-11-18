@@ -4,6 +4,7 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
+import { createPinia } from 'pinia';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
@@ -18,8 +19,11 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        const pinia = createPinia();
+
         return createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(pinia)
             .use(ZiggyVue)
             .use(Toast, {
                 position: "top-right",
