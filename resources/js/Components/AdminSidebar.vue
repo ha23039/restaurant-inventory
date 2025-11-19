@@ -90,6 +90,15 @@
                 >
                     Devoluciones
                 </NavItem>
+
+                <NavItem
+                    :href="route('cashregister.index')"
+                    :active="route().current('cashregister.*')"
+                    :collapsed="isCollapsed"
+                    icon="cash"
+                >
+                    Caja Registradora
+                </NavItem>
             </template>
 
             <!-- Inventario (Admin + Almacenero) -->

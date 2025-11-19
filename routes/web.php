@@ -130,9 +130,11 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.'
     // Dashboard de ventas
     Route::get('/', [App\Http\Controllers\SaleController::class, 'index'])->name('index');
 
-    // POS (Punto de Venta)
-    Route::get('/pos', [App\Http\Controllers\POSController::class, 'index'])->name('pos');
-    Route::post('/pos', [App\Http\Controllers\POSController::class, 'store'])->name('pos.store');
+    // POS (Punto de Venta) - Requiere caja abierta
+    Route::middleware('validate.cashregister')->group(function () {
+        Route::get('/pos', [App\Http\Controllers\POSController::class, 'index'])->name('pos');
+        Route::post('/pos', [App\Http\Controllers\POSController::class, 'store'])->name('pos.store');
+    });
 
     // Ver venta específica
     Route::get('/{sale}', [App\Http\Controllers\SaleController::class, 'show'])->name('show');

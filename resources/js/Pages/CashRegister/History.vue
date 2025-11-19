@@ -1,0 +1,292 @@
+<template>
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                Historial de Sesiones de Caja
+            </h2>
+        </template>
+
+        <div class="py-12">
+            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <!-- Filtros -->
+                <div class="mb-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filtros</h3>
+                        <form @submit.prevent="applyFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                <select
+                                    v-model="localFilters.status"
+                                    class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todos</option>
+                                    <option value="open">Abiertas</option>
+                                    <option value="closed">Cerradas</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Desde</label>
+                                <input
+                                    v-model="localFilters.date_from"
+                                    type="date"
+                                    class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Hasta</label>
+                                <input
+                                    v-model="localFilters.date_to"
+                                    type="date"
+                                    class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div class="flex items-end">
+                                <button
+                                    type="submit"
+                                    class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    Filtrar
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Active Filters -->
+                        <div v-if="hasActiveFilters" class="mt-4 flex flex-wrap gap-2">
+                            <span class="text-sm text-gray-600">Filtros activos:</span>
+                            <span v-if="filters.status" class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                                Estado: {{ filters.status }}
+                                <button @click="removeFilter('status')" class="ml-1 text-blue-600 hover:text-blue-800">×</button>
+                            </span>
+                            <span v-if="filters.date_from" class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                                Desde: {{ filters.date_from }}
+                                <button @click="removeFilter('date_from')" class="ml-1 text-blue-600 hover:text-blue-800">×</button>
+                            </span>
+                            <span v-if="filters.date_to" class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                                Hasta: {{ filters.date_to }}
+                                <button @click="removeFilter('date_to')" class="ml-1 text-blue-600 hover:text-blue-800">×</button>
+                            </span>
+                            <button @click="clearFilters" class="px-2 py-1 text-xs font-semibold text-red-700 hover:text-red-900">
+                                Limpiar todo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Sesiones -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div v-if="sessions.data.length === 0" class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No hay sesiones</h3>
+                            <p class="mt-1 text-sm text-gray-500">No se encontraron sesiones con los filtros aplicados</p>
+                        </div>
+
+                        <div v-else class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Cajero
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Apertura
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Cierre
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Duración
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Ventas
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Diferencia
+                                        </th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Estado
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Acciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr v-for="session in sessions.data" :key="session.id" class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ session.user.name }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ formatDateTime(session.opened_at) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ session.closed_at ? formatDateTime(session.closed_at) : '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ getDuration(session) }} hrs
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                                            ${{ formatPrice(session.total_all_sales || 0) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                            <span v-if="session.status === 'closed'" :class="[
+                                                'font-semibold',
+                                                session.difference == 0 ? 'text-green-600' :
+                                                session.difference > 0 ? 'text-yellow-600' :
+                                                'text-red-600'
+                                            ]">
+                                                {{ session.difference > 0 ? '+' : '' }}${{ (session.difference || 0).toFixed(2) }}
+                                            </span>
+                                            <span v-else class="text-gray-400">-</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <span :class="[
+                                                'px-2 py-1 text-xs font-semibold rounded-full',
+                                                session.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                            ]">
+                                                {{ session.status === 'open' ? 'Abierta' : 'Cerrada' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <Link
+                                                :href="route('cashregister.show', session.id)"
+                                                class="text-blue-600 hover:text-blue-900"
+                                            >
+                                                Ver detalles
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginación -->
+                        <div v-if="sessions.data.length > 0" class="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                            <div class="flex flex-1 justify-between sm:hidden">
+                                <Link
+                                    v-if="sessions.prev_page_url"
+                                    :href="sessions.prev_page_url"
+                                    class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                >
+                                    Anterior
+                                </Link>
+                                <Link
+                                    v-if="sessions.next_page_url"
+                                    :href="sessions.next_page_url"
+                                    class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                >
+                                    Siguiente
+                                </Link>
+                            </div>
+                            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Mostrando
+                                        <span class="font-medium">{{ sessions.from }}</span>
+                                        a
+                                        <span class="font-medium">{{ sessions.to }}</span>
+                                        de
+                                        <span class="font-medium">{{ sessions.total }}</span>
+                                        resultados
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                                        <Link
+                                            v-for="link in sessions.links"
+                                            :key="link.label"
+                                            :href="link.url"
+                                            :class="[
+                                                'relative inline-flex items-center px-4 py-2 text-sm font-medium',
+                                                link.active
+                                                    ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0',
+                                                !link.url && 'pointer-events-none opacity-50'
+                                            ]"
+                                            v-html="link.label"
+                                        ></Link>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { Link } from '@inertiajs/vue3';
+
+const props = defineProps({
+    sessions: Object,
+    filters: Object,
+});
+
+const localFilters = ref({
+    status: props.filters.status || '',
+    date_from: props.filters.date_from || '',
+    date_to: props.filters.date_to || '',
+});
+
+const hasActiveFilters = computed(() => {
+    return props.filters.status || props.filters.date_from || props.filters.date_to;
+});
+
+const applyFilters = () => {
+    router.get(route('cashregister.history'), localFilters.value, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+const removeFilter = (filterName) => {
+    localFilters.value[filterName] = '';
+    applyFilters();
+};
+
+const clearFilters = () => {
+    localFilters.value = {
+        status: '',
+        date_from: '',
+        date_to: '',
+    };
+    applyFilters();
+};
+
+const formatPrice = (value) => {
+    return parseFloat(value || 0).toFixed(2);
+};
+
+const formatDateTime = (datetime) => {
+    return new Date(datetime).toLocaleString('es-MX', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+const getDuration = (session) => {
+    if (!session.closed_at) {
+        const start = new Date(session.opened_at);
+        const now = new Date();
+        const hours = Math.abs(now - start) / 36e5;
+        return hours.toFixed(1);
+    }
+
+    const start = new Date(session.opened_at);
+    const end = new Date(session.closed_at);
+    const hours = Math.abs(end - start) / 36e5;
+    return hours.toFixed(1);
+};
+</script>
