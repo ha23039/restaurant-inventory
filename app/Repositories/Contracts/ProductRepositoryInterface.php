@@ -18,6 +18,11 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
     public function getExpiringSoonProducts(int $days = 7): Collection;
 
     /**
+     * Get expired products
+     */
+    public function getExpiredProducts(): Collection;
+
+    /**
      * Get products by category
      */
     public function getByCategory(int $categoryId): Collection;

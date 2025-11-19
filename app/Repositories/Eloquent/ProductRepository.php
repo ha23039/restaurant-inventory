@@ -32,6 +32,15 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             ->get();
     }
 
+    public function getExpiredProducts(): Collection
+    {
+        return $this->model
+            ->where('expiry_date', '<', now())
+            ->where('is_active', true)
+            ->with('category')
+            ->get();
+    }
+
     public function getByCategory(int $categoryId): Collection
     {
         return $this->model
