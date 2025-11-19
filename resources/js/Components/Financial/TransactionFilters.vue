@@ -200,10 +200,10 @@ import { ref, computed, watch } from 'vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
-import SearchBar from '@/Components/Form/SearchBar.vue';
-import FormSelect from '@/Components/Form/FormSelect.vue';
-import FormInput from '@/Components/Form/FormInput.vue';
-import FilterDropdown from '@/Components/Form/FilterDropdown.vue';
+import SearchBar from '@/Components/Data/SearchBar.vue';
+import FormSelect from '@/Components/Forms/FormSelect.vue';
+import FormInput from '@/Components/Forms/FormInput.vue';
+import FilterDropdown from '@/Components/Data/FilterDropdown.vue';
 import DateRangePicker from '@/Components/Financial/DateRangePicker.vue';
 
 const props = defineProps({

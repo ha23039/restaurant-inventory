@@ -79,17 +79,32 @@ class CashFlowRepository
      */
     public function getTrendsByPeriod(string $from, string $to, string $groupBy = 'day'): array
     {
-        $dateFormat = match ($groupBy) {
-            'day' => '%Y-%m-%d',
-            'week' => '%Y-%u',
-            'month' => '%Y-%m',
-            'year' => '%Y',
-            default => '%Y-%m-%d',
-        };
+        $driver = DB::connection()->getDriverName();
+
+        // Database-specific date formatting
+        if ($driver === 'pgsql') {
+            $dateFormat = match ($groupBy) {
+                'day' => "to_char(flow_date, 'YYYY-MM-DD')",
+                'week' => "to_char(flow_date, 'IYYY-IW')",
+                'month' => "to_char(flow_date, 'YYYY-MM')",
+                'year' => "to_char(flow_date, 'YYYY')",
+                default => "to_char(flow_date, 'YYYY-MM-DD')",
+            };
+        } else {
+            // MySQL
+            $mysqlFormat = match ($groupBy) {
+                'day' => '%Y-%m-%d',
+                'week' => '%Y-%u',
+                'month' => '%Y-%m',
+                'year' => '%Y',
+                default => '%Y-%m-%d',
+            };
+            $dateFormat = "DATE_FORMAT(flow_date, '{$mysqlFormat}')";
+        }
 
         $trends = DB::table('cash_flow')
             ->select(
-                DB::raw("DATE_FORMAT(flow_date, '{$dateFormat}') as period"),
+                DB::raw("{$dateFormat} as period"),
                 'type',
                 DB::raw('SUM(amount) as total')
             )

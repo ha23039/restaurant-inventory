@@ -9,7 +9,7 @@
                     <BaseButton
                         variant="secondary"
                         size="md"
-                        @click="exportToCsv"
+                        @click="showExportModal = true"
                     >
                         <svg
                             class="w-4 h-4 mr-2"
@@ -24,7 +24,7 @@
                                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                             />
                         </svg>
-                        Exportar CSV
+                        Exportar Reporte
                     </BaseButton>
                     <Link :href="route('financial.dashboard')">
                         <BaseButton variant="primary" size="md">
@@ -229,6 +229,15 @@
                 </div>
             </BaseCard>
         </div>
+
+        <!-- Export Modal -->
+        <ExportModal
+            :show="showExportModal"
+            :filters="filters"
+            title="Exportar Reporte de Flujo de Efectivo"
+            @close="showExportModal = false"
+            @export="handleExport"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -240,9 +249,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
-import DataTable from '@/Components/Table/DataTable.vue';
-import Pagination from '@/Components/Table/Pagination.vue';
+import DataTable from '@/Components/Data/DataTable.vue';
+import Pagination from '@/Components/Data/Pagination.vue';
 import TransactionFilters from '@/Components/Financial/TransactionFilters.vue';
+import ExportModal from '@/Components/Financial/ExportModal.vue';
 
 const props = defineProps({
     transactions: Object,
@@ -254,6 +264,7 @@ const props = defineProps({
 
 const toast = useToast();
 const loading = ref(false);
+const showExportModal = ref(false);
 
 const columns = [
     { key: 'flow_date', label: 'Fecha', sortable: true },
@@ -314,11 +325,24 @@ const handleFiltersClear = () => {
     });
 };
 
-const exportToCsv = () => {
-    const queryParams = new URLSearchParams(props.filters).toString();
-    const url = route('cashflow.export-csv') + (queryParams ? `?${queryParams}` : '');
+const handleExport = (exportData) => {
+    const { format, filters: exportFilters } = exportData;
+
+    const routeMap = {
+        csv: 'cashflow.export-csv',
+        excel: 'cashflow.export-excel',
+        pdf: 'cashflow.export-pdf'
+    };
+
+    const routeName = routeMap[format];
+    if (!routeName) {
+        toast.error('Formato de exportación no válido');
+        return;
+    }
+
+    const queryParams = new URLSearchParams(exportFilters).toString();
+    const url = route(routeName) + (queryParams ? `?${queryParams}` : '');
 
     window.location.href = url;
-    toast.success('Exportando transacciones a CSV...');
 };
 </script>

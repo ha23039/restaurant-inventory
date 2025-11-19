@@ -24,11 +24,18 @@ class SaleService
     public function processSale(array $validatedData, int $userId): Sale
     {
         return DB::transaction(function () use ($validatedData, $userId) {
-            // Verificar disponibilidad de stock
-            $this->verifyStockAvailability($validatedData['items']);
+            $isFreeSale = $validatedData['is_free_sale'] ?? false;
+
+            // Para ventas libres, omitir validación de stock
+            if (! $isFreeSale) {
+                // Verificar disponibilidad de stock
+                $this->verifyStockAvailability($validatedData['items']);
+            }
 
             // Calcular totales
-            $totals = $this->calculateTotals($validatedData);
+            $totals = $isFreeSale
+                ? $this->calculateFreeSaleTotals($validatedData)
+                : $this->calculateTotals($validatedData);
 
             // Crear venta usando repository
             $sale = $this->saleRepository->create([
@@ -40,6 +47,8 @@ class SaleService
                 'total' => $totals['total'],
                 'payment_method' => $validatedData['payment_method'],
                 'status' => 'completada',
+                'is_free_sale' => $isFreeSale,
+                'free_sale_description' => $isFreeSale ? $validatedData['free_sale_description'] : null,
             ]);
 
             Log::info('Venta creada exitosamente', [
@@ -47,10 +56,14 @@ class SaleService
                 'sale_number' => $sale->sale_number,
                 'user_id' => $userId,
                 'total' => $sale->total,
+                'is_free_sale' => $isFreeSale,
             ]);
 
-            // Procesar items y deducir inventario
-            $this->processSaleItems($sale, $validatedData['items']);
+            // Para ventas libres, no procesar items ni deducir inventario
+            if (! $isFreeSale) {
+                // Procesar items y deducir inventario
+                $this->processSaleItems($sale, $validatedData['items']);
+            }
 
             // Registrar flujo de efectivo
             $this->cashFlowService->recordSaleIncome($sale);
@@ -90,6 +103,22 @@ class SaleService
         $discount = $data['discount'] ?? 0;
         $tax = $data['tax'] ?? 0;
         $total = $subtotal - $discount + $tax;
+
+        return compact('subtotal', 'discount', 'tax', 'total');
+    }
+
+    /**
+     * Calcular totales para venta libre
+     */
+    protected function calculateFreeSaleTotals(array $data): array
+    {
+        $total = $data['free_sale_total'];
+        $discount = $data['discount'] ?? 0;
+        $tax = $data['tax'] ?? 0;
+
+        // Para venta libre, el total ya está definido
+        // Calculamos el subtotal trabajando hacia atrás
+        $subtotal = $total + $discount - $tax;
 
         return compact('subtotal', 'discount', 'tax', 'total');
     }

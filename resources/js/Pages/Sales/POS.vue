@@ -223,8 +223,77 @@
                                     </div>
                                 </div>
 
+                                <!-- Toggle de Venta Libre -->
+                                <div class="border-t border-gray-200 pt-4 mb-4">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input
+                                            v-model="isFreeSale"
+                                            type="checkbox"
+                                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        >
+                                        <span class="ml-2 text-sm font-medium text-gray-700">
+                                            Venta Libre (sin productos)
+                                        </span>
+                                    </label>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Para ventas que no afectan el inventario
+                                    </p>
+                                </div>
+
+                                <!-- Form de Venta Libre -->
+                                <div v-if="isFreeSale" class="border border-blue-200 rounded-lg p-4 mb-4 bg-blue-50">
+                                    <h4 class="text-sm font-semibold text-blue-900 mb-3">
+                                        Datos de Venta Libre
+                                    </h4>
+
+                                    <div class="space-y-3">
+                                        <!-- Descripción -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Descripción *
+                                            </label>
+                                            <textarea
+                                                v-model="freeSaleDescription"
+                                                rows="3"
+                                                maxlength="500"
+                                                placeholder="Ej: Servicio de catering para evento corporativo"
+                                                class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm text-sm"
+                                            ></textarea>
+                                            <div class="flex justify-between items-center mt-1">
+                                                <span class="text-xs text-gray-500">
+                                                    Mínimo 3 caracteres
+                                                </span>
+                                                <span class="text-xs text-gray-500">
+                                                    {{ freeSaleDescription.length }}/500
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Monto -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Monto Total *
+                                            </label>
+                                            <div class="relative">
+                                                <span class="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <input
+                                                    v-model="freeSaleTotal"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0.01"
+                                                    placeholder="0.00"
+                                                    class="w-full pl-7 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                                >
+                                            </div>
+                                            <p class="mt-1 text-xs text-gray-500">
+                                                Este monto no afectará el inventario
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Totales -->
-                                <div v-if="cartItems.length > 0" class="border-t border-gray-200 pt-4">
+                                <div v-if="cartItems.length > 0 && !isFreeSale" class="border-t border-gray-200 pt-4">
                                     <div class="space-y-3">
                                         <div class="flex justify-between text-sm">
                                             <span class="font-medium">Subtotal:</span>
@@ -263,8 +332,19 @@
                                         </div>
                                     </div>
 
-                                    <!-- Método de pago -->
-                                    <div class="mt-4">
+                                    <!-- Resumen de Venta Libre -->
+                                    <div v-if="isFreeSale" class="border-t border-gray-200 pt-4">
+                                        <div class="flex justify-between text-lg font-bold">
+                                            <span>Total (Venta Libre):</span>
+                                            <span class="text-green-600">${{ formatPrice(parseFloat(freeSaleTotal || 0)) }}</span>
+                                        </div>
+                                        <p class="text-xs text-blue-600 mt-2">
+                                            Esta venta no afectará el inventario
+                                        </p>
+                                    </div>
+
+                                    <!-- Método de pago (siempre visible si hay carrito o es venta libre) -->
+                                    <div v-if="cartItems.length > 0 || isFreeSale" class="mt-4">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">
                                             Método de Pago
                                         </label>
@@ -281,8 +361,9 @@
 
                                     <!-- Botón de procesar venta -->
                                     <button
+                                        v-if="cartItems.length > 0 || isFreeSale"
                                         @click="processSale"
-                                        :disabled="processing || cartItems.length === 0"
+                                        :disabled="processing || (!isFreeSale && cartItems.length === 0) || (isFreeSale && (!freeSaleDescription || !freeSaleTotal || parseFloat(freeSaleTotal) <= 0))"
                                         class="w-full mt-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors"
                                     >
                                         <span v-if="processing" class="flex items-center justify-center">
@@ -291,6 +372,9 @@
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
                                             Procesando...
+                                        </span>
+                                        <span v-else-if="isFreeSale">
+                                            Procesar Venta Libre (${{ formatPrice(parseFloat(freeSaleTotal || 0)) }})
                                         </span>
                                         <span v-else>Procesar Venta (${{ formatPrice(total) }})</span>
                                     </button>
@@ -327,6 +411,11 @@ const tax = ref(0);
 const paymentMethod = ref('efectivo');
 const processing = ref(false);
 const toast = useToast();
+
+// VENTA LIBRE
+const isFreeSale = ref(false);
+const freeSaleDescription = ref('');
+const freeSaleTotal = ref('');
 
 // 4. FUNCIONES DE PERSISTENCIA DEL CARRITO
 const saveCartToStorage = () => {
@@ -505,9 +594,23 @@ const clearCart = () => {
 
 // 7. PROCESAR VENTA
 const processSale = () => {
-    if (cartItems.value.length === 0) {
-        showNotification('El carrito está vacío', 'warning');
-        return;
+    // Validaciones para venta libre
+    if (isFreeSale.value) {
+        if (!freeSaleDescription.value || freeSaleDescription.value.length < 3) {
+            showNotification('La descripción debe tener al menos 3 caracteres', 'warning');
+            return;
+        }
+
+        if (!freeSaleTotal.value || parseFloat(freeSaleTotal.value) <= 0) {
+            showNotification('El monto debe ser mayor a 0', 'warning');
+            return;
+        }
+    } else {
+        // Validación para venta normal
+        if (cartItems.value.length === 0) {
+            showNotification('El carrito está vacío', 'warning');
+            return;
+        }
     }
 
     if (!paymentMethod.value) {
@@ -517,7 +620,17 @@ const processSale = () => {
 
     processing.value = true;
 
-    const saleData = {
+    const saleData = isFreeSale.value ? {
+        // Datos para venta libre
+        is_free_sale: true,
+        free_sale_description: freeSaleDescription.value,
+        free_sale_total: parseFloat(freeSaleTotal.value),
+        payment_method: paymentMethod.value,
+        discount: 0,
+        tax: 0
+    } : {
+        // Datos para venta normal
+        is_free_sale: false,
         items: cartItems.value.map(item => ({
             id: item.id,
             product_type: item.product_type,
@@ -534,13 +647,22 @@ const processSale = () => {
     router.post(route('sales.pos.store'), saleData, {
         onSuccess: (page) => {
             console.log('Venta exitosa:', page);
-            showNotification('¡Venta procesada exitosamente!', 'success');
-            
+            const message = isFreeSale.value
+                ? '¡Venta libre procesada exitosamente!'
+                : '¡Venta procesada exitosamente!';
+            showNotification(message, 'success');
+
             // Limpiar carrito y storage después de venta exitosa
             cartItems.value = [];
             discount.value = 0;
             tax.value = 0;
             paymentMethod.value = 'efectivo';
+
+            // Limpiar datos de venta libre
+            isFreeSale.value = false;
+            freeSaleDescription.value = '';
+            freeSaleTotal.value = '';
+
             clearCartStorage();
         },
         onError: (errors) => {

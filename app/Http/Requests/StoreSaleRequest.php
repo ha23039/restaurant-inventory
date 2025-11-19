@@ -22,12 +22,17 @@ class StoreSaleRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isFreeSale = $this->boolean('is_free_sale');
+
         return [
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'required|integer',
-            'items.*.product_type' => 'required|in:menu,simple',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'is_free_sale' => 'nullable|boolean',
+            'free_sale_description' => $isFreeSale ? 'required|string|min:3|max:500' : 'nullable|string|max:500',
+            'free_sale_total' => $isFreeSale ? 'required|numeric|min:0.01' : 'nullable|numeric',
+            'items' => $isFreeSale ? 'nullable|array' : 'required|array|min:1',
+            'items.*.id' => 'required_with:items.*|integer',
+            'items.*.product_type' => 'required_with:items.*|in:menu,simple',
+            'items.*.quantity' => 'required_with:items.*|integer|min:1',
+            'items.*.unit_price' => 'required_with:items.*|numeric|min:0',
             'payment_method' => 'required|in:efectivo,tarjeta,transferencia',
             'discount' => 'nullable|numeric|min:0',
             'tax' => 'nullable|numeric|min:0',
@@ -46,6 +51,10 @@ class StoreSaleRequest extends FormRequest
             'items.*.quantity.min' => 'La cantidad debe ser al menos 1',
             'payment_method.required' => 'Debe seleccionar un método de pago',
             'payment_method.in' => 'Método de pago inválido',
+            'free_sale_description.required' => 'Debe proporcionar una descripción para la venta libre',
+            'free_sale_description.min' => 'La descripción debe tener al menos 3 caracteres',
+            'free_sale_total.required' => 'Debe especificar el monto de la venta libre',
+            'free_sale_total.min' => 'El monto debe ser mayor a 0',
         ];
     }
 }
