@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\ValidateCashRegister;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,9 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // Registrar middleware de roles
+        // Registrar middleware de roles y caja registradora
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'validate.cashregister' => ValidateCashRegister::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
