@@ -99,6 +99,15 @@
                 >
                     Caja Registradora
                 </NavItem>
+
+                <NavItem
+                    :href="route('tables.index')"
+                    :active="route().current('tables.*')"
+                    :collapsed="isCollapsed"
+                    icon="dashboard"
+                >
+                    Mesas
+                </NavItem>
             </template>
 
             <!-- Inventario (Admin + Almacenero) -->
