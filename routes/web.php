@@ -134,17 +134,10 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
 */
 
 Route::middleware(['auth', 'role:admin'])->prefix('cashflow')->name('cashflow.')->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('CashFlow/Index');
-    })->name('index');
-
-    Route::get('/income', function () {
-        return Inertia::render('CashFlow/Income');
-    })->name('income');
-
-    Route::get('/expenses', function () {
-        return Inertia::render('CashFlow/Expenses');
-    })->name('expenses');
+    Route::get('/', [App\Http\Controllers\CashFlowController::class, 'index'])->name('index');
+    Route::get('/search', [App\Http\Controllers\CashFlowController::class, 'search'])->name('search');
+    Route::get('/summary', [App\Http\Controllers\CashFlowController::class, 'getSummary'])->name('summary');
+    Route::get('/export-csv', [App\Http\Controllers\CashFlowController::class, 'exportCsv'])->name('export-csv');
 });
 
 /*
