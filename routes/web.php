@@ -134,17 +134,38 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
 */
 
 Route::middleware(['auth', 'role:admin'])->prefix('cashflow')->name('cashflow.')->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('CashFlow/Index');
-    })->name('index');
+    Route::get('/', [App\Http\Controllers\CashFlowController::class, 'index'])->name('index');
+    Route::get('/search', [App\Http\Controllers\CashFlowController::class, 'search'])->name('search');
+    Route::get('/summary', [App\Http\Controllers\CashFlowController::class, 'getSummary'])->name('summary');
+    Route::get('/export-csv', [App\Http\Controllers\CashFlowController::class, 'exportCsv'])->name('export-csv');
+});
 
-    Route::get('/income', function () {
-        return Inertia::render('CashFlow/Income');
-    })->name('income');
+/*
+|--------------------------------------------------------------------------
+| Rutas para GASTOS (Admin solamente)
+|--------------------------------------------------------------------------
+*/
 
-    Route::get('/expenses', function () {
-        return Inertia::render('CashFlow/Expenses');
-    })->name('expenses');
+Route::middleware(['auth', 'role:admin'])->prefix('expenses')->name('expenses.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ExpenseController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\ExpenseController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\ExpenseController::class, 'store'])->name('store');
+    Route::get('/{expense}', [App\Http\Controllers\ExpenseController::class, 'show'])->name('show');
+    Route::get('/{expense}/edit', [App\Http\Controllers\ExpenseController::class, 'edit'])->name('edit');
+    Route::put('/{expense}', [App\Http\Controllers\ExpenseController::class, 'update'])->name('update');
+    Route::delete('/{expense}', [App\Http\Controllers\ExpenseController::class, 'destroy'])->name('destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rutas para DASHBOARD FINANCIERO (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('financial')->name('financial.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\FinancialDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/kpis', [App\Http\Controllers\FinancialDashboardController::class, 'getKpis'])->name('api.kpis');
+    Route::get('/api/trends', [App\Http\Controllers\FinancialDashboardController::class, 'getTrends'])->name('api.trends');
 });
 
 /*
