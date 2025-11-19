@@ -73,6 +73,26 @@ Route::middleware(['auth', 'role:admin'])->prefix('users')->name('users.')->grou
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para GESTIÓN DE MESAS (Admin + Cajero)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,cajero'])->prefix('tables')->name('tables.')->group(function () {
+    Route::get('/', [App\Http\Controllers\TableController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\TableController::class, 'store'])->name('store');
+    Route::put('/{table}', [App\Http\Controllers\TableController::class, 'update'])->name('update');
+    Route::delete('/{table}', [App\Http\Controllers\TableController::class, 'destroy'])->name('destroy');
+
+    // Special actions
+    Route::get('/{table}', [App\Http\Controllers\TableController::class, 'show'])->name('show');
+    Route::post('/{table}/update-status', [App\Http\Controllers\TableController::class, 'updateStatus'])->name('update-status');
+    Route::post('/{table}/occupy', [App\Http\Controllers\TableController::class, 'occupyTable'])->name('occupy');
+    Route::post('/{table}/release', [App\Http\Controllers\TableController::class, 'releaseTable'])->name('release');
+    Route::post('/{table}/toggle-active', [App\Http\Controllers\TableController::class, 'toggleActive'])->name('toggle-active');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para CAJA REGISTRADORA (Admin + Cajero)
 |--------------------------------------------------------------------------
 */
