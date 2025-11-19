@@ -1,12 +1,12 @@
 <template>
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
                 Cerrar Caja
             </h2>
         </template>
 
-        <div class="py-12">
+        <div class="space-y-6">
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6">
                 <!-- Resumen de la Sesión -->
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -220,13 +220,13 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import { Link } from '@inertiajs/vue3';
 

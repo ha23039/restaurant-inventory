@@ -1,5 +1,5 @@
 <template>
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
@@ -14,7 +14,7 @@
             </div>
         </template>
 
-        <div class="py-12">
+        <div class="space-y-6">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 <!-- Resumen Principal -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -245,11 +245,11 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
