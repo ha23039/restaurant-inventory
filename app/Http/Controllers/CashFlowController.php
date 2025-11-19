@@ -190,6 +190,106 @@ class CashFlowController extends Controller
     }
 
     /**
+     * Export transactions to Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        $filters = $request->only([
+            'search',
+            'type',
+            'category',
+            'date_from',
+            'date_to',
+            'user_id',
+            'amount_min',
+            'amount_max',
+        ]);
+
+        $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', now()->format('Y-m-d'));
+
+        $filename = 'flujo_efectivo_'.now()->format('Y-m-d_His').'.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\CashFlowExport($filters, $dateFrom, $dateTo),
+            $filename
+        );
+    }
+
+    /**
+     * Export transactions to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $filters = $request->only([
+            'search',
+            'type',
+            'category',
+            'date_from',
+            'date_to',
+            'user_id',
+            'amount_min',
+            'amount_max',
+        ]);
+
+        $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', now()->format('Y-m-d'));
+
+        $query = CashFlow::with(['user', 'sale']);
+
+        // Apply filters (same logic as exportCsv)
+        if (! empty($filters['date_from']) && ! empty($filters['date_to'])) {
+            $query->byDateRange($filters['date_from'], $filters['date_to']);
+        }
+
+        if (! empty($filters['category'])) {
+            $query->byCategory($filters['category']);
+        }
+
+        if (! empty($filters['type'])) {
+            $query->byType($filters['type']);
+        }
+
+        if (! empty($filters['search'])) {
+            $query->search($filters['search']);
+        }
+
+        if (! empty($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (! empty($filters['amount_min'])) {
+            $query->where('amount', '>=', $filters['amount_min']);
+        }
+
+        if (! empty($filters['amount_max'])) {
+            $query->where('amount', '<=', $filters['amount_max']);
+        }
+
+        $transactions = $query->orderBy('flow_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Calculate summary
+        $summary = null;
+        if (! empty($dateFrom) && ! empty($dateTo)) {
+            $summary = $this->repository->getSummaryByDateRange($dateFrom, $dateTo);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.cash-flow-pdf', [
+            'transactions' => $transactions,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $summary,
+            'restaurantName' => config('app.name', 'Restaurante'),
+        ]);
+
+        $filename = 'flujo_efectivo_'.now()->format('Y-m-d_His').'.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
      * Get available categories
      */
     protected function getCategoryOptions(): array

@@ -138,6 +138,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('cashflow')->name('cashflow.')
     Route::get('/search', [App\Http\Controllers\CashFlowController::class, 'search'])->name('search');
     Route::get('/summary', [App\Http\Controllers\CashFlowController::class, 'getSummary'])->name('summary');
     Route::get('/export-csv', [App\Http\Controllers\CashFlowController::class, 'exportCsv'])->name('export-csv');
+    Route::get('/export-excel', [App\Http\Controllers\CashFlowController::class, 'exportExcel'])->name('export-excel');
+    Route::get('/export-pdf', [App\Http\Controllers\CashFlowController::class, 'exportPdf'])->name('export-pdf');
 });
 
 /*
