@@ -49,7 +49,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import FormInput from '@/Components/Form/FormInput.vue';
+import FormInput from '@/Components/Forms/FormInput.vue';
 
 const props = defineProps({
     from: {

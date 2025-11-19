@@ -249,8 +249,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
-import DataTable from '@/Components/Table/DataTable.vue';
-import Pagination from '@/Components/Table/Pagination.vue';
+import DataTable from '@/Components/Data/DataTable.vue';
+import Pagination from '@/Components/Data/Pagination.vue';
 import TransactionFilters from '@/Components/Financial/TransactionFilters.vue';
 import ExportModal from '@/Components/Financial/ExportModal.vue';
 

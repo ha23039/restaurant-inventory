@@ -21,13 +21,13 @@ return new class extends Migration {
         // Menu Items - For menu availability queries
         Schema::table('menu_items', function (Blueprint $table) {
             $table->index('is_available', 'idx_menu_items_is_available');
-            $table->index(['category_id', 'is_available'], 'idx_menu_items_category_available');
+            // Note: menu_items doesn't have category_id column
         });
 
         // Simple Products - For simple product queries
         Schema::table('simple_products', function (Blueprint $table) {
             $table->index('is_available', 'idx_simple_products_is_available');
-            $table->index(['category_id', 'is_available'], 'idx_simple_products_category_available');
+            $table->index(['category', 'is_available'], 'idx_simple_products_category_available');
         });
 
         // Sales - For sales reports and queries
@@ -86,7 +86,6 @@ return new class extends Migration {
         // Menu Items
         Schema::table('menu_items', function (Blueprint $table) {
             $table->dropIndex('idx_menu_items_is_available');
-            $table->dropIndex('idx_menu_items_category_available');
         });
 
         // Simple Products
