@@ -12,6 +12,7 @@ class Sale extends Model
 
     protected $fillable = [
         'user_id',
+        'cash_register_session_id',
         'sale_number',
         'subtotal',
         'tax',
@@ -44,6 +45,11 @@ class Sale extends Model
     public function cashFlow()
     {
         return $this->hasOne(CashFlow::class);
+    }
+
+    public function cashRegisterSession()
+    {
+        return $this->belongsTo(CashRegisterSession::class);
     }
 
     // ==========================================

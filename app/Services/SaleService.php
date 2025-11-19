@@ -15,7 +15,8 @@ class SaleService
         private SaleRepositoryInterface $saleRepository,
         private ProductRepositoryInterface $productRepository,
         private InventoryService $inventoryService,
-        private CashFlowService $cashFlowService
+        private CashFlowService $cashFlowService,
+        private CashRegisterService $cashRegisterService
     ) {}
 
     /**
@@ -37,9 +38,13 @@ class SaleService
                 ? $this->calculateFreeSaleTotals($validatedData)
                 : $this->calculateTotals($validatedData);
 
+            // Obtener sesión de caja activa
+            $cashRegisterSession = $this->cashRegisterService->getCurrentSession();
+
             // Crear venta usando repository
             $sale = $this->saleRepository->create([
                 'user_id' => $userId,
+                'cash_register_session_id' => $cashRegisterSession?->id,
                 'sale_number' => $this->generateSaleNumber(),
                 'subtotal' => $totals['subtotal'],
                 'discount' => $totals['discount'] ?? 0,

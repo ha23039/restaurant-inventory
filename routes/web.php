@@ -59,6 +59,37 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para CAJA REGISTRADORA (Admin + Cajero)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,cajero'])->prefix('cashregister')->name('cashregister.')->group(function () {
+    // Vista principal de caja
+    Route::get('/', [App\Http\Controllers\CashRegisterController::class, 'index'])->name('index');
+
+    // Abrir caja
+    Route::get('/open', [App\Http\Controllers\CashRegisterController::class, 'create'])->name('create');
+    Route::post('/open', [App\Http\Controllers\CashRegisterController::class, 'store'])->name('store');
+
+    // Cerrar caja
+    Route::get('/close', [App\Http\Controllers\CashRegisterController::class, 'closeForm'])->name('close.form');
+    Route::post('/close', [App\Http\Controllers\CashRegisterController::class, 'close'])->name('close');
+
+    // Ver detalles de sesión
+    Route::get('/{id}', [App\Http\Controllers\CashRegisterController::class, 'show'])->name('show');
+
+    // Historial de sesiones
+    Route::get('/history', [App\Http\Controllers\CashRegisterController::class, 'history'])->name('history');
+
+    // Estadísticas
+    Route::get('/stats', [App\Http\Controllers\CashRegisterController::class, 'stats'])->name('stats');
+
+    // API: Sesión actual
+    Route::get('/api/current', [App\Http\Controllers\CashRegisterController::class, 'current'])->name('api.current');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para INVENTARIO (Admin + Almacenero)
 |--------------------------------------------------------------------------
 */
