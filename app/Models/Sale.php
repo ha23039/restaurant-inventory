@@ -19,6 +19,8 @@ class Sale extends Model
         'total',
         'payment_method',
         'status',
+        'is_free_sale',
+        'free_sale_description',
     ];
 
     protected $casts = [
@@ -26,6 +28,7 @@ class Sale extends Model
         'tax' => 'decimal:2',
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
+        'is_free_sale' => 'boolean',
     ];
 
     public function user()
