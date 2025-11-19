@@ -44,10 +44,6 @@ Route::middleware('auth')->group(function () {
 */
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/users', function () {
-        return Inertia::render('Admin/Users');
-    })->name('users');
-
     Route::get('/reports', function () {
         return Inertia::render('Admin/Reports');
     })->name('reports');
@@ -55,6 +51,24 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/settings', function () {
         return Inertia::render('Admin/Settings');
     })->name('settings');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rutas para GESTIÓN DE USUARIOS (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('users')->name('users.')->group(function () {
+    Route::get('/', [App\Http\Controllers\UserController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\UserController::class, 'store'])->name('store');
+    Route::get('/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('show');
+    Route::put('/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('update');
+    Route::delete('/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('destroy');
+
+    // Special actions
+    Route::post('/{user}/toggle-status', [App\Http\Controllers\UserController::class, 'toggleStatus'])->name('toggle-status');
+    Route::post('/{user}/reset-password', [App\Http\Controllers\UserController::class, 'resetPassword'])->name('reset-password');
 });
 
 /*
