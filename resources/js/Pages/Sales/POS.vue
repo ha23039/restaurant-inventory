@@ -397,8 +397,8 @@ import { useToast } from 'vue-toastification';
 
 // 2. PROPS DEL COMPONENTE
 const props = defineProps({
-    menu_items: Array,
-    simple_products: Array
+    menu_items: Object,
+    simple_products: Object
 });
 
 // 3. ESTADO PRINCIPAL DEL POS
@@ -473,12 +473,12 @@ const currentDate = computed(() => {
 });
 
 const groupedProducts = computed(() => {
-    const menuProducts = (props.menu_items || []).map(item => ({
+    const menuProducts = (props.menu_items.data || []).map(item => ({
         ...item,
         product_type: 'menu'
     }));
     
-    const simpleProducts = (props.simple_products || []).map(item => ({
+    const simpleProducts = (props.simple_products.data || []).map(item => ({
         ...item,
         product_type: 'simple'
     }));

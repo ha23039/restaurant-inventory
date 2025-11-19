@@ -45,9 +45,12 @@ class MenuItemResource extends JsonResource
                     return [
                         'id' => $recipe->id,
                         'product_id' => $recipe->product_id,
-                        'product_name' => $recipe->product->name ?? null,
                         'quantity_needed' => (float) $recipe->quantity_needed,
                         'unit' => $recipe->unit,
+                        'product' => [
+                            'id' => $recipe->product->id,
+                            'name' => $recipe->product->name,
+                        ],
                     ];
                 });
             }),

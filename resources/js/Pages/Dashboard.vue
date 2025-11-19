@@ -105,7 +105,7 @@
 
                     <!-- Gráfica de Métodos de Pago -->
                     <PaymentMethodsChart
-                        :paymentMethods="chartData.paymentMethods"
+                        :data="chartData.paymentMethods"
                     />
                 </div>
 
