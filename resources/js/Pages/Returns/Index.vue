@@ -1,7 +1,7 @@
 <template>
     <Head title="Devoluciones" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
@@ -333,13 +333,13 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { reactive } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useIcons } from '@/composables/useIcons';
 
 // Props del controlador

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DataTable from '@/Components/Data/DataTable.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
 import SearchBar from '@/Components/Data/SearchBar.vue';
@@ -109,7 +109,7 @@ const getCategoryVariant = (category) => {
 <template>
     <Head title="Gastos" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -264,5 +264,5 @@ const getCategoryVariant = (category) => {
                 </BaseCard>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

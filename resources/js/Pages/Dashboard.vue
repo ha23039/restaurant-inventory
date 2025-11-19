@@ -1,7 +1,38 @@
+<script setup>
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { useIcons } from '@/composables/useIcons';
+import SalesChart from '@/Components/Charts/SalesChart.vue';
+import TopProductsChart from '@/Components/Charts/TopProductsChart.vue';
+import PaymentMethodsChart from '@/Components/Charts/PaymentMethodsChart.vue';
+
+const props = defineProps({
+    metrics: Object,
+    chartData: Object,
+});
+
+const page = usePage();
+const { icons } = useIcons();
+
+// Función para verificar permisos de rol
+const canAccess = (allowedRoles) => {
+    const userRole = page.props.auth.user.role;
+    return allowedRoles.includes(userRole);
+};
+
+// Formatear moneda
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(amount);
+};
+</script>
+
 <template>
     <Head title="Dashboard" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Dashboard - {{ $page.props.auth.user.name }} ({{ $page.props.auth.user.role }})
@@ -197,36 +228,5 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
-
-<script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { useIcons } from '@/composables/useIcons';
-import SalesChart from '@/Components/Charts/SalesChart.vue';
-import TopProductsChart from '@/Components/Charts/TopProductsChart.vue';
-import PaymentMethodsChart from '@/Components/Charts/PaymentMethodsChart.vue';
-
-const props = defineProps({
-    metrics: Object,
-    chartData: Object,
-});
-
-const page = usePage();
-const { icons } = useIcons();
-
-// Función para verificar permisos de rol
-const canAccess = (allowedRoles) => {
-    const userRole = page.props.auth.user.role;
-    return allowedRoles.includes(userRole);
-};
-
-// Formatear moneda
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN'
-    }).format(amount);
-};
-</script>

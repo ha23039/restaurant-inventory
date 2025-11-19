@@ -1,7 +1,7 @@
 <template>
     <Head :title="`Producto: ${product.name}`" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
@@ -190,12 +190,12 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 // Props
 defineProps({

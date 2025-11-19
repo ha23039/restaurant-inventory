@@ -1,7 +1,345 @@
+<script setup>
+// 1. IMPORTS CORRECTOS AL INICIO
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useToast } from 'vue-toastification';
+
+// 2. PROPS DEL COMPONENTE
+const props = defineProps({
+    menu_items: Object,
+    simple_products: Object
+});
+
+// 3. ESTADO PRINCIPAL DEL POS
+const searchTerm = ref('');
+const selectedCategory = ref('');
+const activeTab = ref('menu');
+const cartItems = ref([]);
+const discount = ref(0);
+const tax = ref(0);
+const paymentMethod = ref('efectivo');
+const processing = ref(false);
+const toast = useToast();
+
+// VENTA LIBRE
+const isFreeSale = ref(false);
+const freeSaleDescription = ref('');
+const freeSaleTotal = ref('');
+
+// 4. FUNCIONES DE PERSISTENCIA DEL CARRITO
+const saveCartToStorage = () => {
+    const cartData = {
+        items: cartItems.value,
+        discount: discount.value,
+        tax: tax.value,
+        paymentMethod: paymentMethod.value,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('pos_cart_data', JSON.stringify(cartData));
+};
+
+const loadCartFromStorage = () => {
+    try {
+        const savedCart = localStorage.getItem('pos_cart_data');
+        if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            
+            // Verificar que no sea muy antiguo (24 horas)
+            const isExpired = (Date.now() - cartData.timestamp) > 24 * 60 * 60 * 1000;
+            
+            if (!isExpired && cartData.items) {
+                cartItems.value = cartData.items || [];
+                discount.value = cartData.discount || 0;
+                tax.value = cartData.tax || 0;
+                paymentMethod.value = cartData.paymentMethod || 'efectivo';
+                
+                if (cartItems.value.length > 0) {
+                    showNotification(`Carrito restaurado con ${cartItems.value.length} productos`, 'info');
+                }
+            } else {
+                // Limpiar carrito expirado
+                clearCartStorage();
+            }
+        }
+    } catch (error) {
+        console.warn('Error cargando carrito guardado:', error);
+        clearCartStorage();
+    }
+};
+
+const clearCartStorage = () => {
+    localStorage.removeItem('pos_cart_data');
+};
+
+// 5. COMPUTED PROPERTIES
+const currentDate = computed(() => {
+    return new Date().toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+});
+
+const groupedProducts = computed(() => {
+    const menuProducts = (props.menu_items.data || []).map(item => ({
+        ...item,
+        product_type: 'menu'
+    }));
+    
+    const simpleProducts = (props.simple_products.data || []).map(item => ({
+        ...item,
+        product_type: 'simple'
+    }));
+
+    // Filtrar por búsqueda y categoría
+    const allProducts = [...menuProducts, ...simpleProducts].filter(product => {
+        const matchesSearch = !searchTerm.value || 
+            product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
+        
+        const matchesCategory = !selectedCategory.value || 
+            (selectedCategory.value === 'menu' && product.product_type === 'menu') ||
+            (selectedCategory.value !== 'menu' && product.category === selectedCategory.value);
+        
+        return matchesSearch && matchesCategory;
+    });
+
+    // Agrupar por categorías
+    const groups = {
+        menu: { title: 'Platillos del Menú', items: [] },
+        bebida: { title: 'Bebidas', items: [] },
+        extra: { title: 'Extras', items: [] },
+        condimento: { title: 'Condimentos', items: [] },
+    };
+
+    allProducts.forEach(product => {
+        const category = product.product_type === 'menu' ? 'menu' : product.category;
+        if (groups[category]) {
+            groups[category].items.push(product);
+        }
+    });
+
+    return groups;
+});
+
+const subtotal = computed(() => {
+    return cartItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+});
+
+const total = computed(() => {
+    return Math.max(0, subtotal.value - parseFloat(discount.value || 0) + parseFloat(tax.value || 0));
+});
+
+// 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
+const addToCart = (product) => {
+    if (!product.is_in_stock) {
+        showNotification('Este producto no está disponible por falta de stock', 'warning');
+        return;
+    }
+
+    const existingIndex = cartItems.value.findIndex(item => 
+        item.id === product.id && item.product_type === product.product_type
+    );
+    
+    if (existingIndex >= 0) {
+        if (cartItems.value[existingIndex].quantity < product.available_quantity) {
+            cartItems.value[existingIndex].quantity++;
+            showNotification(`${product.name} agregado al carrito`, 'success');
+        } else {
+            showNotification(`Solo hay ${product.available_quantity} ${product.name} disponibles`, 'warning');
+        }
+    } else {
+        cartItems.value.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            available_quantity: product.available_quantity,
+            product_type: product.product_type
+        });
+        showNotification(`${product.name} agregado al carrito`, 'success');
+    }
+    
+    // Guardar automáticamente
+    saveCartToStorage();
+};
+
+const incrementQuantity = (index) => {
+    const item = cartItems.value[index];
+    if (item.quantity < item.available_quantity) {
+        item.quantity++;
+        saveCartToStorage();
+    } else {
+        showNotification(`Stock máximo alcanzado para ${item.name}`, 'warning');
+    }
+};
+
+const decrementQuantity = (index) => {
+    const item = cartItems.value[index];
+    if (item.quantity > 1) {
+        item.quantity--;
+        saveCartToStorage();
+    } else {
+        removeFromCart(index);
+    }
+};
+
+const removeFromCart = (index) => {
+    const item = cartItems.value[index];
+    cartItems.value.splice(index, 1);
+    showNotification(`${item.name} eliminado del carrito`, 'info');
+    saveCartToStorage();
+};
+
+const clearCart = () => {
+    if (confirm('¿Estás seguro de limpiar el carrito?')) {
+        cartItems.value = [];
+        discount.value = 0;
+        tax.value = 0;
+        clearCartStorage();
+        showNotification('Carrito limpiado', 'info');
+    }
+};
+
+// 7. PROCESAR VENTA
+const processSale = () => {
+    // Validaciones para venta libre
+    if (isFreeSale.value) {
+        if (!freeSaleDescription.value || freeSaleDescription.value.length < 3) {
+            showNotification('La descripción debe tener al menos 3 caracteres', 'warning');
+            return;
+        }
+
+        if (!freeSaleTotal.value || parseFloat(freeSaleTotal.value) <= 0) {
+            showNotification('El monto debe ser mayor a 0', 'warning');
+            return;
+        }
+    } else {
+        // Validación para venta normal
+        if (cartItems.value.length === 0) {
+            showNotification('El carrito está vacío', 'warning');
+            return;
+        }
+    }
+
+    if (!paymentMethod.value) {
+        showNotification('Selecciona un método de pago', 'warning');
+        return;
+    }
+
+    processing.value = true;
+
+    const saleData = isFreeSale.value ? {
+        // Datos para venta libre
+        is_free_sale: true,
+        free_sale_description: freeSaleDescription.value,
+        free_sale_total: parseFloat(freeSaleTotal.value),
+        payment_method: paymentMethod.value,
+        discount: 0,
+        tax: 0
+    } : {
+        // Datos para venta normal
+        is_free_sale: false,
+        items: cartItems.value.map(item => ({
+            id: item.id,
+            product_type: item.product_type,
+            quantity: item.quantity,
+            unit_price: item.price
+        })),
+        payment_method: paymentMethod.value,
+        discount: parseFloat(discount.value || 0),
+        tax: parseFloat(tax.value || 0)
+    };
+
+    console.log('Enviando datos de venta:', saleData);
+
+    router.post(route('sales.pos.store'), saleData, {
+        onSuccess: (page) => {
+            console.log('Venta exitosa:', page);
+            const message = isFreeSale.value
+                ? '¡Venta libre procesada exitosamente!'
+                : '¡Venta procesada exitosamente!';
+            showNotification(message, 'success');
+
+            // Limpiar carrito y storage después de venta exitosa
+            cartItems.value = [];
+            discount.value = 0;
+            tax.value = 0;
+            paymentMethod.value = 'efectivo';
+
+            // Limpiar datos de venta libre
+            isFreeSale.value = false;
+            freeSaleDescription.value = '';
+            freeSaleTotal.value = '';
+
+            clearCartStorage();
+        },
+        onError: (errors) => {
+            console.error('Error en venta:', errors);
+            
+            if (errors.message) {
+                showNotification('Error: ' + errors.message, 'error');
+            } else if (typeof errors === 'object') {
+                showNotification('Error: ' + Object.values(errors).join(', '), 'error');
+            } else {
+                showNotification('Error desconocido al procesar la venta', 'error');
+            }
+        },
+        onFinish: () => {
+            processing.value = false;
+        }
+    });
+};
+
+// 8. SISTEMA DE NOTIFICACIONES (usando vue-toastification)
+const showNotification = (message, type = 'info') => {
+    switch (type) {
+        case 'success':
+            toast.success(message);
+            break;
+        case 'error':
+            toast.error(message);
+            break;
+        case 'warning':
+            toast.warning(message);
+            break;
+        default:
+            toast.info(message);
+    }
+};
+
+// 9. FUNCIONES DE UTILIDAD
+const formatPrice = (price) => {
+    return parseFloat(price || 0).toFixed(2);
+};
+
+// 10. WATCHERS PARA AUTO-GUARDAR
+watch([discount, tax, paymentMethod], () => {
+    if (cartItems.value.length > 0) {
+        saveCartToStorage();
+    }
+});
+
+// 11. LIFECYCLE HOOKS
+onMounted(() => {
+    // Cargar carrito guardado
+    loadCartFromStorage();
+    console.log('🛒 POS iniciado - Carrito persistente activado');
+});
+
+onBeforeUnmount(() => {
+    // Guardar antes de salir de la página
+    if (cartItems.value.length > 0) {
+        saveCartToStorage();
+    }
+});
+</script>
+
 <template>
     <Head title="Punto de Venta" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -385,343 +723,5 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
-
-<script setup>
-// 1. IMPORTS CORRECTOS AL INICIO
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { useToast } from 'vue-toastification';
-
-// 2. PROPS DEL COMPONENTE
-const props = defineProps({
-    menu_items: Object,
-    simple_products: Object
-});
-
-// 3. ESTADO PRINCIPAL DEL POS
-const searchTerm = ref('');
-const selectedCategory = ref('');
-const activeTab = ref('menu');
-const cartItems = ref([]);
-const discount = ref(0);
-const tax = ref(0);
-const paymentMethod = ref('efectivo');
-const processing = ref(false);
-const toast = useToast();
-
-// VENTA LIBRE
-const isFreeSale = ref(false);
-const freeSaleDescription = ref('');
-const freeSaleTotal = ref('');
-
-// 4. FUNCIONES DE PERSISTENCIA DEL CARRITO
-const saveCartToStorage = () => {
-    const cartData = {
-        items: cartItems.value,
-        discount: discount.value,
-        tax: tax.value,
-        paymentMethod: paymentMethod.value,
-        timestamp: Date.now()
-    };
-    localStorage.setItem('pos_cart_data', JSON.stringify(cartData));
-};
-
-const loadCartFromStorage = () => {
-    try {
-        const savedCart = localStorage.getItem('pos_cart_data');
-        if (savedCart) {
-            const cartData = JSON.parse(savedCart);
-            
-            // Verificar que no sea muy antiguo (24 horas)
-            const isExpired = (Date.now() - cartData.timestamp) > 24 * 60 * 60 * 1000;
-            
-            if (!isExpired && cartData.items) {
-                cartItems.value = cartData.items || [];
-                discount.value = cartData.discount || 0;
-                tax.value = cartData.tax || 0;
-                paymentMethod.value = cartData.paymentMethod || 'efectivo';
-                
-                if (cartItems.value.length > 0) {
-                    showNotification(`Carrito restaurado con ${cartItems.value.length} productos`, 'info');
-                }
-            } else {
-                // Limpiar carrito expirado
-                clearCartStorage();
-            }
-        }
-    } catch (error) {
-        console.warn('Error cargando carrito guardado:', error);
-        clearCartStorage();
-    }
-};
-
-const clearCartStorage = () => {
-    localStorage.removeItem('pos_cart_data');
-};
-
-// 5. COMPUTED PROPERTIES
-const currentDate = computed(() => {
-    return new Date().toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-});
-
-const groupedProducts = computed(() => {
-    const menuProducts = (props.menu_items.data || []).map(item => ({
-        ...item,
-        product_type: 'menu'
-    }));
-    
-    const simpleProducts = (props.simple_products.data || []).map(item => ({
-        ...item,
-        product_type: 'simple'
-    }));
-
-    // Filtrar por búsqueda y categoría
-    const allProducts = [...menuProducts, ...simpleProducts].filter(product => {
-        const matchesSearch = !searchTerm.value || 
-            product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
-        
-        const matchesCategory = !selectedCategory.value || 
-            (selectedCategory.value === 'menu' && product.product_type === 'menu') ||
-            (selectedCategory.value !== 'menu' && product.category === selectedCategory.value);
-        
-        return matchesSearch && matchesCategory;
-    });
-
-    // Agrupar por categorías
-    const groups = {
-        menu: { title: 'Platillos del Menú', items: [] },
-        bebida: { title: 'Bebidas', items: [] },
-        extra: { title: 'Extras', items: [] },
-        condimento: { title: 'Condimentos', items: [] },
-    };
-
-    allProducts.forEach(product => {
-        const category = product.product_type === 'menu' ? 'menu' : product.category;
-        if (groups[category]) {
-            groups[category].items.push(product);
-        }
-    });
-
-    return groups;
-});
-
-const subtotal = computed(() => {
-    return cartItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-});
-
-const total = computed(() => {
-    return Math.max(0, subtotal.value - parseFloat(discount.value || 0) + parseFloat(tax.value || 0));
-});
-
-// 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
-const addToCart = (product) => {
-    if (!product.is_in_stock) {
-        showNotification('Este producto no está disponible por falta de stock', 'warning');
-        return;
-    }
-
-    const existingIndex = cartItems.value.findIndex(item => 
-        item.id === product.id && item.product_type === product.product_type
-    );
-    
-    if (existingIndex >= 0) {
-        if (cartItems.value[existingIndex].quantity < product.available_quantity) {
-            cartItems.value[existingIndex].quantity++;
-            showNotification(`${product.name} agregado al carrito`, 'success');
-        } else {
-            showNotification(`Solo hay ${product.available_quantity} ${product.name} disponibles`, 'warning');
-        }
-    } else {
-        cartItems.value.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: 1,
-            available_quantity: product.available_quantity,
-            product_type: product.product_type
-        });
-        showNotification(`${product.name} agregado al carrito`, 'success');
-    }
-    
-    // Guardar automáticamente
-    saveCartToStorage();
-};
-
-const incrementQuantity = (index) => {
-    const item = cartItems.value[index];
-    if (item.quantity < item.available_quantity) {
-        item.quantity++;
-        saveCartToStorage();
-    } else {
-        showNotification(`Stock máximo alcanzado para ${item.name}`, 'warning');
-    }
-};
-
-const decrementQuantity = (index) => {
-    const item = cartItems.value[index];
-    if (item.quantity > 1) {
-        item.quantity--;
-        saveCartToStorage();
-    } else {
-        removeFromCart(index);
-    }
-};
-
-const removeFromCart = (index) => {
-    const item = cartItems.value[index];
-    cartItems.value.splice(index, 1);
-    showNotification(`${item.name} eliminado del carrito`, 'info');
-    saveCartToStorage();
-};
-
-const clearCart = () => {
-    if (confirm('¿Estás seguro de limpiar el carrito?')) {
-        cartItems.value = [];
-        discount.value = 0;
-        tax.value = 0;
-        clearCartStorage();
-        showNotification('Carrito limpiado', 'info');
-    }
-};
-
-// 7. PROCESAR VENTA
-const processSale = () => {
-    // Validaciones para venta libre
-    if (isFreeSale.value) {
-        if (!freeSaleDescription.value || freeSaleDescription.value.length < 3) {
-            showNotification('La descripción debe tener al menos 3 caracteres', 'warning');
-            return;
-        }
-
-        if (!freeSaleTotal.value || parseFloat(freeSaleTotal.value) <= 0) {
-            showNotification('El monto debe ser mayor a 0', 'warning');
-            return;
-        }
-    } else {
-        // Validación para venta normal
-        if (cartItems.value.length === 0) {
-            showNotification('El carrito está vacío', 'warning');
-            return;
-        }
-    }
-
-    if (!paymentMethod.value) {
-        showNotification('Selecciona un método de pago', 'warning');
-        return;
-    }
-
-    processing.value = true;
-
-    const saleData = isFreeSale.value ? {
-        // Datos para venta libre
-        is_free_sale: true,
-        free_sale_description: freeSaleDescription.value,
-        free_sale_total: parseFloat(freeSaleTotal.value),
-        payment_method: paymentMethod.value,
-        discount: 0,
-        tax: 0
-    } : {
-        // Datos para venta normal
-        is_free_sale: false,
-        items: cartItems.value.map(item => ({
-            id: item.id,
-            product_type: item.product_type,
-            quantity: item.quantity,
-            unit_price: item.price
-        })),
-        payment_method: paymentMethod.value,
-        discount: parseFloat(discount.value || 0),
-        tax: parseFloat(tax.value || 0)
-    };
-
-    console.log('Enviando datos de venta:', saleData);
-
-    router.post(route('sales.pos.store'), saleData, {
-        onSuccess: (page) => {
-            console.log('Venta exitosa:', page);
-            const message = isFreeSale.value
-                ? '¡Venta libre procesada exitosamente!'
-                : '¡Venta procesada exitosamente!';
-            showNotification(message, 'success');
-
-            // Limpiar carrito y storage después de venta exitosa
-            cartItems.value = [];
-            discount.value = 0;
-            tax.value = 0;
-            paymentMethod.value = 'efectivo';
-
-            // Limpiar datos de venta libre
-            isFreeSale.value = false;
-            freeSaleDescription.value = '';
-            freeSaleTotal.value = '';
-
-            clearCartStorage();
-        },
-        onError: (errors) => {
-            console.error('Error en venta:', errors);
-            
-            if (errors.message) {
-                showNotification('Error: ' + errors.message, 'error');
-            } else if (typeof errors === 'object') {
-                showNotification('Error: ' + Object.values(errors).join(', '), 'error');
-            } else {
-                showNotification('Error desconocido al procesar la venta', 'error');
-            }
-        },
-        onFinish: () => {
-            processing.value = false;
-        }
-    });
-};
-
-// 8. SISTEMA DE NOTIFICACIONES (usando vue-toastification)
-const showNotification = (message, type = 'info') => {
-    switch (type) {
-        case 'success':
-            toast.success(message);
-            break;
-        case 'error':
-            toast.error(message);
-            break;
-        case 'warning':
-            toast.warning(message);
-            break;
-        default:
-            toast.info(message);
-    }
-};
-
-// 9. FUNCIONES DE UTILIDAD
-const formatPrice = (price) => {
-    return parseFloat(price || 0).toFixed(2);
-};
-
-// 10. WATCHERS PARA AUTO-GUARDAR
-watch([discount, tax, paymentMethod], () => {
-    if (cartItems.value.length > 0) {
-        saveCartToStorage();
-    }
-});
-
-// 11. LIFECYCLE HOOKS
-onMounted(() => {
-    // Cargar carrito guardado
-    loadCartFromStorage();
-    console.log('🛒 POS iniciado - Carrito persistente activado');
-});
-
-onBeforeUnmount(() => {
-    // Guardar antes de salir de la página
-    if (cartItems.value.length > 0) {
-        saveCartToStorage();
-    }
-});
-</script>

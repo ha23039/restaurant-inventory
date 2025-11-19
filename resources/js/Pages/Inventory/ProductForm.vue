@@ -1,7 +1,7 @@
 <template>
     <Head :title="product ? 'Editar Producto' : 'Nuevo Producto'" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center space-x-4">
                 <Link 
@@ -267,13 +267,13 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 // Props
 const props = defineProps({

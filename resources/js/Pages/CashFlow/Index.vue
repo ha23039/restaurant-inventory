@@ -1,5 +1,5 @@
 <template>
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
@@ -238,14 +238,14 @@
             @close="showExportModal = false"
             @export="handleExport"
         />
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import { useToast } from '@/Composables/useToast';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';

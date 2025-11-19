@@ -1,5 +1,85 @@
+<script setup>
+import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import BaseCard from '@/Components/Base/BaseCard.vue';
+import BaseBadge from '@/Components/Base/BaseBadge.vue';
+import BaseButton from '@/Components/Base/BaseButton.vue';
+import FormInput from '@/Components/Forms/FormInput.vue';
+import FormSelect from '@/Components/Forms/FormSelect.vue';
+import TrendChart from '@/Components/Charts/TrendChart.vue';
+import CategoryPieChart from '@/Components/Charts/CategoryPieChart.vue';
+import PaymentMethodChart from '@/Components/Charts/PaymentMethodChart.vue';
+
+const props = defineProps({
+    filters: Object,
+    kpis: Object,
+    trends: Object,
+    categoryChart: Object,
+    paymentMethodChart: Object,
+    topExpenses: Array,
+    recentTransactions: Array,
+    summary: Object,
+});
+
+// Local state for filters
+const dateFrom = ref(props.filters.date_from);
+const dateTo = ref(props.filters.date_to);
+const selectedPeriod = ref(props.filters.period);
+
+const periodOptions = [
+    { value: 'day', label: 'Diario' },
+    { value: 'week', label: 'Semanal' },
+    { value: 'month', label: 'Mensual' },
+    { value: 'year', label: 'Anual' },
+];
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+        minimumFractionDigits: 2,
+    }).format(value);
+};
+
+const handleDateRangeChange = () => {
+    router.visit(route('financial.dashboard'), {
+        data: {
+            date_from: dateFrom.value,
+            date_to: dateTo.value,
+            period: selectedPeriod.value,
+        },
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+const handlePeriodChange = () => {
+    router.visit(route('financial.dashboard'), {
+        data: {
+            date_from: dateFrom.value,
+            date_to: dateTo.value,
+            period: selectedPeriod.value,
+        },
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+const resetFilters = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    dateFrom.value = firstDay.toISOString().split('T')[0];
+    dateTo.value = today.toISOString().split('T')[0];
+    selectedPeriod.value = 'month';
+
+    handleDateRangeChange();
+};
+</script>
+
 <template>
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
@@ -501,85 +581,5 @@
                 </BaseCard>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import BaseCard from '@/Components/Base/BaseCard.vue';
-import BaseBadge from '@/Components/Base/BaseBadge.vue';
-import BaseButton from '@/Components/Base/BaseButton.vue';
-import FormInput from '@/Components/Forms/FormInput.vue';
-import FormSelect from '@/Components/Forms/FormSelect.vue';
-import TrendChart from '@/Components/Charts/TrendChart.vue';
-import CategoryPieChart from '@/Components/Charts/CategoryPieChart.vue';
-import PaymentMethodChart from '@/Components/Charts/PaymentMethodChart.vue';
-
-const props = defineProps({
-    filters: Object,
-    kpis: Object,
-    trends: Object,
-    categoryChart: Object,
-    paymentMethodChart: Object,
-    topExpenses: Array,
-    recentTransactions: Array,
-    summary: Object,
-});
-
-// Local state for filters
-const dateFrom = ref(props.filters.date_from);
-const dateTo = ref(props.filters.date_to);
-const selectedPeriod = ref(props.filters.period);
-
-const periodOptions = [
-    { value: 'day', label: 'Diario' },
-    { value: 'week', label: 'Semanal' },
-    { value: 'month', label: 'Mensual' },
-    { value: 'year', label: 'Anual' },
-];
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN',
-        minimumFractionDigits: 2,
-    }).format(value);
-};
-
-const handleDateRangeChange = () => {
-    router.visit(route('financial.dashboard'), {
-        data: {
-            date_from: dateFrom.value,
-            date_to: dateTo.value,
-            period: selectedPeriod.value,
-        },
-        preserveState: true,
-        preserveScroll: true,
-    });
-};
-
-const handlePeriodChange = () => {
-    router.visit(route('financial.dashboard'), {
-        data: {
-            date_from: dateFrom.value,
-            date_to: dateTo.value,
-            period: selectedPeriod.value,
-        },
-        preserveState: true,
-        preserveScroll: true,
-    });
-};
-
-const resetFilters = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    dateFrom.value = firstDay.toISOString().split('T')[0];
-    dateTo.value = today.toISOString().split('T')[0];
-    selectedPeriod.value = 'month';
-
-    handleDateRangeChange();
-};
-</script>

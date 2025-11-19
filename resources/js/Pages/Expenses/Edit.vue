@@ -1,6 +1,6 @@
 <script setup>
 import { Head, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import ExpenseForm from '@/Components/Financial/ExpenseForm.vue';
 import { useForm } from '@/composables';
@@ -50,7 +50,7 @@ const handleCancel = () => {
 <template>
     <Head title="Editar Gasto" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Editar Gasto
@@ -87,5 +87,5 @@ const handleCancel = () => {
                 </BaseCard>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

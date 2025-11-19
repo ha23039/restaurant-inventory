@@ -1,7 +1,7 @@
 <template>
     <Head :title="`Venta #${sale?.sale_number || 'N/A'}`" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -534,7 +534,7 @@
                 </div>
             </div>
         </div>
-        <!-- Agregar al final del template, antes de </AuthenticatedLayout> -->
+        <!-- Agregar al final del template, antes de </AdminLayout> -->
 
 <!-- Modal de Vista Previa de Comanda de Cocina -->
 <div v-if="showKitchenPreview" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -635,13 +635,13 @@
         </div>
     </div>
 </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 // Props
 const props = defineProps({

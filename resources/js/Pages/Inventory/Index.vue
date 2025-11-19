@@ -1,7 +1,7 @@
 <template>
     <Head title="Dashboard de Inventario" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex items-center">
                 <component :is="icons.inventory" class="w-6 h-6 text-gray-800 mr-2" />
@@ -317,12 +317,12 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useIcons } from '@/composables/useIcons';
 
 const { icons } = useIcons();
