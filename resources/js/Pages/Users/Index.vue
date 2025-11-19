@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import UserFormModal from './UserFormModal.vue';
 
 const props = defineProps({
     users: Object,
@@ -395,13 +396,13 @@ const hasActiveFilters = computed(() => {
             </div>
         </div>
 
-        <!-- User Form Modal (placeholder - will create next) -->
-        <!-- <UserFormModal
+        <!-- User Form Modal -->
+        <UserFormModal
             :show="showUserModal"
             :user="editingUser"
             :roles="roles"
             @close="closeModal"
-        /> -->
+        />
 
         <!-- Delete Confirmation Modal -->
         <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 overflow-y-auto">
