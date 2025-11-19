@@ -1,12 +1,12 @@
 <template>
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
                 Historial de Sesiones de Caja
             </h2>
         </template>
 
-        <div class="py-12">
+        <div class="space-y-6">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Filtros -->
                 <div class="mb-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -78,7 +78,7 @@
                 <!-- Tabla de Sesiones -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div v-if="sessions.data.length === 0" class="text-center py-12">
+                        <div v-if="sessions.data.length === 0" class="text-center space-y-6">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
@@ -218,13 +218,13 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
