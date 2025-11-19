@@ -7,11 +7,13 @@ use App\Repositories\Contracts\MenuItemRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Repositories\Contracts\SimpleProductRepositoryInterface;
+use App\Repositories\Contracts\TableRepositoryInterface;
 use App\Repositories\Eloquent\CashFlowRepository;
 use App\Repositories\Eloquent\MenuItemRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\SaleRepository;
 use App\Repositories\Eloquent\SimpleProductRepository;
+use App\Repositories\Eloquent\TableRepository;
 use App\Repositories\Interfaces\CashRegisterRepositoryInterface;
 use App\Repositories\CashRegisterRepository;
 use Illuminate\Support\Facades\Vite;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MenuItemRepositoryInterface::class, MenuItemRepository::class);
         $this->app->bind(SimpleProductRepositoryInterface::class, SimpleProductRepository::class);
         $this->app->bind(CashRegisterRepositoryInterface::class, CashRegisterRepository::class);
+        $this->app->bind(TableRepositoryInterface::class, TableRepository::class);
     }
 
     /**
