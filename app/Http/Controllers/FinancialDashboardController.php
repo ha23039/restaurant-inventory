@@ -52,7 +52,7 @@ class FinancialDashboardController extends Controller
 
         // Get recent transactions
         $recentTransactions = CashFlowResource::collection(
-            collect($this->repository->getRecent(10))
+            $this->repository->getRecent(10)
         );
 
         // Calculate KPIs

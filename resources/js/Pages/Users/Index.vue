@@ -211,9 +211,11 @@ const hasActiveFilters = computed(() => {
                             @change="applyFilters"
                         >
                             <option value="">Todos</option>
-                            <option v-for="role in roles" :key="role.value" :value="role.value">
-                                {{ role.label }}
-                            </option>
+                            <template v-for="role in roles" :key="role.value">
+                                <option v-if="role && role.label" :value="role.value">
+                                    {{ role.label }}
+                                </option>
+                            </template>
                         </select>
                     </div>
 
@@ -375,21 +377,22 @@ const hasActiveFilters = computed(() => {
                             resultados
                         </div>
                         <div class="flex gap-2">
-                            <Link
-                                v-for="link in users.links"
-                                :key="link.label"
-                                :href="link.url"
-                                v-html="link.label"
-                                :class="[
-                                    'px-3 py-2 text-sm rounded-lg transition-colors',
-                                    link.active
-                                        ? 'bg-blue-600 text-white'
-                                        : link.url
-                                        ? 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                ]"
-                                :preserve-scroll="true"
-                            />
+                            <template v-for="(link, index) in users.links" :key="`pagination-${index}`">
+                                <Link
+                                    v-if="link && link.label"
+                                    :href="link.url"
+                                    v-html="link.label"
+                                    :class="[
+                                        'px-3 py-2 text-sm rounded-lg transition-colors',
+                                        link.active
+                                            ? 'bg-blue-600 text-white'
+                                            : link.url
+                                            ? 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    ]"
+                                    :preserve-scroll="true"
+                                />
+                            </template>
                         </div>
                     </div>
                 </div>

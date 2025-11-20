@@ -311,7 +311,7 @@ class CashFlowRepositoryTest extends TestCase
 
         // Assert
         $this->assertCount(10, $recent);
-        $this->assertEquals('Transacción 1', $recent[0]['description']);
+        $this->assertEquals('Transacción 1', $recent[0]->description);
     }
 
     public function test_gets_top_expense_categories(): void

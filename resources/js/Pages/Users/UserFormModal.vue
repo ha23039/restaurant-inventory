@@ -84,9 +84,11 @@
                                 :class="{ 'border-red-500': form.errors.role }"
                             >
                                 <option value="">Seleccionar rol</option>
-                                <option v-for="role in roles" :key="role.value" :value="role.value">
-                                    {{ role.label }}
-                                </option>
+                                <template v-for="role in roles" :key="role.value">
+                                    <option v-if="role && role.label" :value="role.value">
+                                        {{ role.label }}
+                                    </option>
+                                </template>
                             </select>
                             <div v-if="form.errors.role" class="text-red-500 text-sm mt-1">
                                 {{ form.errors.role }}
@@ -241,6 +243,12 @@ const form = useForm({
     password_confirmation: '',
 });
 
+// Reset form function - declared before watch to avoid hoisting issues
+const resetForm = () => {
+    form.reset();
+    form.clearErrors();
+};
+
 // Watch for user changes to populate form
 watch(() => props.user, (newUser) => {
     if (newUser) {
@@ -255,11 +263,6 @@ watch(() => props.user, (newUser) => {
         resetForm();
     }
 }, { immediate: true });
-
-const resetForm = () => {
-    form.reset();
-    form.clearErrors();
-};
 
 const handleClose = () => {
     if (!form.processing) {

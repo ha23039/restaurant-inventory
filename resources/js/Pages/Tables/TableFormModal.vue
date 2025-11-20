@@ -27,6 +27,12 @@ const form = useForm({
     is_active: true,
 });
 
+// Reset form function - declared before watch to avoid hoisting issues
+const resetForm = () => {
+    form.reset();
+    form.clearErrors();
+};
+
 // Watch for table changes to populate form
 watch(() => props.table, (newTable) => {
     if (newTable) {
@@ -41,11 +47,6 @@ watch(() => props.table, (newTable) => {
         resetForm();
     }
 }, { immediate: true });
-
-const resetForm = () => {
-    form.reset();
-    form.clearErrors();
-};
 
 const handleClose = () => {
     if (!form.processing) {

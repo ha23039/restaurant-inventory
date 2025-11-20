@@ -261,15 +261,14 @@ class CashFlowRepository
     /**
      * Get recent transactions
      */
-    public function getRecent(int $limit = 10): array
+    public function getRecent(int $limit = 10)
     {
         return $this->model
             ->with(['user', 'sale'])
             ->orderBy('flow_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
-            ->get()
-            ->toArray();
+            ->get();
     }
 
     /**
