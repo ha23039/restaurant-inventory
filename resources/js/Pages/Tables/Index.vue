@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import TableSlideOver from './TableSlideOver.vue';
+import TableFormModal from './TableFormModal.vue';
 
 const props = defineProps({
     tables: Array,
@@ -32,6 +33,25 @@ const closeSlideOver = () => {
     showSlideOver.value = false;
     selectedTable.value = null;
     // Refresh data
+    router.reload({ only: ['tables', 'statistics'] });
+};
+
+// Open modal for creating table
+const openCreateModal = () => {
+    editingTable.value = null;
+    showTableFormModal.value = true;
+};
+
+// Open modal for editing table
+const openEditModal = (table) => {
+    editingTable.value = table;
+    showTableFormModal.value = true;
+};
+
+// Close modal
+const closeFormModal = () => {
+    showTableFormModal.value = false;
+    editingTable.value = null;
     router.reload({ only: ['tables', 'statistics'] });
 };
 
@@ -317,7 +337,11 @@ const hasActiveFilters = computed(() => {
             @close="closeSlideOver"
         />
 
-        <!-- Table Form Modal (placeholder for future) -->
-        <!-- Will be created later -->
+        <!-- Table Form Modal -->
+        <TableFormModal
+            :show="showTableFormModal"
+            :table="editingTable"
+            @close="closeFormModal"
+        />
     </AdminLayout>
 </template>
