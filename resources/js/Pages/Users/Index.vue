@@ -135,7 +135,7 @@ const hasActiveFilters = computed(() => {
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-500">Total Usuarios</div>
-                            <div class="text-2xl font-bold text-gray-900">{{ statistics.total }}</div>
+                            <div class="text-2xl font-bold text-gray-900">{{ statistics?.total || 0 }}</div>
                         </div>
                     </div>
                 </div>
@@ -151,7 +151,7 @@ const hasActiveFilters = computed(() => {
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-500">Activos</div>
-                            <div class="text-2xl font-bold text-green-600">{{ statistics.active }}</div>
+                            <div class="text-2xl font-bold text-green-600">{{ statistics?.active || 0 }}</div>
                         </div>
                     </div>
                 </div>
@@ -167,7 +167,7 @@ const hasActiveFilters = computed(() => {
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-500">Inactivos</div>
-                            <div class="text-2xl font-bold text-red-600">{{ statistics.inactive }}</div>
+                            <div class="text-2xl font-bold text-red-600">{{ statistics?.inactive || 0 }}</div>
                         </div>
                     </div>
                 </div>
@@ -183,7 +183,7 @@ const hasActiveFilters = computed(() => {
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-500">Administradores</div>
-                            <div class="text-2xl font-bold text-purple-600">{{ statistics.by_role.admin }}</div>
+                            <div class="text-2xl font-bold text-purple-600">{{ statistics?.by_role?.admin || 0 }}</div>
                         </div>
                     </div>
                 </div>
