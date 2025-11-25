@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\CashFlow;
+use App\Models\Product;
+use App\Models\InventoryMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +16,11 @@ class ExpenseService
     public function create(array $data): CashFlow
     {
         return DB::transaction(function () use ($data) {
+            // If it's a product purchase, handle inventory update
+            if ($data['category'] === 'compra_productos_insumos' && !empty($data['products'])) {
+                $this->updateInventoryFromProducts($data['products'], $data['expense_date'], $data['payment_method'] ?? null);
+            }
+
             // Create cash flow entry for the expense
             $cashFlow = CashFlow::create([
                 'user_id' => Auth::id(),
@@ -25,7 +32,7 @@ class ExpenseService
                 'flow_date' => $data['expense_date'],
             ]);
 
-            // If supplier_id is provided, store it in notes or create a separate relation
+            // If supplier_id is provided, store it in notes
             if (!empty($data['supplier_id'])) {
                 $supplierNote = "Proveedor ID: {$data['supplier_id']}";
                 $cashFlow->notes = $cashFlow->notes
@@ -34,8 +41,55 @@ class ExpenseService
                 $cashFlow->save();
             }
 
+            // Add payment method to notes
+            if (!empty($data['payment_method'])) {
+                $paymentNote = "Método de pago: " . ucfirst($data['payment_method']);
+                $cashFlow->notes = $cashFlow->notes
+                    ? $cashFlow->notes . "\n" . $paymentNote
+                    : $paymentNote;
+                $cashFlow->save();
+            }
+
+            // Add products summary to notes if applicable
+            if ($data['category'] === 'compra_productos_insumos' && !empty($data['products'])) {
+                $productsSummary = "Productos comprados: " . count($data['products']) . " items";
+                $cashFlow->notes = $cashFlow->notes
+                    ? $cashFlow->notes . "\n" . $productsSummary
+                    : $productsSummary;
+                $cashFlow->save();
+            }
+
             return $cashFlow->fresh();
         });
+    }
+
+    /**
+     * Update inventory from purchased products
+     */
+    protected function updateInventoryFromProducts(array $products, string $purchaseDate, ?string $paymentMethod = null): void
+    {
+        foreach ($products as $productData) {
+            $product = Product::findOrFail($productData['product_id']);
+
+            // Update stock
+            $product->increment('current_stock', $productData['quantity']);
+
+            // Update unit cost (weighted average or just update)
+            $product->unit_cost = $productData['cost_price'];
+            $product->save();
+
+            // Create inventory movement record
+            InventoryMovement::create([
+                'product_id' => $product->id,
+                'user_id' => Auth::id(),
+                'movement_type' => 'entrada',
+                'quantity' => $productData['quantity'],
+                'reason' => 'compra',
+                'notes' => "Compra de producto. Precio: $" . number_format($productData['cost_price'], 2) .
+                          ($paymentMethod ? " | Método: " . ucfirst($paymentMethod) : ''),
+                'movement_date' => $purchaseDate,
+            ]);
+        }
     }
 
     /**
@@ -155,11 +209,15 @@ class ExpenseService
     public function getCategories(): array
     {
         return [
-            ['value' => 'compras', 'label' => 'Compras'],
-            ['value' => 'gastos_operativos', 'label' => 'Gastos Operativos'],
+            ['value' => 'servicios_publicos', 'label' => 'Servicios Públicos'],
+            ['value' => 'compra_productos_insumos', 'label' => 'Compra de Productos e Insumos'],
+            ['value' => 'arriendo', 'label' => 'Arriendo'],
+            ['value' => 'nomina', 'label' => 'Nómina'],
             ['value' => 'gastos_admin', 'label' => 'Gastos Administrativos'],
-            ['value' => 'mantenimiento', 'label' => 'Mantenimiento'],
             ['value' => 'marketing', 'label' => 'Marketing'],
+            ['value' => 'transporte_domicilios', 'label' => 'Transporte, Domicilios y Logística'],
+            ['value' => 'mantenimiento_reparaciones', 'label' => 'Mantenimiento y Reparaciones'],
+            ['value' => 'muebles_equipos', 'label' => 'Muebles, Equipos y Maquinaria'],
             ['value' => 'otros', 'label' => 'Otros'],
         ];
     }

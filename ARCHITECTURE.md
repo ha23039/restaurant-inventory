@@ -375,7 +375,7 @@ Desarrollar un **sistema completo de gestión de restaurantes** que permita a pr
 
 #### 1. Cierre de Caja Diario
 **Prioridad**: CRÍTICA
-**Descripción**: Sistema completo de apertura/cierre de turno con cuadre de efectivo
+**Descripción**: Sistema completo de apertura/cierre de turno con cuadre de efectivo (realizado en un 70%)
 
 **Componentes necesarios**:
 ```
@@ -486,7 +486,7 @@ PurchaseOrderItem (id, purchase_order_id, product_id, quantity, unit_cost, total
 
 **Estimado**: 3 días
 
-#### 6. Gestión de Mesas (Para servicio en restaurante)
+#### 6. Gestión de Mesas (Para servicio en restaurante) (implementado en un 70%)
 **Descripción**: Asignación de ventas a mesas
 
 **Modelo**:
@@ -540,7 +540,7 @@ composer require owen-it/laravel-auditing
 
 **Estimado**: 2 días
 
-#### 10. Exportación de Reportes
+#### 10. Exportación de Reportes (40% completado)
 **Formatos**: Excel, PDF, CSV
 **Reportes**: Ventas, Inventario, Flujo de Efectivo, Devoluciones
 
@@ -553,12 +553,13 @@ composer require maatwebsite/excel
 
 ### 🟢 BAJAS (Nice to have)
 
-- Multi-sucursal
+- Multi-sucursal (fundamental para vender el software)
 - Programa de lealtad
 - Reservaciones
 - Inventario por lotes
 - Integración con facturación electrónica (SAT México)
-- WhatsApp notifications
+- WhatsApp notifications (util)
+- Integración con Google Maps (para delivery)
 
 ---
 

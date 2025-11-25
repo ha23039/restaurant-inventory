@@ -137,11 +137,17 @@ class CashFlow extends Model
         $labels = [
             'ventas' => 'Ventas',
             'compras' => 'Compras',
+            'servicios_publicos' => 'Servicios Públicos',
+            'compra_productos_insumos' => 'Compra de Productos e Insumos',
+            'arriendo' => 'Arriendo',
+            'nomina' => 'Nómina',
             'gastos_operativos' => 'Gastos Operativos',
             'gastos_admin' => 'Gastos Administrativos',
-            'devoluciones' => 'Devoluciones',
-            'mantenimiento' => 'Mantenimiento',
             'marketing' => 'Marketing',
+            'transporte_domicilios' => 'Transporte, Domicilios y Logística',
+            'mantenimiento_reparaciones' => 'Mantenimiento y Reparaciones',
+            'muebles_equipos' => 'Muebles, Equipos y Maquinaria',
+            'devoluciones' => 'Devoluciones',
             'otros' => 'Otros',
         ];
 

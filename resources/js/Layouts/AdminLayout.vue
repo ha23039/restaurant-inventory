@@ -21,6 +21,7 @@
                 :breadcrumbs="breadcrumbs"
                 @toggle-mobile-sidebar="toggleMobileSidebar"
                 @open-search="openSearch"
+                @open-new-expense="openNewExpense"
             />
 
             <!-- Page Content -->
@@ -40,6 +41,14 @@
             :is-open="searchOpen"
             @close="closeSearch"
         />
+
+        <!-- Expense SlideOver -->
+        <ExpenseSlideOver
+            :show="expenseSlideOverOpen"
+            :categories="expenseCategories"
+            :suppliers="suppliers"
+            @close="closeExpenseSlideOver"
+        />
     </div>
 </template>
 
@@ -49,6 +58,7 @@ import { usePage } from '@inertiajs/vue3';
 import AdminSidebar from '@/Components/AdminSidebar.vue';
 import AdminHeader from '@/Components/AdminHeader.vue';
 import GlobalSearch from '@/Components/GlobalSearch.vue';
+import ExpenseSlideOver from '@/Components/ExpenseSlideOver.vue';
 
 const props = defineProps({
     breadcrumbs: {
@@ -69,6 +79,25 @@ const mobileSidebarOpen = ref(false);
 
 // Search state
 const searchOpen = ref(false);
+
+// Expense state
+const expenseSlideOverOpen = ref(false);
+
+// Expense categories and suppliers (pass from backend or fetch)
+const expenseCategories = ref([
+    { value: 'servicios_publicos', label: 'Servicios Públicos' },
+    { value: 'compra_productos_insumos', label: 'Compra de Productos e Insumos' },
+    { value: 'arriendo', label: 'Arriendo' },
+    { value: 'nomina', label: 'Nómina' },
+    { value: 'gastos_admin', label: 'Gastos Administrativos' },
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'transporte_domicilios', label: 'Transporte, Domicilios y Logística' },
+    { value: 'mantenimiento_reparaciones', label: 'Mantenimiento y Reparaciones' },
+    { value: 'muebles_equipos', label: 'Muebles, Equipos y Maquinaria' },
+    { value: 'otros', label: 'Otros' },
+]);
+
+const suppliers = ref(page.props.suppliers || []);
 
 // Load sidebar state from localStorage
 onMounted(() => {
@@ -112,5 +141,13 @@ const openSearch = () => {
 
 const closeSearch = () => {
     searchOpen.value = false;
+};
+
+const openNewExpense = () => {
+    expenseSlideOverOpen.value = true;
+};
+
+const closeExpenseSlideOver = () => {
+    expenseSlideOverOpen.value = false;
 };
 </script>

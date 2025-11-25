@@ -22,12 +22,17 @@ class ExpenseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
-            'category' => ['required', 'string', 'in:compras,gastos_operativos,gastos_admin,mantenimiento,marketing,otros'],
+            'amount' => ['nullable', 'numeric', 'min:0.01', 'max:999999.99'],
+            'category' => ['required', 'string', 'in:servicios_publicos,compra_productos_insumos,arriendo,nomina,gastos_admin,marketing,transporte_domicilios,mantenimiento_reparaciones,muebles_equipos,otros'],
             'description' => ['required', 'string', 'min:3', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'expense_date' => ['required', 'date', 'before_or_equal:today'],
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'payment_method' => ['nullable', 'string', 'in:efectivo,tarjeta,transferencia,cheque'],
+            'products' => ['nullable', 'array'],
+            'products.*.product_id' => ['required_with:products', 'exists:products,id'],
+            'products.*.quantity' => ['required_with:products', 'numeric', 'min:0.001'],
+            'products.*.cost_price' => ['required_with:products', 'numeric', 'min:0.01'],
         ];
     }
 

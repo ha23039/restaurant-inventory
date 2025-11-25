@@ -32,7 +32,7 @@
                 </nav>
             </div>
 
-            <!-- Right: Search, Notifications, Dark Mode, Profile -->
+            <!-- Right: Search, Quick Actions, Notifications, Dark Mode, Profile -->
             <div class="flex items-center space-x-2">
                 <!-- Global Search -->
                 <button
@@ -57,6 +57,45 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </button>
+
+                <!-- Quick Actions (only for admin & cajero) -->
+                <div v-if="canAccessQuickActions" class="hidden lg:flex items-center space-x-2 px-3 border-l border-gray-200 dark:border-gray-700">
+                    <!-- Abrir Caja -->
+                    <Link
+                        v-if="canAccess(['admin', 'cajero'])"
+                        :href="route('cashregister.index')"
+                        class="flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span>Abrir Caja</span>
+                    </Link>
+
+                    <!-- Nuevo Gasto -->
+                    <button
+                        v-if="canAccess(['admin'])"
+                        @click="openNewExpense"
+                        class="flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Nuevo Gasto</span>
+                    </button>
+
+                    <!-- Nueva Venta -->
+                    <Link
+                        v-if="canAccess(['admin', 'cajero'])"
+                        :href="route('sales.pos')"
+                        class="flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Nueva Venta</span>
+                    </Link>
+                </div>
 
                 <!-- Notifications -->
                 <Menu as="div" class="relative">
@@ -209,7 +248,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['toggle-mobile-sidebar', 'open-search']);
+const emit = defineEmits(['toggle-mobile-sidebar', 'open-search', 'open-new-expense']);
 
 const page = usePage();
 const { isDark, toggle: toggleDarkMode } = useDarkMode();
@@ -221,6 +260,20 @@ const toggleMobileSidebar = () => {
 const openSearch = () => {
     emit('open-search');
 };
+
+const openNewExpense = () => {
+    emit('open-new-expense');
+};
+
+const canAccess = (allowedRoles) => {
+    const userRole = page.props.auth.user.role;
+    return allowedRoles.includes(userRole);
+};
+
+const canAccessQuickActions = computed(() => {
+    const userRole = page.props.auth.user.role;
+    return ['admin', 'cajero'].includes(userRole);
+});
 
 const userName = computed(() => page.props.auth.user.name);
 const userEmail = computed(() => page.props.auth.user.email);

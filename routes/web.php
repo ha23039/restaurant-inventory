@@ -227,6 +227,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('expenses')->name('expenses.')
 
 /*
 |--------------------------------------------------------------------------
+| Rutas API
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
+    Route::get('/products', [App\Http\Controllers\Api\ProductApiController::class, 'index'])->name('products.index');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para DASHBOARD FINANCIERO (Admin solamente)
 |--------------------------------------------------------------------------
 */

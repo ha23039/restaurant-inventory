@@ -152,6 +152,15 @@
                 </div>
 
                 <NavItem
+                    :href="route('expenses.index')"
+                    :active="route().current('expenses.*')"
+                    :collapsed="isCollapsed"
+                    icon="cashflow"
+                >
+                    Gastos
+                </NavItem>
+
+                <NavItem
                     :href="route('cashflow.index')"
                     :active="route().current('cashflow.*')"
                     :collapsed="isCollapsed"
