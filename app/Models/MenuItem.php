@@ -16,11 +16,13 @@ class MenuItem extends Model
         'price',
         'image_path',
         'is_available',
+        'is_service',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'is_available' => 'boolean',
+        'is_service' => 'boolean',
     ];
 
     public function recipes()
