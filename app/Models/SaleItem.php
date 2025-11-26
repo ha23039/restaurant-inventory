@@ -13,6 +13,8 @@ class SaleItem extends Model
         'sale_id',
         'menu_item_id',
         'simple_product_id',
+        'free_sale_name',
+        'free_sale_price',
         'quantity',
         'unit_price',
         'total_price',
@@ -53,7 +55,9 @@ class SaleItem extends Model
     // Accessor para obtener el nombre del producto
     public function getProductNameAttribute()
     {
-        if ($this->product_type === 'menu') {
+        if ($this->product_type === 'free') {
+            return $this->free_sale_name;
+        } elseif ($this->product_type === 'menu') {
             return $this->menuItem?->name;
         } else {
             return $this->simpleProduct?->name;

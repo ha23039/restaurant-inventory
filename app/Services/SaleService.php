@@ -64,9 +64,10 @@ class SaleService
                 'is_free_sale' => $isFreeSale,
             ]);
 
-            // Para ventas libres, no procesar items ni deducir inventario
-            if (! $isFreeSale) {
-                // Procesar items y deducir inventario
+            // Procesar items (si existen)
+            // Nota: Para ventas libres completas no hay items, para ventas normales siempre hay items
+            if (! $isFreeSale && isset($validatedData['items'])) {
+                // Procesar items y deducir inventario solo para items no-free
                 $this->processSaleItems($sale, $validatedData['items']);
             }
 
@@ -85,6 +86,11 @@ class SaleService
         foreach ($items as $item) {
             $productType = $item['product_type'] ?? 'menu';
             $quantity = $item['quantity'];
+
+            // Saltar verificación para ventas libres (no afectan inventario)
+            if ($productType === 'free') {
+                continue;
+            }
 
             if ($productType === 'menu') {
                 // Verificar ingredientes del menu item
@@ -136,20 +142,35 @@ class SaleService
         foreach ($items as $item) {
             $productType = $item['product_type'] ?? 'menu';
 
-            $saleItem = SaleItem::create([
+            // Crear registro de sale item
+            $saleItemData = [
                 'sale_id' => $sale->id,
-                'menu_item_id' => $productType === 'menu' ? $item['id'] : null,
-                'simple_product_id' => $productType === 'simple' ? $item['id'] : null,
                 'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'total_price' => $item['quantity'] * $item['unit_price'],
                 'product_type' => $productType,
-            ]);
+            ];
 
-            // Deducir inventario usando InventoryService
+            // Para ventas libres, usar campos específicos
+            if ($productType === 'free') {
+                $saleItemData['free_sale_name'] = $item['name'];
+                $saleItemData['free_sale_price'] = $item['price'];
+                $saleItemData['unit_price'] = $item['price'];
+                $saleItemData['total_price'] = $item['quantity'] * $item['price'];
+                $saleItemData['menu_item_id'] = null;
+                $saleItemData['simple_product_id'] = null;
+            } else {
+                // Para productos regulares
+                $saleItemData['menu_item_id'] = $productType === 'menu' ? $item['id'] : null;
+                $saleItemData['simple_product_id'] = $productType === 'simple' ? $item['id'] : null;
+                $saleItemData['unit_price'] = $item['unit_price'];
+                $saleItemData['total_price'] = $item['quantity'] * $item['unit_price'];
+            }
+
+            $saleItem = SaleItem::create($saleItemData);
+
+            // Deducir inventario solo para productos regulares (no para ventas libres)
             if ($productType === 'menu') {
                 $this->inventoryService->deductMenuItemStock($saleItem);
-            } else {
+            } elseif ($productType === 'simple') {
                 $this->inventoryService->deductSimpleProductStock($saleItem);
             }
 
@@ -157,6 +178,7 @@ class SaleService
                 'sale_id' => $sale->id,
                 'product_type' => $productType,
                 'quantity' => $item['quantity'],
+                'is_free_sale' => $productType === 'free',
             ]);
         }
     }

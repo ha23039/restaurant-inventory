@@ -185,7 +185,14 @@ class SaleController extends Controller
                 $baseItem['can_return'] = ($baseItem['can_return_quantity'] > 0) && ($sale->status === 'completada');
 
                 // Agregar datos específicos según el tipo
-                if ($item->product_type === 'menu' && $item->menuItem) {
+                if ($item->product_type === 'free') {
+                    // Venta libre - usar campos free_sale_*
+                    $baseItem['free_sale'] = [
+                        'name' => $item->free_sale_name,
+                        'price' => floatval($item->free_sale_price),
+                    ];
+                    $baseItem['product_name'] = $item->free_sale_name;
+                } elseif ($item->product_type === 'menu' && $item->menuItem) {
                     $baseItem['menu_item'] = [
                         'id' => $item->menuItem->id,
                         'name' => $item->menuItem->name,
@@ -203,6 +210,7 @@ class SaleController extends Controller
                             ];
                         })->toArray(),
                     ];
+                    $baseItem['product_name'] = $item->menuItem->name;
                 } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
                     $baseItem['simple_product'] = [
                         'id' => $item->simpleProduct->id,
@@ -211,6 +219,7 @@ class SaleController extends Controller
                         'sale_price' => floatval($item->simpleProduct->sale_price),
                         'category' => $item->simpleProduct->category,
                     ];
+                    $baseItem['product_name'] = $item->simpleProduct->name;
                 }
 
                 return $baseItem;

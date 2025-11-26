@@ -3,6 +3,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import FreeSaleSlideOver from '@/Components/FreeSaleSlideOver.vue';
 import { useToast } from 'vue-toastification';
 
 // 2. PROPS DEL COMPONENTE
@@ -23,6 +24,7 @@ const processing = ref(false);
 const toast = useToast();
 
 // VENTA LIBRE
+const showFreeSaleSlideOver = ref(false);
 const isFreeSale = ref(false);
 const freeSaleDescription = ref('');
 const freeSaleTotal = ref('');
@@ -165,6 +167,20 @@ const addToCart = (product) => {
     saveCartToStorage();
 };
 
+const addFreeSaleToCart = (freeSaleData) => {
+    cartItems.value.push({
+        id: `free-${Date.now()}`,
+        name: freeSaleData.name,
+        price: freeSaleData.price,
+        quantity: 1,
+        product_type: 'free',
+        category: freeSaleData.category,
+        available_quantity: 999 // Sin límite de stock
+    });
+    showNotification(`${freeSaleData.name} agregado al carrito`, 'success');
+    saveCartToStorage();
+};
+
 const incrementQuantity = (index) => {
     const item = cartItems.value[index];
     if (item.quantity < item.available_quantity) {
@@ -241,12 +257,26 @@ const processSale = () => {
     } : {
         // Datos para venta normal
         is_free_sale: false,
-        items: cartItems.value.map(item => ({
-            id: item.id,
-            product_type: item.product_type,
-            quantity: item.quantity,
-            unit_price: item.price
-        })),
+        items: cartItems.value.map(item => {
+            // Construir objeto base con campos comunes
+            const itemData = {
+                product_type: item.product_type,
+                quantity: item.quantity,
+                unit_price: item.price, // Requerido para todos los items
+            };
+
+            // Para items de tipo 'free', incluir campos adicionales
+            if (item.product_type === 'free') {
+                itemData.name = item.name;
+                itemData.price = item.price;
+                itemData.category = item.category;
+            } else {
+                // Para items regulares (menu/simple), incluir id
+                itemData.id = item.id;
+            }
+
+            return itemData;
+        }),
         payment_method: paymentMethod.value,
         discount: parseFloat(discount.value || 0),
         tax: parseFloat(tax.value || 0)
@@ -367,6 +397,15 @@ onBeforeUnmount(() => {
                                 <div class="flex items-center justify-between mb-6">
                                     <h3 class="text-lg font-semibold text-gray-900">Catálogo de Productos</h3>
                                     <div class="flex items-center space-x-3">
+                                        <button
+                                            @click="showFreeSaleSlideOver = true"
+                                            class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all shadow-sm hover:shadow-md"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            <span>Venta Libre</span>
+                                        </button>
                                         <input
                                             v-model="searchTerm"
                                             type="text"
@@ -724,4 +763,11 @@ onBeforeUnmount(() => {
             </div>
         </div>
     </AdminLayout>
+
+    <!-- Free Sale SlideOver -->
+    <FreeSaleSlideOver
+        :show="showFreeSaleSlideOver"
+        @close="showFreeSaleSlideOver = false"
+        @add="addFreeSaleToCart"
+    />
 </template>

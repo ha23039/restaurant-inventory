@@ -370,10 +370,11 @@
                                                     class="inline-flex items-center justify-center w-10 h-10 rounded-full text-lg"
                                                     :class="{
                                                         'bg-orange-100 text-orange-600': item.product_type === 'menu',
-                                                        'bg-blue-100 text-blue-600': item.product_type === 'simple'
+                                                        'bg-blue-100 text-blue-600': item.product_type === 'simple',
+                                                        'bg-purple-100 text-purple-600': item.product_type === 'free'
                                                     }"
                                                 >
-                                                    {{ item.product_type === 'menu' ? '🍽️' : '🥤' }}
+                                                    {{ item.product_type === 'menu' ? '🍽️' : item.product_type === 'simple' ? '🥤' : '✨' }}
                                                 </span>
                                             </div>
 
@@ -387,14 +388,15 @@
                                                 </p>
 
                                                 <div class="flex items-center space-x-2 mt-1">
-                                                    <span 
+                                                    <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                         :class="{
                                                             'bg-orange-100 text-orange-800': item.product_type === 'menu',
-                                                            'bg-blue-100 text-blue-800': item.product_type === 'simple'
+                                                            'bg-blue-100 text-blue-800': item.product_type === 'simple',
+                                                            'bg-purple-100 text-purple-800': item.product_type === 'free'
                                                         }"
                                                     >
-                                                        {{ item.product_type === 'menu' ? 'Platillo del Menú' : 'Producto Individual' }}
+                                                        {{ item.product_type === 'menu' ? 'Platillo del Menú' : item.product_type === 'simple' ? 'Producto Individual' : 'Venta Libre' }}
                                                     </span>
 
                                                     <span 
@@ -849,16 +851,20 @@ const formatTime = (date) => {
 };
 
 const getProductName = (item) => {
-    if (item.product_type === 'menu' && item.menu_item) {
+    if (item.product_type === 'free' && item.free_sale) {
+        return item.free_sale.name;
+    } else if (item.product_type === 'menu' && item.menu_item) {
         return item.menu_item.name;
     } else if (item.product_type === 'simple' && item.simple_product) {
         return item.simple_product.name;
     }
-    return 'Producto no identificado';
+    return item.product_name || 'Producto no identificado';
 };
 
 const getProductDescription = (item) => {
-    if (item.product_type === 'menu' && item.menu_item) {
+    if (item.product_type === 'free') {
+        return null; // Las ventas libres no tienen descripción adicional
+    } else if (item.product_type === 'menu' && item.menu_item) {
         return item.menu_item.description;
     } else if (item.product_type === 'simple' && item.simple_product) {
         return item.simple_product.description;

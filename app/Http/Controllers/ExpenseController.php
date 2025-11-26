@@ -59,10 +59,8 @@ class ExpenseController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Expenses/Create', [
-            'categories' => $this->expenseService->getCategories(),
-            'suppliers' => Supplier::select('id', 'name')->orderBy('name')->get(),
-        ]);
+        // Redirect to index where the SlideOver will handle creation
+        return redirect()->route('expenses.index');
     }
 
     /**
