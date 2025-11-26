@@ -185,13 +185,20 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
         return Inertia::render('Menu/Index');
     })->name('index');
 
-    Route::get('/items', function () {
-        return Inertia::render('Menu/Items');
-    })->name('items');
+    // Menu Items (Platillos)
+    Route::get('/items', [App\Http\Controllers\MenuItemController::class, 'index'])->name('items');
+    Route::post('/items', [App\Http\Controllers\MenuItemController::class, 'store'])->name('items.store');
+    Route::get('/items/{menuItem}', [App\Http\Controllers\MenuItemController::class, 'show'])->name('items.show');
+    Route::put('/items/{menuItem}', [App\Http\Controllers\MenuItemController::class, 'update'])->name('items.update');
+    Route::delete('/items/{menuItem}', [App\Http\Controllers\MenuItemController::class, 'destroy'])->name('items.destroy');
+    Route::patch('/items/{menuItem}/toggle-availability', [App\Http\Controllers\MenuItemController::class, 'toggleAvailability'])->name('items.toggle-availability');
 
-    Route::get('/recipes', function () {
-        return Inertia::render('Menu/Recipes');
-    })->name('recipes');
+    // Recipes (Recetas)
+    Route::get('/recipes', [App\Http\Controllers\RecipeController::class, 'index'])->name('recipes');
+    Route::post('/recipes', [App\Http\Controllers\RecipeController::class, 'store'])->name('recipes.store');
+    Route::post('/recipes/bulk', [App\Http\Controllers\RecipeController::class, 'bulkStore'])->name('recipes.bulk-store');
+    Route::put('/recipes/{recipe}', [App\Http\Controllers\RecipeController::class, 'update'])->name('recipes.update');
+    Route::delete('/recipes/{recipe}', [App\Http\Controllers\RecipeController::class, 'destroy'])->name('recipes.destroy');
 });
 
 /*
