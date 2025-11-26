@@ -16,14 +16,9 @@ class SimpleProductRepository extends BaseRepository implements SimpleProductRep
     public function getAvailableProducts(): Collection
     {
         return $this->model
-            ->whereHas('product', function ($query) {
-                $query->where('is_active', true);
-            })
-            ->with('product.category')
-            ->get()
-            ->filter(function ($item) {
-                return $this->calculateAvailableQuantity($item->id) > 0;
-            });
+            ->where('is_available', true)
+            ->with('product')
+            ->get();
     }
 
     public function getByCategory(int $categoryId): Collection

@@ -26,12 +26,15 @@ const form = ref({
     is_service: false,
 });
 
+const initialFormState = ref(null);
 const hasChanges = ref(false);
 const processing = ref(false);
 
-// Watch for changes
+// Watch for changes - comparar con estado inicial
 watch(() => form.value, () => {
-    hasChanges.value = true;
+    if (initialFormState.value) {
+        hasChanges.value = JSON.stringify(form.value) !== JSON.stringify(initialFormState.value);
+    }
 }, { deep: true });
 
 // Watch for menuItem changes (edit mode)
@@ -45,6 +48,8 @@ watch(() => props.menuItem, (newItem) => {
             is_available: newItem.is_available !== undefined ? newItem.is_available : true,
             is_service: newItem.is_service !== undefined ? newItem.is_service : false,
         };
+        // Guardar estado inicial
+        initialFormState.value = JSON.parse(JSON.stringify(form.value));
         hasChanges.value = false;
     }
 }, { immediate: true });
@@ -55,6 +60,12 @@ watch(() => props.show, (newVal) => {
         setTimeout(() => {
             resetForm();
         }, 300);
+    } else if (newVal && !props.menuItem) {
+        // Modo crear - resetear primero, luego guardar estado inicial
+        resetForm();
+        setTimeout(() => {
+            initialFormState.value = JSON.parse(JSON.stringify(form.value));
+        }, 100);
     }
 });
 
@@ -69,6 +80,7 @@ const resetForm = () => {
         is_available: true,
         is_service: false,
     };
+    initialFormState.value = null;
     hasChanges.value = false;
 };
 

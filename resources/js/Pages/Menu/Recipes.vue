@@ -42,7 +42,7 @@ const openAddRecipeForm = (menuItem) => {
 };
 
 const openEditRecipeForm = (menuItem, recipe) => {
-    selected MenuItem.value = menuItem;
+    selectedMenuItem.value = menuItem;
     editingRecipe.value = recipe;
     showFormSlideOver.value = true;
 };

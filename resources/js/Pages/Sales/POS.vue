@@ -84,45 +84,125 @@ const currentDate = computed(() => {
     });
 });
 
+// Normalizar categorías para agrupar variaciones
+const normalizeCategoryKey = (category) => {
+    if (!category) return 'otros';
+
+    const normalized = category.toLowerCase().trim();
+
+    // Mapear variaciones comunes
+    if (normalized.includes('bebida')) return 'bebidas';
+    if (normalized.includes('extra')) return 'extras';
+    if (normalized.includes('postre')) return 'postres';
+    if (normalized.includes('entrada')) return 'entradas';
+    if (normalized.includes('plato fuerte') || normalized.includes('platillo')) return 'platos-fuertes';
+    if (normalized.includes('condimento') || normalized.includes('salsa')) return 'condimentos';
+
+    return normalized;
+};
+
+const getCategoryTitle = (key) => {
+    const titles = {
+        'bebidas': 'Bebidas',
+        'extras': 'Extras',
+        'postres': 'Postres',
+        'entradas': 'Entradas',
+        'platos-fuertes': 'Platos Fuertes',
+        'condimentos': 'Condimentos',
+        'otros': 'Otros'
+    };
+
+    return titles[key] || key.charAt(0).toUpperCase() + key.slice(1);
+};
+
+const availableCategories = computed(() => {
+    const categories = new Set();
+
+    // Agregar categorías normalizadas de productos simples
+    (props.simple_products.data || []).forEach(item => {
+        if (item.category) {
+            const normalized = normalizeCategoryKey(item.category);
+            categories.add(normalized);
+        }
+    });
+
+    return ['menu', ...Array.from(categories).sort()];
+});
+
 const groupedProducts = computed(() => {
     const menuProducts = (props.menu_items.data || []).map(item => ({
         ...item,
         product_type: 'menu'
     }));
-    
+
     const simpleProducts = (props.simple_products.data || []).map(item => ({
         ...item,
-        product_type: 'simple'
+        product_type: 'simple',
+        price: item.sale_price, // Mapear sale_price a price para uniformidad
+        is_in_stock: item.is_in_stock !== undefined ? item.is_in_stock : (item.available_quantity > 0)
     }));
 
     // Filtrar por búsqueda y categoría
     const allProducts = [...menuProducts, ...simpleProducts].filter(product => {
-        const matchesSearch = !searchTerm.value || 
+        const matchesSearch = !searchTerm.value ||
             product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
-        
-        const matchesCategory = !selectedCategory.value || 
-            (selectedCategory.value === 'menu' && product.product_type === 'menu') ||
-            (selectedCategory.value !== 'menu' && product.category === selectedCategory.value);
-        
+
+        let matchesCategory = true;
+        if (selectedCategory.value) {
+            if (selectedCategory.value === 'menu') {
+                matchesCategory = product.product_type === 'menu';
+            } else {
+                // Normalizar la categoría del producto para comparar
+                const normalizedProductCategory = normalizeCategoryKey(product.category);
+                matchesCategory = normalizedProductCategory === selectedCategory.value;
+            }
+        }
+
         return matchesSearch && matchesCategory;
     });
 
-    // Agrupar por categorías
+    // Agrupar por categorías - dinámicamente con normalización
     const groups = {
         menu: { title: 'Platillos del Menú', items: [] },
-        bebida: { title: 'Bebidas', items: [] },
-        extra: { title: 'Extras', items: [] },
-        condimento: { title: 'Condimentos', items: [] },
     };
 
     allProducts.forEach(product => {
-        const category = product.product_type === 'menu' ? 'menu' : product.category;
-        if (groups[category]) {
-            groups[category].items.push(product);
+        let categoryKey;
+
+        if (product.product_type === 'menu') {
+            categoryKey = 'menu';
+        } else {
+            // Normalizar la categoría del producto simple
+            categoryKey = normalizeCategoryKey(product.category);
         }
+
+        // Crear grupo dinámicamente si no existe
+        if (!groups[categoryKey]) {
+            groups[categoryKey] = {
+                title: getCategoryTitle(categoryKey),
+                items: []
+            };
+        }
+
+        groups[categoryKey].items.push(product);
     });
 
-    return groups;
+    // Ordenar grupos: menú primero, luego alfabéticamente
+    const sortedGroups = {};
+    if (groups.menu && groups.menu.items.length > 0) {
+        sortedGroups.menu = groups.menu;
+    }
+
+    Object.keys(groups)
+        .filter(key => key !== 'menu')
+        .sort()
+        .forEach(key => {
+            if (groups[key].items.length > 0) {
+                sortedGroups[key] = groups[key];
+            }
+        });
+
+    return sortedGroups;
 });
 
 const subtotal = computed(() => {
@@ -417,10 +497,13 @@ onBeforeUnmount(() => {
                                             class="text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                         >
                                             <option value="">Todas las categorías</option>
-                                            <option value="menu">Platillos del Menú</option>
-                                            <option value="bebida">Bebidas</option>
-                                            <option value="extra">Extras</option>
-                                            <option value="condimento">Condimentos</option>
+                                            <option
+                                                v-for="category in availableCategories"
+                                                :key="category"
+                                                :value="category"
+                                            >
+                                                {{ category === 'menu' ? 'Platillos del Menú' : getCategoryTitle(category) }}
+                                            </option>
                                         </select>
                                     </div>
                                 </div>

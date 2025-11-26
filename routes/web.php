@@ -203,6 +203,19 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para PRODUCTOS SIMPLES (Admin + Almacenero)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,almacenero'])->prefix('simple-products')->name('simple-products.')->group(function () {
+    Route::get('/', [App\Http\Controllers\SimpleProductController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\SimpleProductController::class, 'store'])->name('store');
+    Route::put('/{simpleProduct}', [App\Http\Controllers\SimpleProductController::class, 'update'])->name('update');
+    Route::delete('/{simpleProduct}', [App\Http\Controllers\SimpleProductController::class, 'destroy'])->name('destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para FLUJO DE CAJA (Admin solamente)
 |--------------------------------------------------------------------------
 */

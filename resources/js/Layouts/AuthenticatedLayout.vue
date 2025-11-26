@@ -22,12 +22,20 @@
                                 </NavLink>
 
                                 <!-- Enlaces para Admin y Almacenero -->
-                                <NavLink 
+                                <NavLink
                                     v-if="canAccess(['admin', 'almacenero'])"
-                                    :href="route('inventory.index')" 
+                                    :href="route('inventory.index')"
                                     :active="route().current('inventory.*')"
                                 >
                                     Inventario
+                                </NavLink>
+
+                                <NavLink
+                                    v-if="canAccess(['admin', 'almacenero'])"
+                                    :href="route('simple-products.index')"
+                                    :active="route().current('simple-products.*')"
+                                >
+                                    Productos Simples
                                 </NavLink>
 
                                 <!-- Enlaces para Admin y Cajero -->
@@ -149,17 +157,25 @@
                             Dashboard
                         </ResponsiveNavLink>
                         
-                        <ResponsiveNavLink 
+                        <ResponsiveNavLink
                             v-if="canAccess(['admin', 'almacenero'])"
-                            :href="route('inventory.index')" 
+                            :href="route('inventory.index')"
                             :active="route().current('inventory.*')"
                         >
                             Inventario
                         </ResponsiveNavLink>
 
-                        <ResponsiveNavLink 
+                        <ResponsiveNavLink
+                            v-if="canAccess(['admin', 'almacenero'])"
+                            :href="route('simple-products.index')"
+                            :active="route().current('simple-products.*')"
+                        >
+                            Productos Simples
+                        </ResponsiveNavLink>
+
+                        <ResponsiveNavLink
                             v-if="canAccess(['admin', 'cajero'])"
-                            :href="route('sales.index')" 
+                            :href="route('sales.index')"
                             :active="route().current('sales.*')"
                         >
                             Ventas

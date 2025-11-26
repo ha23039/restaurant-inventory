@@ -33,13 +33,16 @@ const form = ref({
     products: [] // Para productos/insumos
 });
 
+const initialFormState = ref(null);
 const hasChanges = ref(false);
 const showProductSelection = ref(false);
 const isSubmitting = ref(false);
 
-// Watch form changes
+// Watch form changes - comparar con estado inicial
 watch(() => form.value, () => {
-    hasChanges.value = true;
+    if (initialFormState.value) {
+        hasChanges.value = JSON.stringify(form.value) !== JSON.stringify(initialFormState.value);
+    }
 }, { deep: true });
 
 // Reset form when closed
@@ -48,6 +51,12 @@ watch(() => props.show, (newVal) => {
         setTimeout(() => {
             resetForm();
         }, 300);
+    } else if (newVal) {
+        // Al abrir - resetear primero, luego guardar estado inicial
+        resetForm();
+        setTimeout(() => {
+            initialFormState.value = JSON.parse(JSON.stringify(form.value));
+        }, 100);
     }
 });
 
@@ -108,6 +117,7 @@ const resetForm = () => {
         notes: '',
         products: []
     };
+    initialFormState.value = null;
     hasChanges.value = false;
     isSubmitting.value = false;
 };

@@ -22,11 +22,17 @@ class SimpleProductResource extends JsonResource
             'sale_price' => (float) $this->sale_price,
             'profit_margin' => (float) $this->profit_margin,
             'is_available' => (bool) $this->is_available,
+            'category' => $this->category, // Campo de texto simple
 
             // Computed attributes
             'available_quantity' => $this->when(
                 isset($this->available_quantity),
                 $this->available_quantity
+            ),
+
+            'is_in_stock' => $this->when(
+                isset($this->is_in_stock),
+                $this->is_in_stock
             ),
 
             // Relationships
@@ -36,13 +42,6 @@ class SimpleProductResource extends JsonResource
                     'name' => $this->product->name,
                     'current_stock' => (float) $this->product->current_stock,
                     'unit_type' => $this->product->unit_type,
-                ];
-            }),
-
-            'category' => $this->whenLoaded('category', function () {
-                return [
-                    'id' => $this->category->id,
-                    'name' => $this->category->name,
                 ];
             }),
 
