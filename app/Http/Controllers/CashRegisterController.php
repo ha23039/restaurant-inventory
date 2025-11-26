@@ -26,6 +26,27 @@ class CashRegisterController extends Controller
     {
         $currentSession = $this->service->getCurrentSession();
 
+        $sales = null;
+        $transactions = null;
+
+        if ($currentSession) {
+            // Obtener ventas de la sesión actual
+            $sales = $currentSession->sales()
+                ->with(['saleItems.menuItem', 'saleItems.simpleProduct', 'user'])
+                ->latest()
+                ->get();
+
+            // Obtener transacciones (cash flow) relacionadas
+            $transactions = \App\Models\CashFlow::where('type', 'entrada')
+                ->where('category', 'ventas')
+                ->whereHas('sale', function ($query) use ($currentSession) {
+                    $query->where('cash_register_session_id', $currentSession->id);
+                })
+                ->with(['sale', 'user'])
+                ->latest()
+                ->get();
+        }
+
         return Inertia::render('CashRegister/Index', [
             'currentSession' => $currentSession ? [
                 'id' => $currentSession->id,
@@ -40,6 +61,8 @@ class CashRegisterController extends Controller
                 'duration_hours' => $currentSession->current_duration_in_hours,
                 'user' => $currentSession->user,
             ] : null,
+            'sales' => $sales,
+            'transactions' => $transactions,
         ]);
     }
 
