@@ -47,6 +47,7 @@ class ExpenseController extends Controller
             'expenses' => CashFlowResource::collection($expenses),
             'filters' => $request->only(['date_from', 'date_to', 'category', 'search']),
             'categories' => $this->expenseService->getCategories(),
+            'suppliers' => Supplier::select('id', 'name')->orderBy('name')->get(),
             'statistics' => $this->expenseService->getStatistics(
                 $request->date_from,
                 $request->date_to
@@ -107,6 +108,8 @@ class ExpenseController extends Controller
         if ($expense->type !== 'salida') {
             abort(404);
         }
+
+        $expense->load(['user']);
 
         return Inertia::render('Expenses/Edit', [
             'expense' => new CashFlowResource($expense),

@@ -57,8 +57,13 @@ const filteredProducts = computed(() => {
     );
 });
 
+// Computed Set para búsqueda O(1) ultra rápida
+const selectedProductIds = computed(() => {
+    return new Set(tempSelectedProducts.value.map(p => p.product_id));
+});
+
 const isProductSelected = (productId) => {
-    return tempSelectedProducts.value.some(p => p.product_id === productId);
+    return selectedProductIds.value.has(productId); // O(1) - SÚPER RÁPIDO
 };
 
 const handleProductClick = (product) => {

@@ -273,6 +273,7 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { Head, Link } from '@inertiajs/vue3';
+import { watch, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 // Props
@@ -289,17 +290,43 @@ const formatDateForInput = (dateString) => {
 
 // Form
 const form = useForm({
-    name: props.product?.name || '',
-    category_id: props.product?.category_id || '',
-    description: props.product?.description || '',
-    unit_type: props.product?.unit_type || '',
-    current_stock: props.product?.current_stock || 0,
-    min_stock: props.product?.min_stock || 0,
-    max_stock: props.product?.max_stock || '',
-    unit_cost: props.product?.unit_cost || 0,
-    expiry_date: formatDateForInput(props.product?.expiry_date) || '',
-    is_active: props.product?.is_active ?? true,
+    name: '',
+    category_id: '',
+    description: '',
+    unit_type: '',
+    current_stock: 0,
+    min_stock: 0,
+    max_stock: '',
+    unit_cost: 0,
+    expiry_date: '',
+    is_active: true,
 });
+
+// Función para poblar el formulario
+const populateForm = () => {
+    if (props.product) {
+        form.name = props.product.name || '';
+        form.category_id = props.product.category_id || '';
+        form.description = props.product.description || '';
+        form.unit_type = props.product.unit_type || '';
+        form.current_stock = props.product.current_stock || 0;
+        form.min_stock = props.product.min_stock || 0;
+        form.max_stock = props.product.max_stock || '';
+        form.unit_cost = props.product.unit_cost || 0;
+        form.expiry_date = props.product.expiry_date || '';
+        form.is_active = props.product.is_active ?? true;
+    }
+};
+
+// Poblar al montar
+onMounted(() => {
+    populateForm();
+});
+
+// Observar cambios en el producto
+watch(() => props.product, () => {
+    populateForm();
+}, { deep: true, immediate: true });
 
 // Submit
 const submit = () => {

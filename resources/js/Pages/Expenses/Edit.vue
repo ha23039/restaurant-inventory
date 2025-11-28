@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch, onMounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
@@ -21,14 +22,37 @@ const extractSupplierId = (notes) => {
     return match ? parseInt(match[1]) : null;
 };
 
+// Inicializar form vacío
 const form = useForm({
-    amount: props.expense.amount,
-    category: props.expense.category,
-    description: props.expense.description,
-    notes: props.expense.notes ? props.expense.notes.replace(/Proveedor ID: \d+\n?/, '').trim() : '',
-    expense_date: props.expense.flow_date,
-    supplier_id: extractSupplierId(props.expense.notes),
+    amount: '',
+    category: '',
+    description: '',
+    notes: '',
+    expense_date: '',
+    supplier_id: null,
 });
+
+// Función para poblar el formulario
+const populateForm = () => {
+    if (props.expense) {
+        form.amount = props.expense.amount || '';
+        form.category = props.expense.category || '';
+        form.description = props.expense.description || '';
+        form.notes = props.expense.notes ? props.expense.notes.replace(/Proveedor ID: \d+\n?/, '').trim() : '';
+        form.expense_date = props.expense.flow_date || '';
+        form.supplier_id = extractSupplierId(props.expense.notes);
+    }
+};
+
+// Poblar al montar
+onMounted(() => {
+    populateForm();
+});
+
+// Observar cambios en el expense
+watch(() => props.expense, () => {
+    populateForm();
+}, { deep: true, immediate: true });
 
 const handleSubmit = () => {
     form.put(route('expenses.update', props.expense.id), {
@@ -68,7 +92,7 @@ const handleCancel = () => {
                             <p class="mt-1 text-sm text-gray-600">
                                 Modifica la información del gasto. Los campos marcados con * son obligatorios.
                             </p>
-                            <div class="mt-2 text-xs text-gray-500">
+                            <div v-if="expense.user" class="mt-2 text-xs text-gray-500">
                                 Registrado por: {{ expense.user.name }} el {{ new Date(expense.created_at).toLocaleDateString('es-MX') }}
                             </div>
                         </div>

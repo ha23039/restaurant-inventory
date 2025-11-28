@@ -72,7 +72,7 @@ const resetFilters = () => {
 
     dateFrom.value = firstDay.toISOString().split('T')[0];
     dateTo.value = today.toISOString().split('T')[0];
-    selectedPeriod.value = 'month';
+    selectedPeriod.value = 'day';
 
     handleDateRangeChange();
 };

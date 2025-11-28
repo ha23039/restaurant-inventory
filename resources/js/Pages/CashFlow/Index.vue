@@ -230,11 +230,10 @@
             </BaseCard>
         </div>
 
-        <!-- Export Modal -->
-        <ExportModal
+        <!-- Export SlideOver -->
+        <ExportSlideOver
             :show="showExportModal"
             :filters="filters"
-            title="Exportar Reporte de Flujo de Efectivo"
             @close="showExportModal = false"
             @export="handleExport"
         />
@@ -252,7 +251,7 @@ import BaseButton from '@/Components/Base/BaseButton.vue';
 import DataTable from '@/Components/Data/DataTable.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
 import TransactionFilters from '@/Components/Financial/TransactionFilters.vue';
-import ExportModal from '@/Components/Financial/ExportModal.vue';
+import ExportSlideOver from '@/Components/Financial/ExportSlideOver.vue';
 
 const props = defineProps({
     transactions: Object,

@@ -104,7 +104,7 @@ class CashRegisterSession extends Model
     {
         return (float) $this->sales()
             ->where('payment_method', 'efectivo')
-            ->where('status', 'completed')
+            ->where('status', 'completada')
             ->sum('total');
     }
 
@@ -115,7 +115,7 @@ class CashRegisterSession extends Model
     {
         return (float) $this->sales()
             ->where('payment_method', 'tarjeta')
-            ->where('status', 'completed')
+            ->where('status', 'completada')
             ->sum('total');
     }
 
@@ -126,7 +126,7 @@ class CashRegisterSession extends Model
     {
         return (float) $this->sales()
             ->where('payment_method', 'transferencia')
-            ->where('status', 'completed')
+            ->where('status', 'completada')
             ->sum('total');
     }
 
@@ -136,7 +136,7 @@ class CashRegisterSession extends Model
     public function getTotalAllSalesAttribute(): float
     {
         return (float) $this->sales()
-            ->where('status', 'completed')
+            ->where('status', 'completada')
             ->sum('total');
     }
 
@@ -146,7 +146,7 @@ class CashRegisterSession extends Model
     public function getTransactionCountAttribute(): int
     {
         return $this->sales()
-            ->where('status', 'completed')
+            ->where('status', 'completada')
             ->count();
     }
 

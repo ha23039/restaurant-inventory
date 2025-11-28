@@ -9,16 +9,19 @@ import FilterDropdown from '@/Components/Data/FilterDropdown.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
+import ExpenseSlideOver from '@/Components/ExpenseSlideOver.vue';
 import { useToast } from '@/composables';
 
 const props = defineProps({
     expenses: Object,
     filters: Object,
     categories: Array,
+    suppliers: Array,
     statistics: Object,
 });
 
 const toast = useToast();
+const showExpenseSlideOver = ref(false);
 
 // Filtros
 const searchQuery = ref(props.filters.search || '');
@@ -115,14 +118,12 @@ const getCategoryVariant = (category) => {
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Gestión de Gastos
                 </h2>
-                <Link :href="route('expenses.create')">
-                    <BaseButton variant="primary">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Nuevo Gasto
-                    </BaseButton>
-                </Link>
+                <BaseButton variant="primary" @click="showExpenseSlideOver = true">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nuevo Gasto
+                </BaseButton>
             </div>
         </template>
 
@@ -236,8 +237,13 @@ const getCategoryVariant = (category) => {
 
                         <template #cell-actions="{ row }">
                             <div class="flex items-center justify-center gap-2">
-                                <Link :href="route('expenses.edit', row.id)">
+                                <Link :href="route('expenses.show', row.id)">
                                     <BaseButton variant="secondary" size="sm">
+                                        Ver
+                                    </BaseButton>
+                                </Link>
+                                <Link :href="route('expenses.edit', row.id)">
+                                    <BaseButton variant="primary" size="sm">
                                         Editar
                                     </BaseButton>
                                 </Link>
@@ -264,5 +270,13 @@ const getCategoryVariant = (category) => {
                 </BaseCard>
             </div>
         </div>
+
+        <!-- Expense SlideOver -->
+        <ExpenseSlideOver
+            :show="showExpenseSlideOver"
+            :categories="categories"
+            :suppliers="suppliers"
+            @close="showExpenseSlideOver = false"
+        />
     </AdminLayout>
 </template>

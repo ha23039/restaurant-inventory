@@ -167,9 +167,26 @@ class CashFlowRepository
             $query->whereBetween('flow_date', [$from, $to]);
         }
 
-        return $query->get()->map(function ($item) {
+        // Category labels mapping
+        $categoryLabels = [
+            'ventas' => 'Ventas',
+            'compras' => 'Compras',
+            'compra_productos_insumos' => 'Compra de Productos e Insumos',
+            'gastos_operativos' => 'Gastos Operativos',
+            'gastos_admin' => 'Gastos Administrativos',
+            'servicios_publicos' => 'Servicios Públicos',
+            'nomina' => 'Nómina',
+            'mantenimiento' => 'Mantenimiento',
+            'marketing' => 'Marketing',
+            'devoluciones' => 'Devoluciones',
+            'otros' => 'Otros',
+            'otros_ingresos' => 'Otros Ingresos',
+        ];
+
+        return $query->get()->map(function ($item) use ($categoryLabels) {
             return [
                 'category' => $item->category,
+                'label' => $categoryLabels[$item->category] ?? ucfirst(str_replace('_', ' ', $item->category)),
                 'type' => $item->type,
                 'count' => $item->count,
                 'total' => (float) $item->total,

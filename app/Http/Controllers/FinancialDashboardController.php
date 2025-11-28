@@ -42,7 +42,7 @@ class FinancialDashboardController extends Controller
 
         // Get breakdown by category
         $expensesByCategory = $this->repository->getByCategory($dateFrom, $dateTo);
-        $expensesByCategory = array_filter($expensesByCategory, fn ($item) => $item['type'] === 'salida');
+        $expensesByCategory = array_values(array_filter($expensesByCategory, fn ($item) => $item['type'] === 'salida'));
 
         // Get payment method breakdown
         $paymentMethods = $this->repository->getByPaymentMethod($dateFrom, $dateTo);
@@ -53,7 +53,7 @@ class FinancialDashboardController extends Controller
         // Get recent transactions
         $recentTransactions = CashFlowResource::collection(
             $this->repository->getRecent(10)
-        );
+        )->resolve();
 
         // Calculate KPIs
         $kpis = [
@@ -87,7 +87,7 @@ class FinancialDashboardController extends Controller
 
         // Format data for category pie chart
         $categoryChartData = [
-            'labels' => array_map(fn ($item) => $item['category'], $expensesByCategory),
+            'labels' => array_map(fn ($item) => $item['label'] ?? $item['category'], $expensesByCategory),
             'datasets' => [
                 [
                     'label' => 'Gastos por Categoría',
