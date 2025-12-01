@@ -92,7 +92,7 @@ class ProductController extends Controller
         $product->load(['category', 'inventoryMovements.user', 'recipes.menuItem']);
 
         return Inertia::render('Inventory/ProductDetail', [
-            'product' => new ProductResource($product),
+            'product' => $product,
         ]);
     }
 
@@ -104,7 +104,7 @@ class ProductController extends Controller
 
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,
-            'product' => new ProductResource($product),
+            'product' => $product,
         ]);
     }
 

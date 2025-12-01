@@ -95,7 +95,7 @@ class ExpenseController extends Controller
         $expense->load(['user']);
 
         return Inertia::render('Expenses/Show', [
-            'expense' => new CashFlowResource($expense),
+            'expense' => $expense,
         ]);
     }
 
@@ -112,7 +112,7 @@ class ExpenseController extends Controller
         $expense->load(['user']);
 
         return Inertia::render('Expenses/Edit', [
-            'expense' => new CashFlowResource($expense),
+            'expense' => $expense,
             'categories' => $this->expenseService->getCategories(),
             'suppliers' => Supplier::select('id', 'name')->orderBy('name')->get(),
         ]);
