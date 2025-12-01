@@ -21,33 +21,45 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', Product::class);
 
-        $products = $this->productRepository->getAllWithCategory();
+        // Start with base query instead of collection
+        $query = Product::with('category');
 
-        // Aplicar filtros usando el repositorio
+        // Aplicar filtros usando query builder
         if ($request->filled('search')) {
-            $products = $this->productRepository->search($request->search);
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
         }
 
         if ($request->filled('category_id')) {
-            $products = $this->productRepository->getByCategory($request->category_id);
+            $query->where('category_id', $request->category_id);
         }
 
         if ($request->boolean('low_stock')) {
-            $products = $this->productRepository->getLowStockProducts();
+            $query->whereColumn('current_stock', '<=', 'min_stock');
         }
 
         if ($request->boolean('expired')) {
-            $products = $this->productRepository->getExpiredProducts();
+            $query->where('expiry_date', '<', now());
         }
 
         if ($request->boolean('expiring_soon')) {
-            $products = $this->productRepository->getExpiringSoonProducts();
+            $query->where('expiry_date', '<=', now()->addDays(7))
+                  ->where('expiry_date', '>=', now());
         }
+
+        // Apply pagination (15 per page)
+        $products = $query->where('is_active', true)
+                          ->orderBy('name')
+                          ->paginate(15)
+                          ->withQueryString();
 
         $categories = Category::all();
 
         return Inertia::render('Inventory/Products', [
-            'products' => ProductResource::collection($products),
+            'products' => $products,
             'categories' => $categories,
             'filters' => $request->only(['search', 'category_id', 'low_stock', 'expired', 'expiring_soon']),
         ]);

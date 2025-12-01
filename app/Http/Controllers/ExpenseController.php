@@ -44,7 +44,7 @@ class ExpenseController extends Controller
         $expenses = $query->paginate(20)->withQueryString();
 
         return Inertia::render('Expenses/Index', [
-            'expenses' => CashFlowResource::collection($expenses),
+            'expenses' => $expenses,
             'filters' => $request->only(['date_from', 'date_to', 'category', 'search']),
             'categories' => $this->expenseService->getCategories(),
             'suppliers' => Supplier::select('id', 'name')->orderBy('name')->get(),

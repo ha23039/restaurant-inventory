@@ -32,6 +32,11 @@ class Product extends Model
         'unit_cost' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'is_low_stock',
+        'is_expiring_soon',
+    ];
+
     // RELACIONES
     public function category()
     {
@@ -46,6 +51,17 @@ class Product extends Model
     public function inventoryMovements()
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    // ACCESSORS
+    public function getIsLowStockAttribute()
+    {
+        return $this->current_stock <= $this->min_stock;
+    }
+
+    public function getIsExpiringSoonAttribute()
+    {
+        return $this->expiry_date && $this->expiry_date->lte(now()->addDays(7)) && $this->expiry_date->gte(now());
     }
 
     // MÉTODOS ÚTILES

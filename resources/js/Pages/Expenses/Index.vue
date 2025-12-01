@@ -3,7 +3,6 @@ import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DataTable from '@/Components/Data/DataTable.vue';
-import Pagination from '@/Components/Data/Pagination.vue';
 import SearchBar from '@/Components/Data/SearchBar.vue';
 import FilterDropdown from '@/Components/Data/FilterDropdown.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
@@ -287,14 +286,63 @@ const getCategoryVariant = (category) => {
                         </template>
                     </DataTable>
 
-                    <div class="border-t border-gray-200">
-                        <Pagination
-                            :current-page="expenses.current_page"
-                            :total-pages="expenses.last_page"
-                            :total-items="expenses.total"
-                            :per-page="expenses.per_page"
-                            @page-change="(page) => router.get(route('expenses.index', { ...filters, page }))"
-                        />
+                    <!-- Paginación -->
+                    <div v-if="expenses.data.length > 0" class="border-t border-gray-200 px-4 py-3 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                <Link
+                                    v-if="expenses.prev_page_url"
+                                    :href="expenses.prev_page_url"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Anterior
+                                </Link>
+                                <Link
+                                    v-if="expenses.next_page_url"
+                                    :href="expenses.next_page_url"
+                                    class="relative ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Siguiente
+                                </Link>
+                            </div>
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        Mostrando
+                                        <span class="font-medium">{{ expenses.from }}</span>
+                                        a
+                                        <span class="font-medium">{{ expenses.to }}</span>
+                                        de
+                                        <span class="font-medium">{{ expenses.total }}</span>
+                                        gastos
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                        <template v-for="(link, index) in expenses.links" :key="index">
+                                            <Link
+                                                v-if="link.url"
+                                                :href="link.url"
+                                                v-html="link.label"
+                                                class="relative inline-flex items-center px-2 py-2 text-sm font-medium transition-colors border"
+                                                :class="[
+                                                    link.active
+                                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900 dark:text-blue-200'
+                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700',
+                                                    index === 0 ? 'rounded-l-md' : '',
+                                                    index === expenses.links.length - 1 ? 'rounded-r-md' : '',
+                                                ]"
+                                            />
+                                            <span
+                                                v-else
+                                                v-html="link.label"
+                                                class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default dark:bg-gray-800 dark:border-gray-600 dark:text-gray-600"
+                                            />
+                                        </template>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </BaseCard>
             </div>

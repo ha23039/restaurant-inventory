@@ -34,6 +34,7 @@ class CashFlow extends Model
         'formatted_amount',
         'signed_amount',
         'category_label',
+        'flow_date_formatted',
     ];
 
     // Relaciones
@@ -160,5 +161,10 @@ class CashFlow extends Model
         ];
 
         return $labels[$this->category] ?? ucfirst($this->category);
+    }
+
+    public function getFlowDateFormattedAttribute()
+    {
+        return $this->flow_date ? $this->flow_date->format('d/m/Y') : '';
     }
 }
