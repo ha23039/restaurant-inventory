@@ -34,6 +34,7 @@ class ProductResource extends JsonResource
                 return [
                     'id' => $this->category->id,
                     'name' => $this->category->name,
+                    'color' => $this->category->color,
                 ];
             }),
 

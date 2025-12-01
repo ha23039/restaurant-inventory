@@ -84,7 +84,7 @@
                         </div>
 
                         <!-- Información Adicional -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-200">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mt-6 pt-6 border-t border-gray-200">
                             <div>
                                 <h4 class="font-semibold text-gray-900 mb-2">Información del Cajero</h4>
                                 <p class="text-gray-600">{{ sale?.user?.name || 'Usuario no disponible' }}</p>
@@ -95,6 +95,26 @@
                                 <h4 class="font-semibold text-gray-900 mb-2">Fecha y Hora</h4>
                                 <p class="text-gray-600">{{ formatDate(sale?.created_at) }}</p>
                                 <p class="text-sm text-gray-500">{{ formatTime(sale?.created_at) }}</p>
+                            </div>
+
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-2">Mesa</h4>
+                                <div v-if="sale?.table" class="flex items-center space-x-2">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-gray-600 font-semibold">Mesa {{ sale.table.table_number }}</p>
+                                        <p v-if="sale.table.name" class="text-sm text-gray-500">{{ sale.table.name }}</p>
+                                        <p class="text-xs text-gray-400">Capacidad: {{ sale.table.capacity }} pers.</p>
+                                    </div>
+                                </div>
+                                <div v-else class="flex items-center space-x-2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    </svg>
+                                    <span class="text-gray-400">Para llevar</span>
+                                </div>
                             </div>
 
                             <div>

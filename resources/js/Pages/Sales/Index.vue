@@ -212,6 +212,9 @@
                                             Estado Venta
                                         </th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Mesa
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Cajero
                                         </th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -287,6 +290,16 @@
                                                 <component :is="getStatusIcon(sale.status, true)" class="w-4 h-4" />
                                                 {{ sale.status }}
                                             </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div v-if="sale.table" class="flex items-center">
+                                                <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                <span class="font-medium">{{ sale.table.table_number }}</span>
+                                                <span v-if="sale.table.name" class="text-gray-500 ml-1 text-xs">{{ sale.table.name }}</span>
+                                            </div>
+                                            <div v-else class="text-gray-400 text-xs">Para llevar</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ sale.user.name }}

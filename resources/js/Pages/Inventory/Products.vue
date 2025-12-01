@@ -4,15 +4,18 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    📦 Gestión de Productos
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
+                    Gestión de Productos
                 </h2>
-                <Link 
-                    :href="route('inventory.products.create')"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                <button
+                    @click="openCreateSlideOver"
+                    class="inline-flex items-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
                 >
-                    + Nuevo Producto
-                </Link>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nuevo Producto
+                </button>
             </div>
         </template>
 
@@ -48,7 +51,7 @@
                                 </div>
                                 <!-- Sugerencias de búsqueda -->
                                 <div v-if="form.search && form.search.length >= 2" class="mt-1 text-xs text-gray-500">
-                                    💡 Sugerencias: "pan", "carne", "soda", "queso"
+                                    Sugerencias: "pan", "carne", "soda", "queso"
                                 </div>
                             </div>
 
@@ -79,7 +82,7 @@
                                             class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
                                         />
                                         <span class="ml-2 text-sm text-gray-600">
-                                            ⚠️ Stock bajo
+                                            Stock bajo
                                             <span v-if="lowStockCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                 {{ lowStockCount }}
                                             </span>
@@ -93,7 +96,7 @@
                                             class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
                                         />
                                         <span class="ml-2 text-sm text-gray-600">
-                                            🗓️ Vencidos
+                                            Vencidos
                                             <span v-if="expiredCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                 {{ expiredCount }}
                                             </span>
@@ -107,7 +110,7 @@
                                             class="rounded border-gray-300 text-yellow-600 shadow-sm focus:border-yellow-300 focus:ring focus:ring-yellow-200 focus:ring-opacity-50"
                                         />
                                         <span class="ml-2 text-sm text-gray-600">
-                                            ⏰ Vencen pronto
+                                            Vencen pronto
                                             <span v-if="expiringSoonCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                 {{ expiringSoonCount }}
                                             </span>
@@ -138,23 +141,23 @@
                         <div v-if="hasActiveFilters" class="mt-4 flex flex-wrap gap-2">
                             <span class="text-sm text-gray-600">Filtros activos:</span>
                             <span v-if="form.search" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                🔍 "{{ form.search }}"
+                                 "{{ form.search }}"
                                 <button @click="form.search = ''; search()" class="ml-1 text-blue-600 hover:text-blue-800">×</button>
                             </span>
                             <span v-if="form.category_id" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                🏷️ {{ getCategoryName(form.category_id) }}
+                                {{ getCategoryName(form.category_id) }}
                                 <button @click="form.category_id = ''; search()" class="ml-1 text-purple-600 hover:text-purple-800">×</button>
                             </span>
                             <span v-if="form.low_stock" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                ⚠️ Stock bajo
+                                Stock bajo
                                 <button @click="form.low_stock = false; search()" class="ml-1 text-red-600 hover:text-red-800">×</button>
                             </span>
                             <span v-if="form.expired" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                🗓️ Vencidos
+                                Vencidos
                                 <button @click="form.expired = false; search()" class="ml-1 text-red-600 hover:text-red-800">×</button>
                             </span>
                             <span v-if="form.expiring_soon" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                ⏰ Vencen pronto
+                                Vencen pronto
                                 <button @click="form.expiring_soon = false; search()" class="ml-1 text-yellow-600 hover:text-yellow-800">×</button>
                             </span>
                         </div>
@@ -240,43 +243,50 @@
                                                 v-if="product.current_stock <= product.min_stock"
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                             >
-                                                ⚠️ Stock Bajo
+                                                Stock Bajo
                                             </span>
                                             <span
                                                 v-else-if="product.current_stock <= product.min_stock * 1.5"
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
                                             >
-                                                ⚡ Stock Medio
+                                                Stock Medio
                                             </span>
                                             <span
                                                 v-else
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
                                             >
-                                                ✅ Stock OK
+                                                Stock OK
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
+                                            <div class="flex items-center justify-center space-x-2">
                                                 <Link
                                                     :href="route('inventory.products.show', product.id)"
-                                                    class="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                                    title="Ver detalles"
+                                                    class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                    title="Ver Detalles"
                                                 >
-                                                    👁️
-                                                </Link>
-                                                <Link
-                                                    :href="route('inventory.products.edit', product.id)"
-                                                    class="text-green-600 hover:text-green-900 transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    ✏️
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
                                                 </Link>
                                                 <button
+                                                    @click="openEditSlideOver(product)"
+                                                    class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </button>
+                                                <button
                                                     @click="deleteProduct(product)"
-                                                    class="text-red-600 hover:text-red-900 transition-colors"
+                                                    class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                     title="Eliminar"
                                                 >
-                                                    🗑️
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
                                                 </button>
                                             </div>
                                         </td>
@@ -287,7 +297,7 @@
                             <!-- Mensaje si no hay resultados -->
                             <div v-if="products.data.length === 0" class="text-center py-12">
                                 <div class="text-gray-500 text-lg">
-                                    <div class="text-4xl mb-4">📦</div>
+                                    <div class="text-4xl mb-4"></div>
                                     <div v-if="hasActiveFilters">
                                         No se encontraron productos con los filtros aplicados
                                     </div>
@@ -300,7 +310,7 @@
                                     :href="route('inventory.products.create')"
                                     class="mt-4 inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded"
                                 >
-                                    ➕ Crear primer producto
+                                    Crear primer producto
                                 </Link>
                             </div>
                         </div>
@@ -368,6 +378,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Product SlideOver -->
+        <ProductSlideOver
+            :show="showProductSlideOver"
+            :product="editingProduct"
+            :categories="categories"
+            @close="closeProductSlideOver"
+        />
     </AdminLayout>
 </template>
 
@@ -375,6 +393,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ProductSlideOver from '@/Components/ProductSlideOver.vue';
 import { debounce } from 'lodash-es';
 
 // Props
@@ -389,6 +408,8 @@ const searching = ref(false);
 const lowStockCount = ref(0);
 const expiredCount = ref(0);
 const expiringSoonCount = ref(0);
+const showProductSlideOver = ref(false);
+const editingProduct = ref(null);
 
 // Reactive form para filtros
 const form = reactive({
@@ -431,11 +452,30 @@ const clearFilters = () => {
     search();
 };
 
+// SlideOver functions
+const openEditSlideOver = (product) => {
+    editingProduct.value = product;
+    showProductSlideOver.value = true;
+};
+
+const openCreateSlideOver = () => {
+    editingProduct.value = null;
+    showProductSlideOver.value = true;
+};
+
+const closeProductSlideOver = () => {
+    showProductSlideOver.value = false;
+    setTimeout(() => {
+        editingProduct.value = null;
+    }, 300);
+};
+
 // Eliminar producto
 const deleteProduct = (product) => {
     if (confirm(`¿Estás seguro de eliminar "${product.name}"?`)) {
         router.delete(route('inventory.products.destroy', product.id));
     }
+    closeDropdown();
 };
 
 // Formatear números - eliminar decimales innecesarios

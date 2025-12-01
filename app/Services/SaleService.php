@@ -26,6 +26,13 @@ class SaleService
     {
         return DB::transaction(function () use ($validatedData, $userId) {
             $isFreeSale = $validatedData['is_free_sale'] ?? false;
+            $action = $validatedData['action'] ?? 'complete'; // 'complete' o 'save_pending'
+            $existingSaleId = $validatedData['existing_sale_id'] ?? null;
+
+            // Si existe una venta pendiente, agregar items
+            if ($existingSaleId) {
+                return $this->addItemsToExistingSale($existingSaleId, $validatedData, $action);
+            }
 
             // Para ventas libres, omitir validación de stock
             if (! $isFreeSale) {
@@ -41,17 +48,21 @@ class SaleService
             // Obtener sesión de caja activa
             $cashRegisterSession = $this->cashRegisterService->getCurrentSession();
 
+            // Determinar estado según acción
+            $status = $action === 'save_pending' ? 'pendiente' : 'completada';
+
             // Crear venta usando repository
             $sale = $this->saleRepository->create([
                 'user_id' => $userId,
                 'cash_register_session_id' => $cashRegisterSession?->id,
+                'table_id' => $validatedData['table_id'] ?? null,
                 'sale_number' => $this->generateSaleNumber(),
                 'subtotal' => $totals['subtotal'],
                 'discount' => $totals['discount'] ?? 0,
                 'tax' => $totals['tax'] ?? 0,
                 'total' => $totals['total'],
-                'payment_method' => $validatedData['payment_method'],
-                'status' => 'completada',
+                'payment_method' => $validatedData['payment_method'] ?? 'efectivo',
+                'status' => $status,
                 'is_free_sale' => $isFreeSale,
                 'free_sale_description' => $isFreeSale ? $validatedData['free_sale_description'] : null,
             ]);
@@ -61,6 +72,7 @@ class SaleService
                 'sale_number' => $sale->sale_number,
                 'user_id' => $userId,
                 'total' => $sale->total,
+                'status' => $status,
                 'is_free_sale' => $isFreeSale,
             ]);
 
@@ -71,11 +83,85 @@ class SaleService
                 $this->processSaleItems($sale, $validatedData['items']);
             }
 
-            // Registrar flujo de efectivo
-            $this->cashFlowService->recordSaleIncome($sale);
+            // Actualizar estado de mesa si fue asignada
+            if ($sale->table_id) {
+                $this->updateTableStatus($sale);
+            }
 
-            return $sale->fresh(['saleItems', 'user', 'cashFlow']);
+            // Registrar flujo de efectivo solo si está completada
+            if ($status === 'completada') {
+                $this->cashFlowService->recordSaleIncome($sale);
+            }
+
+            return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table']);
         });
+    }
+
+    /**
+     * Agregar items a una venta existente pendiente
+     */
+    public function addItemsToExistingSale(int $saleId, array $validatedData, string $action): Sale
+    {
+        $sale = Sale::with(['saleItems'])->findOrFail($saleId);
+
+        // Verificar que la venta esté pendiente
+        if ($sale->status !== 'pendiente') {
+            throw new \Exception('Solo se pueden modificar ventas pendientes');
+        }
+
+        // Verificar stock de nuevos items
+        if (isset($validatedData['items'])) {
+            $this->verifyStockAvailability($validatedData['items']);
+
+            // Procesar nuevos items
+            $this->processSaleItems($sale, $validatedData['items']);
+        }
+
+        // Recalcular totales
+        $newTotals = $this->recalculateSaleTotals($sale, $validatedData);
+
+        // Actualizar venta
+        $sale->update([
+            'subtotal' => $newTotals['subtotal'],
+            'discount' => $newTotals['discount'],
+            'tax' => $newTotals['tax'],
+            'total' => $newTotals['total'],
+            'payment_method' => $validatedData['payment_method'] ?? $sale->payment_method,
+            'status' => $action === 'save_pending' ? 'pendiente' : 'completada',
+        ]);
+
+        // Actualizar estado de mesa si fue asignada
+        if ($sale->table_id) {
+            $this->updateTableStatus($sale);
+        }
+
+        // Si se completa la venta, registrar flujo de efectivo
+        if ($action === 'complete') {
+            $this->cashFlowService->recordSaleIncome($sale);
+        }
+
+        Log::info('Items agregados a venta existente', [
+            'sale_id' => $sale->id,
+            'sale_number' => $sale->sale_number,
+            'new_total' => $sale->total,
+            'status' => $sale->status,
+        ]);
+
+        return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table']);
+    }
+
+    /**
+     * Recalcular totales de venta basado en items existentes
+     */
+    protected function recalculateSaleTotals(Sale $sale, array $validatedData): array
+    {
+        $subtotal = $sale->saleItems()->sum(DB::raw('quantity * unit_price'));
+
+        $discount = $validatedData['discount'] ?? $sale->discount;
+        $tax = $validatedData['tax'] ?? $sale->tax;
+        $total = $subtotal - $discount + $tax;
+
+        return compact('subtotal', 'discount', 'tax', 'total');
     }
 
     /**
@@ -215,5 +301,55 @@ class SaleService
     public function findBySaleNumber(string $saleNumber): ?Sale
     {
         return $this->saleRepository->findBySaleNumber($saleNumber);
+    }
+
+    /**
+     * Obtener ventas pendientes (órdenes activas)
+     */
+    public function getPendingSales()
+    {
+        return Sale::with(['saleItems.menuItem', 'saleItems.simpleProduct', 'table', 'user'])
+            ->where('status', 'pendiente')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Actualizar estado de mesa según el estado de la venta
+     */
+    protected function updateTableStatus(Sale $sale): void
+    {
+        $table = \App\Models\Table::find($sale->table_id);
+
+        if (!$table) {
+            return;
+        }
+
+        if ($sale->status === 'pendiente') {
+            // Mesa ocupada con orden pendiente
+            $table->update([
+                'status' => 'ocupada',
+                'current_sale_id' => $sale->id,
+                'last_occupied_at' => now(),
+            ]);
+
+            Log::info('Mesa ocupada', [
+                'table_id' => $table->id,
+                'table_number' => $table->table_number,
+                'sale_id' => $sale->id,
+            ]);
+        } elseif ($sale->status === 'completada') {
+            // Liberar mesa cuando se completa la venta
+            $table->update([
+                'status' => 'disponible',
+                'current_sale_id' => null,
+            ]);
+
+            Log::info('Mesa liberada', [
+                'table_id' => $table->id,
+                'table_number' => $table->table_number,
+                'sale_id' => $sale->id,
+            ]);
+        }
     }
 }

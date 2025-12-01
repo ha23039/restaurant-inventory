@@ -154,27 +154,65 @@ class CashRegisterService
     {
         $sessions = CashRegisterSession::where('user_id', $userId)
             ->whereBetween('opened_at', [$from, $to])
-            ->where('status', 'closed')
-            ->with('sales')
+            ->with(['sales', 'user'])
             ->get();
 
-        $totalSessions = $sessions->count();
-        $totalSales = $sessions->sum('total_all_sales');
-        $totalDifferences = $sessions->sum('difference');
-        $sessionsWithShortage = $sessions->filter(fn($s) => $s->hasShortage())->count();
-        $sessionsWithSurplus = $sessions->filter(fn($s) => $s->hasSurplus())->count();
-        $perfectSessions = $sessions->filter(fn($s) => !$s->hasDifference())->count();
+        $closedSessions = $sessions->where('status', 'closed');
+        $totalSessions = $closedSessions->count();
+        $totalSales = $closedSessions->sum(fn($s) => $s->total_all_sales);
+        $totalDifferences = $closedSessions->sum('difference');
+        $totalHours = $closedSessions->sum('duration_in_hours');
+        $totalTransactions = $closedSessions->sum('transaction_count');
+
+        // Calcular totales por método de pago
+        $cashTotal = $closedSessions->sum('total_cash_sales');
+        $cardTotal = $closedSessions->sum('total_card_sales');
+        $transferTotal = $closedSessions->sum('total_transfer_sales');
+
+        // Agrupar por día
+        $dailyTotals = $closedSessions->groupBy(function ($session) {
+            return $session->opened_at->format('Y-m-d');
+        })->map(function ($daySessions, $date) {
+            return [
+                'date' => $date,
+                'sessions' => $daySessions->count(),
+                'transactions' => $daySessions->sum('transaction_count'),
+                'total' => $daySessions->sum(fn($s) => $s->total_all_sales),
+                'difference' => $daySessions->sum('difference'),
+            ];
+        })->values()->sortBy('date')->values()->all();
+
+        // Sesiones recientes
+        $recentSessions = $sessions->sortByDesc('opened_at')->take(10)->map(function ($session) {
+            return [
+                'id' => $session->id,
+                'opened_at' => $session->opened_at,
+                'closed_at' => $session->closed_at,
+                'duration_hours' => $session->duration_in_hours,
+                'total_sales' => $session->total_all_sales,
+                'difference' => $session->difference,
+                'status' => $session->status,
+            ];
+        })->values()->all();
 
         return [
             'user_id' => $userId,
             'total_sessions' => $totalSessions,
             'total_sales' => (float) $totalSales,
+            'total_transactions' => $totalTransactions,
+            'total_hours' => (float) $totalHours,
             'total_differences' => (float) $totalDifferences,
-            'sessions_with_shortage' => $sessionsWithShortage,
-            'sessions_with_surplus' => $sessionsWithSurplus,
-            'perfect_sessions' => $perfectSessions,
-            'accuracy_rate' => $totalSessions > 0 ? ($perfectSessions / $totalSessions * 100) : 0,
-            'average_session_sales' => $totalSessions > 0 ? ($totalSales / $totalSessions) : 0,
+            'sessions_with_differences' => $closedSessions->filter(fn($s) => $s->hasDifference())->count(),
+            'payment_methods' => [
+                'cash' => (float) $cashTotal,
+                'card' => (float) $cardTotal,
+                'transfer' => (float) $transferTotal,
+                'cash_percentage' => $totalSales > 0 ? ($cashTotal / $totalSales * 100) : 0,
+                'card_percentage' => $totalSales > 0 ? ($cardTotal / $totalSales * 100) : 0,
+                'transfer_percentage' => $totalSales > 0 ? ($transferTotal / $totalSales * 100) : 0,
+            ],
+            'daily_totals' => $dailyTotals,
+            'recent_sessions' => $recentSessions,
         ];
     }
 

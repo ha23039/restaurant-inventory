@@ -101,6 +101,12 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('cashregister')->name('
     // Vista principal de caja
     Route::get('/', [App\Http\Controllers\CashRegisterController::class, 'index'])->name('index');
 
+    // Historial de sesiones (ANTES de /{id})
+    Route::get('/history', [App\Http\Controllers\CashRegisterController::class, 'history'])->name('history');
+
+    // Estadísticas (ANTES de /{id})
+    Route::get('/stats', [App\Http\Controllers\CashRegisterController::class, 'stats'])->name('stats');
+
     // Abrir caja
     Route::get('/open', [App\Http\Controllers\CashRegisterController::class, 'create'])->name('create');
     Route::post('/open', [App\Http\Controllers\CashRegisterController::class, 'store'])->name('store');
@@ -109,17 +115,11 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('cashregister')->name('
     Route::get('/close', [App\Http\Controllers\CashRegisterController::class, 'closeForm'])->name('close.form');
     Route::post('/close', [App\Http\Controllers\CashRegisterController::class, 'close'])->name('close');
 
-    // Ver detalles de sesión
-    Route::get('/{id}', [App\Http\Controllers\CashRegisterController::class, 'show'])->name('show');
-
-    // Historial de sesiones
-    Route::get('/history', [App\Http\Controllers\CashRegisterController::class, 'history'])->name('history');
-
-    // Estadísticas
-    Route::get('/stats', [App\Http\Controllers\CashRegisterController::class, 'stats'])->name('stats');
-
     // API: Sesión actual
     Route::get('/api/current', [App\Http\Controllers\CashRegisterController::class, 'current'])->name('api.current');
+
+    // Ver detalles de sesión (DEBE estar al final por ser ruta dinámica)
+    Route::get('/{id}', [App\Http\Controllers\CashRegisterController::class, 'show'])->name('show');
 });
 
 /*
@@ -193,6 +193,9 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
     Route::delete('/items/{menuItem}', [App\Http\Controllers\MenuItemController::class, 'destroy'])->name('items.destroy');
     Route::patch('/items/{menuItem}/toggle-availability', [App\Http\Controllers\MenuItemController::class, 'toggleAvailability'])->name('items.toggle-availability');
 
+    // Export Menu
+    Route::get('/export/pdf', [App\Http\Controllers\MenuExportController::class, 'exportPdf'])->name('export.pdf');
+
     // Recipes (Recetas)
     Route::get('/recipes', [App\Http\Controllers\RecipeController::class, 'index'])->name('recipes');
     Route::post('/recipes', [App\Http\Controllers\RecipeController::class, 'store'])->name('recipes.store');
@@ -239,6 +242,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('financial')->name('financial.
     Route::get('/dashboard', [App\Http\Controllers\FinancialDashboardController::class, 'index'])->name('dashboard');
     Route::get('/kpis', [App\Http\Controllers\FinancialDashboardController::class, 'getKpis'])->name('kpis');
     Route::get('/trends', [App\Http\Controllers\FinancialDashboardController::class, 'getTrends'])->name('trends');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rutas para CONFIGURACIÓN (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('settings')->name('settings.')->group(function () {
+    Route::get('/business', [App\Http\Controllers\SettingsController::class, 'index'])->name('business');
+    Route::post('/business', [App\Http\Controllers\SettingsController::class, 'update'])->name('update');
 });
 
 /*

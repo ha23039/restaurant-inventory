@@ -43,9 +43,19 @@ class POSController extends Controller
             }
         });
 
+        // Obtener ventas pendientes (órdenes activas)
+        $pendingSales = $this->saleService->getPendingSales();
+
+        // Obtener mesas disponibles para asignación
+        $availableTables = \App\Models\Table::active()
+            ->orderBy('table_number')
+            ->get(['id', 'table_number', 'name', 'capacity', 'status', 'current_sale_id']);
+
         return Inertia::render('Sales/POS', [
             'menu_items' => MenuItemResource::collection($menuItems),
             'simple_products' => SimpleProductResource::collection($simpleProducts),
+            'pending_sales' => $pendingSales,
+            'available_tables' => $availableTables,
         ]);
     }
 

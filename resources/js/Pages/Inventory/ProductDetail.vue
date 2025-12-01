@@ -5,24 +5,19 @@
         <template #header>
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <Link 
-                        :href="route('inventory.products.index')"
-                        class="text-gray-500 hover:text-gray-700"
-                    >
-                        ← Volver a Productos
-                    </Link>
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                        👁️ {{ product.name }}
-                    </h2>
-                </div>
-                <div class="flex space-x-2">
                     <Link
-                        :href="route('inventory.products.edit', product.id)"
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        :href="route('inventory.products.index')"
+                        class="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                     >
-                        ✏️ Editar
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Volver a Productos
                     </Link>
                 </div>
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
+                    {{ product.name }}
+                </h2>
             </div>
         </template>
 
@@ -39,7 +34,7 @@
                                         <dt class="text-sm font-medium text-gray-500">Nombre</dt>
                                         <dd class="text-sm text-gray-900">{{ product.name }}</dd>
                                     </div>
-                                    <div>
+                                    <div v-if="product.category">
                                         <dt class="text-sm font-medium text-gray-500">Categoría</dt>
                                         <dd class="text-sm text-gray-900">
                                             <span
@@ -61,11 +56,11 @@
                                     <div>
                                         <dt class="text-sm font-medium text-gray-500">Estado</dt>
                                         <dd class="text-sm text-gray-900">
-                                            <span 
+                                            <span
                                                 :class="product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                             >
-                                                {{ product.is_active ? '✅ Activo' : '❌ Inactivo' }}
+                                                {{ product.is_active ? 'Activo' : 'Inactivo' }}
                                             </span>
                                         </dd>
                                     </div>
@@ -83,7 +78,7 @@
                                                 v-if="product.current_stock <= product.min_stock"
                                                 class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                             >
-                                                ⚠️ Stock Bajo
+                                                Stock Bajo
                                             </span>
                                         </dd>
                                     </div>
@@ -107,13 +102,13 @@
                                                 v-if="isExpired(product.expiry_date)"
                                                 class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                             >
-                                                🗓️ Vencido
+                                                Vencido
                                             </span>
                                             <span
                                                 v-else-if="isExpiringSoon(product.expiry_date)"
                                                 class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
                                             >
-                                                ⏰ Vence Pronto
+                                                Vence Pronto
                                             </span>
                                         </dd>
                                     </div>
@@ -126,7 +121,7 @@
                 <!-- Últimos movimientos -->
                 <div v-if="product.inventory_movements && product.inventory_movements.length > 0" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Últimos Movimientos</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Últimos Movimientos</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">

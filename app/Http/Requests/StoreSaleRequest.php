@@ -23,12 +23,16 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         $isFreeSale = $this->boolean('is_free_sale');
+        $action = $this->input('action', 'complete');
 
         return [
             'is_free_sale' => 'nullable|boolean',
+            'action' => 'nullable|in:complete,save_pending',
+            'existing_sale_id' => 'nullable|integer|exists:sales,id',
+            'table_id' => 'nullable|integer|exists:tables,id',
             'free_sale_description' => $isFreeSale ? 'required|string|min:3|max:500' : 'nullable|string|max:500',
             'free_sale_total' => $isFreeSale ? 'required|numeric|min:0.01' : 'nullable|numeric',
-            'items' => $isFreeSale ? 'nullable|array' : 'required|array|min:1',
+            'items' => ($isFreeSale || $action === 'save_pending') ? 'nullable|array' : 'required|array|min:1',
             'items.*.id' => 'required_unless:items.*.product_type,free|integer',
             'items.*.product_type' => 'required_with:items.*|in:menu,simple,free',
             'items.*.quantity' => 'required_with:items.*|integer|min:1',
@@ -36,7 +40,7 @@ class StoreSaleRequest extends FormRequest
             'items.*.name' => 'required_if:items.*.product_type,free|string|max:100',
             'items.*.price' => 'required_if:items.*.product_type,free|numeric|min:0.01',
             'items.*.category' => 'nullable|string|in:servicio,evento,propina,ajuste,otro',
-            'payment_method' => 'required|in:efectivo,tarjeta,transferencia',
+            'payment_method' => $action === 'save_pending' ? 'nullable|in:efectivo,tarjeta,transferencia' : 'required|in:efectivo,tarjeta,transferencia',
             'discount' => 'nullable|numeric|min:0',
             'tax' => 'nullable|numeric|min:0',
         ];

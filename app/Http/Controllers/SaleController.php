@@ -15,9 +15,10 @@ class SaleController extends Controller
     {
         $this->authorize('viewAny', Sale::class);
 
-        // 🔄 ACTUALIZADO: Incluir devoluciones en la consulta
+        // 🔄 ACTUALIZADO: Incluir devoluciones y mesa en la consulta
         $query = Sale::with([
             'user',
+            'table',
             'saleItems.menuItem',
             'saleItems.simpleProduct',
             'completedReturns',  // 🔄 NUEVA RELACIÓN
@@ -122,9 +123,10 @@ class SaleController extends Controller
         // DEBUG: Log la venta que se está mostrando
         \Log::info('🧪 SaleController@show - Venta solicitada:', ['sale_id' => $sale->id]);
 
-        // 🔄 ACTUALIZADO: Cargar todas las relaciones necesarias incluyendo devoluciones
+        // 🔄 ACTUALIZADO: Cargar todas las relaciones necesarias incluyendo devoluciones y mesa
         $sale = Sale::with([
             'user:id,name,email',
+            'table',
             'saleItems' => function ($query) {
                 $query->with([
                     'menuItem:id,name,description,price',
@@ -162,6 +164,15 @@ class SaleController extends Controller
                 'name' => $sale->user->name,
                 'email' => $sale->user->email,
             ],
+
+            // Mesa (si está asignada)
+            'table' => $sale->table ? [
+                'id' => $sale->table->id,
+                'table_number' => $sale->table->table_number,
+                'name' => $sale->table->name,
+                'capacity' => $sale->table->capacity,
+                'status' => $sale->table->status,
+            ] : null,
 
             // Items transformados
             'sale_items' => $sale->saleItems->map(function ($item) use ($sale) {

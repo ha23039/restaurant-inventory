@@ -104,30 +104,25 @@ class TableController extends Controller
     /**
      * Update table status
      */
-    public function updateStatus(Request $request, Table $table): JsonResponse
+    public function updateStatus(Request $request, Table $table): RedirectResponse
     {
         $validated = $request->validate([
             'status' => 'required|in:disponible,ocupada,reservada,en_limpieza',
         ]);
 
         try {
-            $updatedTable = $this->tableService->updateStatus($table, $validated['status']);
+            $this->tableService->updateStatus($table, $validated['status']);
 
-            return response()->json([
-                'message' => 'Estado actualizado exitosamente',
-                'table' => $updatedTable,
-            ]);
+            return back()->with('success', 'Estado actualizado exitosamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el estado: ' . $e->getMessage(),
-            ], 400);
+            return back()->withErrors(['error' => 'Error al actualizar el estado: ' . $e->getMessage()]);
         }
     }
 
     /**
      * Occupy table with a sale
      */
-    public function occupyTable(Request $request, Table $table): JsonResponse
+    public function occupyTable(Request $request, Table $table): RedirectResponse
     {
         $validated = $request->validate([
             'sale_id' => 'required|exists:sales,id',
@@ -135,35 +130,25 @@ class TableController extends Controller
 
         try {
             $sale = Sale::findOrFail($validated['sale_id']);
-            $updatedTable = $this->tableService->occupyTable($table, $sale);
+            $this->tableService->occupyTable($table, $sale);
 
-            return response()->json([
-                'message' => 'Mesa ocupada exitosamente',
-                'table' => $updatedTable,
-            ]);
+            return back()->with('success', 'Mesa ocupada exitosamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
      * Release table (mark as available)
      */
-    public function releaseTable(Table $table): JsonResponse
+    public function releaseTable(Table $table): RedirectResponse
     {
         try {
-            $updatedTable = $this->tableService->releaseTable($table);
+            $this->tableService->releaseTable($table);
 
-            return response()->json([
-                'message' => 'Mesa liberada exitosamente',
-                'table' => $updatedTable,
-            ]);
+            return back()->with('success', 'Mesa liberada exitosamente');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al liberar la mesa: ' . $e->getMessage(),
-            ], 400);
+            return back()->withErrors(['error' => 'Error al liberar la mesa: ' . $e->getMessage()]);
         }
     }
 
@@ -182,19 +167,15 @@ class TableController extends Controller
     /**
      * Toggle table active status
      */
-    public function toggleActive(Table $table): JsonResponse
+    public function toggleActive(Table $table): RedirectResponse
     {
         try {
             $updatedTable = $this->tableService->toggleActive($table);
 
-            return response()->json([
-                'message' => $updatedTable->is_active ? 'Mesa activada' : 'Mesa desactivada',
-                'table' => $updatedTable,
-            ]);
+            $message = $updatedTable->is_active ? 'Mesa activada exitosamente' : 'Mesa desactivada exitosamente';
+            return back()->with('success', $message);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 }

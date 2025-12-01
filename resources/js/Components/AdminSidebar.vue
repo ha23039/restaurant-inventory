@@ -186,6 +186,15 @@
                 >
                     Usuarios
                 </NavItem>
+
+                <NavItem
+                    :href="route('settings.business')"
+                    :active="route().current('settings.*')"
+                    :collapsed="isCollapsed"
+                    icon="settings"
+                >
+                    Configuración
+                </NavItem>
             </template>
         </nav>
 

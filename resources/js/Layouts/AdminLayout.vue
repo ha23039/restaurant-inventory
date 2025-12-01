@@ -53,8 +53,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { useToast } from '@/composables';
 import AdminSidebar from '@/Components/AdminSidebar.vue';
 import AdminHeader from '@/Components/AdminHeader.vue';
 import GlobalSearch from '@/Components/GlobalSearch.vue';
@@ -72,6 +73,27 @@ const props = defineProps({
 });
 
 const page = usePage();
+const toast = useToast();
+
+// Watch for flash messages
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+        if (flash?.warning) {
+            toast.warning(flash.warning);
+        }
+        if (flash?.info) {
+            toast.info(flash.info);
+        }
+    },
+    { deep: true }
+);
 
 // Sidebar state
 const sidebarCollapsed = ref(false);

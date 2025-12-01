@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('menu_items', function (Blueprint $table) {
-            //
+            $table->boolean('is_service')->default(false)->after('is_available');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('menu_items', function (Blueprint $table) {
-            //
+            $table->dropColumn('is_service');
         });
     }
 };

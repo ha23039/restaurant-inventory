@@ -140,7 +140,7 @@
                                                 session.difference > 0 ? 'text-yellow-600' :
                                                 'text-red-600'
                                             ]">
-                                                {{ session.difference > 0 ? '+' : '' }}${{ (session.difference || 0).toFixed(2) }}
+                                                {{ session.difference > 0 ? '+' : '' }}${{ parseFloat(session.difference || 0).toFixed(2) }}
                                             </span>
                                             <span v-else class="text-gray-400">-</span>
                                         </td>

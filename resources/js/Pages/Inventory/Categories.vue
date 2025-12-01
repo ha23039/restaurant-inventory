@@ -4,14 +4,17 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    🏷️ Gestión de Categorías
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
+                    Gestión de Categorías
                 </h2>
-                <button 
+                <button
                     @click="openCreateModal"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                 >
-                    + Nueva Categoría
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nueva Categoría
                 </button>
             </div>
         </template>
@@ -70,9 +73,9 @@
 
                     <!-- Mensaje si no hay categorías -->
                     <div v-if="categories.length === 0" class="col-span-full text-center py-12 text-gray-500">
-                        🏷️ No hay categorías creadas
+                        No hay categorías creadas
                         <br>
-                        <button 
+                        <button
                             @click="openCreateModal"
                             class="mt-4 text-blue-600 hover:text-blue-800 underline"
                         >

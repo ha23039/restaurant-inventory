@@ -58,10 +58,17 @@ class MenuItemController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0.01',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'image_path' => 'nullable|string|max:255',
             'is_available' => 'boolean',
             'is_service' => 'boolean',
         ]);
+
+        // Handle file upload
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('menu-items', 'public');
+            $validated['image_path'] = '/storage/' . $path;
+        }
 
         $menuItem = MenuItem::create($validated);
 
@@ -94,10 +101,22 @@ class MenuItemController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0.01',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'image_path' => 'nullable|string|max:255',
             'is_available' => 'boolean',
             'is_service' => 'boolean',
         ]);
+
+        // Handle file upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($menuItem->image_path && \Storage::disk('public')->exists(str_replace('/storage/', '', $menuItem->image_path))) {
+                \Storage::disk('public')->delete(str_replace('/storage/', '', $menuItem->image_path));
+            }
+
+            $path = $request->file('image')->store('menu-items', 'public');
+            $validated['image_path'] = '/storage/' . $path;
+        }
 
         $menuItem->update($validated);
 

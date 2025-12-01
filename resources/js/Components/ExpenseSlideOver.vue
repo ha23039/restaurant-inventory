@@ -3,11 +3,16 @@ import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import SlideOver from './SlideOver.vue';
 import ProductSelectionSlideOver from './ProductSelectionSlideOver.vue';
+import { useToast } from '@/composables';
 
 const props = defineProps({
     show: {
         type: Boolean,
         default: false
+    },
+    expense: {
+        type: Object,
+        default: null
     },
     categories: {
         type: Array,
@@ -20,6 +25,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+
+const toast = useToast();
 
 // Form data
 const form = ref({
@@ -45,20 +52,31 @@ watch(() => form.value, () => {
     }
 }, { deep: true });
 
-// Reset form when closed
+// Reset form when closed or load existing expense
 watch(() => props.show, (newVal) => {
     if (!newVal) {
         setTimeout(() => {
             resetForm();
         }, 300);
     } else if (newVal) {
-        // Al abrir - resetear primero, luego guardar estado inicial
-        resetForm();
+        // Al abrir - cargar datos si es edición o resetear si es nuevo
+        if (props.expense) {
+            loadExpenseData();
+        } else {
+            resetForm();
+        }
         setTimeout(() => {
             initialFormState.value = JSON.parse(JSON.stringify(form.value));
         }, 100);
     }
 });
+
+// Watch expense changes
+watch(() => props.expense, () => {
+    if (props.show && props.expense) {
+        loadExpenseData();
+    }
+}, { deep: true });
 
 const isProductCategory = computed(() => {
     return form.value.category === 'compra_productos_insumos';
@@ -106,6 +124,28 @@ const removeProduct = (index) => {
     form.value.products.splice(index, 1);
 };
 
+const loadExpenseData = () => {
+    if (props.expense) {
+        // Extraer supplier_id de las notas si existe
+        const extractSupplierId = (notes) => {
+            if (!notes) return null;
+            const match = notes.match(/Proveedor ID: (\d+)/);
+            return match ? parseInt(match[1]) : null;
+        };
+
+        form.value = {
+            expense_date: props.expense.flow_date || new Date().toISOString().split('T')[0],
+            category: props.expense.category || '',
+            description: props.expense.description || '',
+            amount: props.expense.amount || '',
+            payment_method: props.expense.payment_method || 'efectivo',
+            supplier_id: extractSupplierId(props.expense.notes),
+            notes: props.expense.notes ? props.expense.notes.replace(/Proveedor ID: \d+\n?/, '').trim() : '',
+            products: []
+        };
+    }
+};
+
 const resetForm = () => {
     form.value = {
         expense_date: new Date().toISOString().split('T')[0],
@@ -121,6 +161,10 @@ const resetForm = () => {
     hasChanges.value = false;
     isSubmitting.value = false;
 };
+
+const isEditMode = computed(() => {
+    return props.expense !== null;
+});
 
 const handleSubmit = () => {
     if (!form.value.category) {
@@ -152,13 +196,19 @@ const handleSubmit = () => {
         amount: isProductCategory.value ? totalAmount.value : parseFloat(form.value.amount)
     };
 
-    router.post(route('expenses.store'), data, {
+    const routeName = isEditMode.value ? 'expenses.update' : 'expenses.store';
+    const routeParams = isEditMode.value ? props.expense.id : undefined;
+    const method = isEditMode.value ? 'put' : 'post';
+
+    router[method](route(routeName, routeParams), data, {
         preserveScroll: true,
         onSuccess: () => {
+            toast.success(isEditMode.value ? 'Gasto actualizado exitosamente' : 'Gasto registrado exitosamente');
             emit('close');
         },
         onError: (errors) => {
             console.error(errors);
+            toast.error('Error al guardar el gasto');
             isSubmitting.value = false;
         }
     });
@@ -171,8 +221,8 @@ const handleSubmit = () => {
         :prevent-close="hasChanges && !isSubmitting"
         @close="handleClose"
         @backdrop-click="handleBackdropClick"
-        title="Nuevo Gasto"
-        subtitle="Registra un nuevo gasto en el sistema"
+        :title="isEditMode ? 'Editar Gasto' : 'Nuevo Gasto'"
+        :subtitle="isEditMode ? 'Modifica la información del gasto' : 'Registra un nuevo gasto en el sistema'"
         size="md"
     >
         <div class="space-y-6">
@@ -394,7 +444,7 @@ const handleSubmit = () => {
                     class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <span v-if="isSubmitting">Guardando...</span>
-                    <span v-else>Crear Gasto</span>
+                    <span v-else>{{ isEditMode ? 'Actualizar Gasto' : 'Crear Gasto' }}</span>
                 </button>
             </div>
         </template>

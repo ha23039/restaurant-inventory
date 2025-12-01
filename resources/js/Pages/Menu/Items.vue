@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MenuItemFormSlideOver from '@/Components/MenuItemFormSlideOver.vue';
+import ExportMenuSlideOver from '@/Components/Menu/ExportMenuSlideOver.vue';
 import { useToast } from 'vue-toastification';
 
 const props = defineProps({
@@ -14,6 +15,7 @@ const toast = useToast();
 
 // Estado
 const showFormSlideOver = ref(false);
+const showExportSlideOver = ref(false);
 const editingItem = ref(null);
 const searchTerm = ref(props.filters?.search || '');
 const filterAvailable = ref(props.filters?.is_available || '');
@@ -106,15 +108,27 @@ const formatPrice = (price) => {
                     </div>
                 </div>
 
-                <button
-                    @click="openCreateForm"
-                    class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors"
-                >
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Nuevo Platillo
-                </button>
+                <div class="flex items-center space-x-3">
+                    <button
+                        @click="showExportSlideOver = true"
+                        class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        Exportar Menú
+                    </button>
+
+                    <button
+                        @click="openCreateForm"
+                        class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo Platillo
+                    </button>
+                </div>
             </div>
         </template>
 
@@ -202,7 +216,9 @@ const formatPrice = (price) => {
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
-                                            <span class="text-orange-600 dark:text-orange-400 text-lg">🍽️</span>
+                                            <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                            </svg>
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -258,18 +274,26 @@ const formatPrice = (price) => {
                                     </button>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button
-                                        @click="openEditForm(item)"
-                                        class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 mr-3"
-                                    >
-                                        Editar
-                                    </button>
-                                    <button
-                                        @click="deleteItem(item)"
-                                        class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                    >
-                                        Eliminar
-                                    </button>
+                                    <div class="flex items-center justify-end space-x-3">
+                                        <button
+                                            @click="openEditForm(item)"
+                                            class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                            title="Editar"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            @click="deleteItem(item)"
+                                            class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            title="Eliminar"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
 
@@ -318,6 +342,12 @@ const formatPrice = (price) => {
             :show="showFormSlideOver"
             :menuItem="editingItem"
             @close="closeForm"
+        />
+
+        <!-- Export SlideOver -->
+        <ExportMenuSlideOver
+            :show="showExportSlideOver"
+            @close="showExportSlideOver = false"
         />
     </AdminLayout>
 </template>

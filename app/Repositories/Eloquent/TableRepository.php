@@ -16,6 +16,7 @@ class TableRepository extends BaseRepository implements TableRepositoryInterface
     public function getActiveTables(): Collection
     {
         return $this->model
+            ->with(['currentSale'])
             ->where('is_active', true)
             ->orderBy('table_number')
             ->get();
@@ -49,6 +50,7 @@ class TableRepository extends BaseRepository implements TableRepositoryInterface
     public function getByStatus(string $status): Collection
     {
         return $this->model
+            ->with(['currentSale'])
             ->where('status', $status)
             ->where('is_active', true)
             ->orderBy('table_number')
@@ -131,6 +133,7 @@ class TableRepository extends BaseRepository implements TableRepositoryInterface
     public function search(string $query): Collection
     {
         return $this->model
+            ->with(['currentSale'])
             ->where(function ($q) use ($query) {
                 $q->where('table_number', 'like', "%{$query}%")
                   ->orWhere('name', 'like', "%{$query}%");
