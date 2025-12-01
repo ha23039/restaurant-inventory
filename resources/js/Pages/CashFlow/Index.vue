@@ -192,13 +192,62 @@
                     </DataTable>
 
                     <!-- Pagination -->
-                    <div v-if="transactions.data.length > 0" class="mt-6">
-                        <Pagination
-                            :links="transactions.links"
-                            :from="transactions.from"
-                            :to="transactions.to"
-                            :total="transactions.total"
-                        />
+                    <div v-if="transactions.data.length > 0" class="px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                <Link
+                                    v-if="transactions.prev_page_url"
+                                    :href="transactions.prev_page_url"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Anterior
+                                </Link>
+                                <Link
+                                    v-if="transactions.next_page_url"
+                                    :href="transactions.next_page_url"
+                                    class="relative ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Siguiente
+                                </Link>
+                            </div>
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        Mostrando
+                                        <span class="font-medium">{{ transactions.from }}</span>
+                                        a
+                                        <span class="font-medium">{{ transactions.to }}</span>
+                                        de
+                                        <span class="font-medium">{{ transactions.total }}</span>
+                                        transacciones
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                        <template v-for="(link, index) in transactions.links" :key="index">
+                                            <Link
+                                                v-if="link.url"
+                                                :href="link.url"
+                                                v-html="link.label"
+                                                class="relative inline-flex items-center px-2 py-2 text-sm font-medium transition-colors border"
+                                                :class="[
+                                                    link.active
+                                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900 dark:text-blue-200'
+                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700',
+                                                    index === 0 ? 'rounded-l-md' : '',
+                                                    index === transactions.links.length - 1 ? 'rounded-r-md' : '',
+                                                ]"
+                                            />
+                                            <span
+                                                v-else
+                                                v-html="link.label"
+                                                class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 cursor-default dark:bg-gray-800 dark:border-gray-600 dark:text-gray-600"
+                                            />
+                                        </template>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Empty State -->
@@ -249,7 +298,6 @@ import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
 import DataTable from '@/Components/Data/DataTable.vue';
-import Pagination from '@/Components/Data/Pagination.vue';
 import TransactionFilters from '@/Components/Financial/TransactionFilters.vue';
 import ExportSlideOver from '@/Components/Financial/ExportSlideOver.vue';
 

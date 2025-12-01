@@ -51,7 +51,7 @@ class CashFlowController extends Controller
         }
 
         return Inertia::render('CashFlow/Index', [
-            'transactions' => CashFlowResource::collection($transactions),
+            'transactions' => $transactions,
             'filters' => $filters,
             'categories' => $categories,
             'users' => $users,

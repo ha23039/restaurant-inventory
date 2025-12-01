@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import FormInput from '@/Components/Forms/FormInput.vue';
 
 const props = defineProps({
@@ -67,6 +67,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:from', 'update:to', 'change']);
+
+const activePreset = ref(null);
 
 const presets = [
     {
@@ -152,16 +154,19 @@ const presets = [
 ];
 
 const handleFromChange = (value) => {
+    activePreset.value = null; // Clear preset when manually changing dates
     emit('update:from', value);
     emit('change', { from: value, to: props.to });
 };
 
 const handleToChange = (value) => {
+    activePreset.value = null; // Clear preset when manually changing dates
     emit('update:to', value);
     emit('change', { from: props.from, to: value });
 };
 
 const applyPreset = (preset) => {
+    activePreset.value = preset.value; // Remember which preset was clicked
     const range = preset.getRange();
     emit('update:from', range.from);
     emit('update:to', range.to);
@@ -169,10 +174,7 @@ const applyPreset = (preset) => {
 };
 
 const isPresetActive = (preset) => {
-    if (!props.from || !props.to) return false;
-
-    const range = preset.getRange();
-    return props.from === range.from && props.to === range.to;
+    return activePreset.value === preset.value;
 };
 
 const getDaysDifference = () => {

@@ -28,6 +28,14 @@ class CashFlow extends Model
         'flow_date' => 'date',
     ];
 
+    protected $appends = [
+        'is_income',
+        'is_expense',
+        'formatted_amount',
+        'signed_amount',
+        'category_label',
+    ];
+
     // Relaciones
     public function user()
     {
