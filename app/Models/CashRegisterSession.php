@@ -33,6 +33,15 @@ class CashRegisterSession extends Model
         'closed_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'total_cash_sales',
+        'total_card_sales',
+        'total_transfer_sales',
+        'total_all_sales',
+        'transaction_count',
+        'current_duration_in_hours',
+    ];
+
     /**
      * Relación con el usuario (cajero)
      */

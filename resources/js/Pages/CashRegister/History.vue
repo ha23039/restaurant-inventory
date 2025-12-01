@@ -136,11 +136,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
                                             <span v-if="session.status === 'closed'" :class="[
                                                 'font-semibold',
-                                                session.difference == 0 ? 'text-green-600' :
-                                                session.difference > 0 ? 'text-yellow-600' :
+                                                toNumber(session.difference) == 0 ? 'text-green-600' :
+                                                toNumber(session.difference) > 0 ? 'text-yellow-600' :
                                                 'text-red-600'
                                             ]">
-                                                {{ session.difference > 0 ? '+' : '' }}${{ parseFloat(session.difference || 0).toFixed(2) }}
+                                                {{ toNumber(session.difference) > 0 ? '+' : '' }}${{ formatPrice(session.difference) }}
                                             </span>
                                             <span v-else class="text-gray-400">-</span>
                                         </td>
@@ -263,8 +263,12 @@ const clearFilters = () => {
     applyFilters();
 };
 
+const toNumber = (value) => {
+    return parseFloat(value) || 0;
+};
+
 const formatPrice = (value) => {
-    return parseFloat(value || 0).toFixed(2);
+    return toNumber(value).toFixed(2);
 };
 
 const formatDateTime = (datetime) => {

@@ -39,24 +39,24 @@
                     <!-- Diferencia (si está cerrada) -->
                     <div v-if="session.status === 'closed'" :class="[
                         'overflow-hidden shadow-sm sm:rounded-lg',
-                        session.difference == 0 ? 'bg-green-50' :
-                        session.difference > 0 ? 'bg-yellow-50' :
+                        toNumber(session.difference) == 0 ? 'bg-green-50' :
+                        toNumber(session.difference) > 0 ? 'bg-yellow-50' :
                         'bg-red-50'
                     ]">
                         <div class="p-6">
                             <p class="text-sm font-medium mb-2" :class="[
-                                session.difference == 0 ? 'text-green-700' :
-                                session.difference > 0 ? 'text-yellow-700' :
+                                toNumber(session.difference) == 0 ? 'text-green-700' :
+                                toNumber(session.difference) > 0 ? 'text-yellow-700' :
                                 'text-red-700'
                             ]">
-                                {{ session.difference == 0 ? '✓ Caja Cuadrada' : session.difference > 0 ? '⚠ Sobrante' : '✗ Faltante' }}
+                                {{ toNumber(session.difference) == 0 ? '✓ Caja Cuadrada' : toNumber(session.difference) > 0 ? '⚠ Sobrante' : '✗ Faltante' }}
                             </p>
                             <p class="text-3xl font-bold" :class="[
-                                session.difference == 0 ? 'text-green-900' :
-                                session.difference > 0 ? 'text-yellow-900' :
+                                toNumber(session.difference) == 0 ? 'text-green-900' :
+                                toNumber(session.difference) > 0 ? 'text-yellow-900' :
                                 'text-red-900'
                             ]">
-                                ${{ Math.abs(session.difference || 0).toFixed(2) }}
+                                ${{ Math.abs(toNumber(session.difference)).toFixed(2) }}
                             </p>
                         </div>
                     </div>
@@ -166,12 +166,12 @@
                                         <span class="font-medium">${{ formatPrice(session.closing_amount) }}</span>
                                     </div>
                                     <div class="flex justify-between font-bold pt-2 border-t-2" :class="[
-                                        session.difference == 0 ? 'text-green-700' :
-                                        session.difference > 0 ? 'text-yellow-700' :
+                                        toNumber(session.difference) == 0 ? 'text-green-700' :
+                                        toNumber(session.difference) > 0 ? 'text-yellow-700' :
                                         'text-red-700'
                                     ]">
                                         <span>Diferencia:</span>
-                                        <span>${{ (session.difference || 0).toFixed(2) }}</span>
+                                        <span>${{ formatPrice(session.difference) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -263,11 +263,16 @@ const props = defineProps({
     sales: Array,
 });
 
+const toNumber = (value) => {
+    return parseFloat(value) || 0;
+};
+
 const formatPrice = (value) => {
-    return parseFloat(value || 0).toFixed(2);
+    return toNumber(value).toFixed(2);
 };
 
 const formatDateTime = (datetime) => {
+    if (!datetime) return '';
     return new Date(datetime).toLocaleString('es-MX', {
         year: 'numeric',
         month: 'short',
@@ -278,6 +283,7 @@ const formatDateTime = (datetime) => {
 };
 
 const formatTime = (datetime) => {
+    if (!datetime) return '';
     return new Date(datetime).toLocaleString('es-MX', {
         hour: '2-digit',
         minute: '2-digit'
