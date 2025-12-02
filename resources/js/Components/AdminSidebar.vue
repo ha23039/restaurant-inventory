@@ -104,7 +104,7 @@
                     :href="route('tables.index')"
                     :active="route().current('tables.*')"
                     :collapsed="isCollapsed"
-                    icon="dashboard"
+                    icon="table"
                 >
                     Mesas
                 </NavItem>

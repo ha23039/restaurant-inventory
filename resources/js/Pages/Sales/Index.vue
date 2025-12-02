@@ -5,8 +5,8 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
-                    <component :is="icons.chart" class="w-6 h-6 text-gray-800 mr-2" />
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    <component :is="icons.chart" class="w-6 h-6 text-gray-800 dark:text-white mr-2" />
+                    <h2 class="font-semibold text-xl text-gray-800 dark:text-white leading-tight">
                         Historial de Ventas
                     </h2>
                 </div>

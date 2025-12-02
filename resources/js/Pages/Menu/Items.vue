@@ -1,14 +1,16 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MenuItemFormSlideOver from '@/Components/MenuItemFormSlideOver.vue';
 import ExportMenuSlideOver from '@/Components/Menu/ExportMenuSlideOver.vue';
 import { useToast } from 'vue-toastification';
+import { debounce } from 'lodash-es';
 
 const props = defineProps({
     menuItems: Object,
     filters: Object,
+    stats: Object,
 });
 
 const toast = useToast();
@@ -20,6 +22,7 @@ const editingItem = ref(null);
 const searchTerm = ref(props.filters?.search || '');
 const filterAvailable = ref(props.filters?.is_available || '');
 const filterService = ref(props.filters?.is_service || '');
+const searching = ref(false);
 
 // Métodos
 const openCreateForm = () => {
@@ -38,6 +41,7 @@ const closeForm = () => {
 };
 
 const applyFilters = () => {
+    searching.value = true;
     router.get(route('menu.items'), {
         search: searchTerm.value,
         is_available: filterAvailable.value,
@@ -45,8 +49,26 @@ const applyFilters = () => {
     }, {
         preserveState: true,
         preserveScroll: true,
+        onFinish: () => {
+            searching.value = false;
+        }
     });
 };
+
+// Búsqueda con debounce (búsqueda interactiva)
+const debouncedSearch = debounce(() => {
+    applyFilters();
+}, 500);
+
+// Watch para búsqueda automática
+watch(searchTerm, () => {
+    debouncedSearch();
+});
+
+// Watch para filtros de disponibilidad y servicio (opcional, ya tienen @change)
+watch([filterAvailable, filterService], () => {
+    applyFilters();
+});
 
 const clearFilters = () => {
     searchTerm.value = '';
@@ -134,25 +156,105 @@ const formatPrice = (price) => {
 
         <div class="py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Estadísticas -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <!-- Total de platillos -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Platillos</p>
+                                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</p>
+                            </div>
+                            <div class="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                                <svg class="w-8 h-8 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {{ stats.dishes }} platillos • {{ stats.services }} servicios
+                        </div>
+                    </div>
+
+                    <!-- Disponibles -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Disponibles</p>
+                                <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{ stats.available }}</p>
+                            </div>
+                            <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                                <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {{ ((stats.available / stats.total) * 100).toFixed(0) }}% del total
+                        </div>
+                    </div>
+
+                    <!-- No disponibles -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">No Disponibles</p>
+                                <p class="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">{{ stats.unavailable }}</p>
+                            </div>
+                            <div class="p-3 bg-red-100 dark:bg-red-900 rounded-lg">
+                                <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Temporalmente fuera de stock
+                        </div>
+                    </div>
+
+                    <!-- Con recetas -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Con Recetas</p>
+                                <p class="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">{{ stats.with_recipes }}</p>
+                            </div>
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {{ stats.without_recipes }} sin receta definida
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Filtros y búsqueda -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <!-- Búsqueda -->
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 relative">
                             <input
                                 v-model="searchTerm"
-                                @keyup.enter="applyFilters"
                                 type="text"
                                 placeholder="Buscar platillo..."
-                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
+                                class="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
                             />
+                            <div v-if="searching" class="absolute right-3 top-1/2 -translate-y-1/2">
+                                <svg class="animate-spin h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
                         </div>
 
                         <!-- Filtro disponibilidad -->
                         <div>
                             <select
                                 v-model="filterAvailable"
-                                @change="applyFilters"
                                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
                             >
                                 <option value="">Todos</option>
@@ -165,7 +267,6 @@ const formatPrice = (price) => {
                         <div>
                             <select
                                 v-model="filterService"
-                                @change="applyFilters"
                                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
                             >
                                 <option value="">Todos</option>
@@ -176,11 +277,17 @@ const formatPrice = (price) => {
                     </div>
 
                     <!-- Botón limpiar filtros -->
-                    <div v-if="searchTerm || filterAvailable || filterService" class="mt-3">
+                    <div v-if="searchTerm || filterAvailable || filterService" class="mt-3 flex items-center justify-between">
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            Filtros activos
+                        </div>
                         <button
                             @click="clearFilters"
-                            class="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                            class="inline-flex items-center text-sm text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium transition-colors"
                         >
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                             Limpiar filtros
                         </button>
                     </div>
@@ -347,6 +454,7 @@ const formatPrice = (price) => {
         <!-- Export SlideOver -->
         <ExportMenuSlideOver
             :show="showExportSlideOver"
+            :menu-items="menuItems.data"
             @close="showExportSlideOver = false"
         />
     </AdminLayout>

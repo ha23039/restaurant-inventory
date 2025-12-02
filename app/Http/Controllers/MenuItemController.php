@@ -41,9 +41,21 @@ class MenuItemController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Estadísticas
+        $stats = [
+            'total' => MenuItem::count(),
+            'available' => MenuItem::where('is_available', true)->count(),
+            'unavailable' => MenuItem::where('is_available', false)->count(),
+            'with_recipes' => MenuItem::has('recipes')->count(),
+            'without_recipes' => MenuItem::doesntHave('recipes')->count(),
+            'services' => MenuItem::where('is_service', true)->count(),
+            'dishes' => MenuItem::where('is_service', false)->count(),
+        ];
+
         return Inertia::render('Menu/Items', [
             'menuItems' => $menuItems,
             'filters' => $request->only(['search', 'is_available', 'is_service']),
+            'stats' => $stats,
         ]);
     }
 

@@ -14,17 +14,25 @@ class MenuExportController extends Controller
         $settings = BusinessSettings::get();
 
         // Apply filters
-        $menuItems = MenuItem::query()
-            ->when($request->only_available, fn($q) => $q->where('is_available', true))
-            ->when($request->only_platillos, fn($q) => $q->where('is_service', false))
-            ->orderBy('name')
-            ->get();
+        $query = MenuItem::query();
 
-        // Options from SlideOver
+        // Si se especificaron IDs de platillos, solo usar esos
+        if ($request->has('items') && !empty($request->items)) {
+            $itemIds = explode(',', $request->items);
+            $query->whereIn('id', $itemIds);
+        } else {
+            // Aplicar filtros generales
+            $query->when($request->only_available, fn($q) => $q->where('is_available', true))
+                  ->when($request->only_platillos, fn($q) => $q->where('is_service', false));
+        }
+
+        $menuItems = $query->orderBy('name')->get();
+
+        // Options from SlideOver - asegurar que se lean correctamente
         $options = [
-            'include_images' => $request->boolean('include_images', true),
-            'include_prices' => $request->boolean('include_prices', true),
-            'include_descriptions' => $request->boolean('include_descriptions', true),
+            'include_images' => $request->input('include_images') === '1',
+            'include_prices' => $request->input('include_prices') === '1',
+            'include_descriptions' => $request->input('include_descriptions') === '1',
         ];
 
         $pdf = PDF::loadView('exports.menu-pdf', [
@@ -32,7 +40,7 @@ class MenuExportController extends Controller
             'settings' => $settings,
             'options' => $options,
             'generatedAt' => now(),
-        ]);
+        ])->setPaper('a4', 'portrait');
 
         return $pdf->download('menu-' . now()->format('Y-m-d') . '.pdf');
     }

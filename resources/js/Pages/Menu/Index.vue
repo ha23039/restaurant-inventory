@@ -128,7 +128,8 @@
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500">Total Platillos</div>
-                                <div class="text-2xl font-bold text-gray-900">-</div>
+                                <div class="text-2xl font-bold text-gray-900">{{ stats?.total_items || 0 }}</div>
+                                <div class="text-xs text-gray-500 mt-1">{{ stats?.with_recipes || 0 }} con receta</div>
                             </div>
                         </div>
                     </div>
@@ -145,8 +146,9 @@
                                 </div>
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-500">Recetas Activas</div>
-                                <div class="text-2xl font-bold text-gray-900">-</div>
+                                <div class="text-sm font-medium text-gray-500">Recetas Definidas</div>
+                                <div class="text-2xl font-bold text-gray-900">{{ stats?.total_recipes || 0 }}</div>
+                                <div class="text-xs text-gray-500 mt-1">{{ stats?.total_simple_products || 0 }} productos simples</div>
                             </div>
                         </div>
                     </div>
@@ -162,7 +164,8 @@
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500">Disponibles</div>
-                                <div class="text-2xl font-bold text-gray-900">-</div>
+                                <div class="text-2xl font-bold text-gray-900">{{ stats?.available_items || 0 }}</div>
+                                <div class="text-xs text-gray-500 mt-1">{{ stats?.total_items ? ((stats.available_items / stats.total_items) * 100).toFixed(0) : 0 }}% del total</div>
                             </div>
                         </div>
                     </div>
@@ -175,4 +178,8 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+
+const props = defineProps({
+    stats: Object,
+});
 </script>

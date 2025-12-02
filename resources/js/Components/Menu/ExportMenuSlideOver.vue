@@ -5,6 +5,7 @@ import BaseButton from '@/Components/Base/BaseButton.vue';
 
 const props = defineProps({
     show: Boolean,
+    menuItems: Array,
 });
 
 const emit = defineEmits(['close']);
@@ -16,6 +17,8 @@ const includePrices = ref(true);
 const includeDescriptions = ref(true);
 const onlyAvailable = ref(true);
 const onlyPlatillos = ref(false); // Excluir servicios
+const selectSpecificItems = ref(false); // Nueva opción para seleccionar platillos específicos
+const selectedItems = ref([]); // IDs de platillos seleccionados
 const imageSize = ref('square'); // square (1:1) o story (9:16)
 
 const formats = [
@@ -39,6 +42,53 @@ const formats = [
     }
 ];
 
+// Computed properties
+const availableMenuItems = computed(() => {
+    if (!props.menuItems) return [];
+    return props.menuItems;
+});
+
+const filteredItems = computed(() => {
+    let items = availableMenuItems.value;
+
+    if (onlyAvailable.value) {
+        items = items.filter(item => item.is_available);
+    }
+
+    if (onlyPlatillos.value) {
+        items = items.filter(item => !item.is_service);
+    }
+
+    return items;
+});
+
+const allSelected = computed(() => {
+    return filteredItems.value.length > 0 &&
+           filteredItems.value.every(item => selectedItems.value.includes(item.id));
+});
+
+const someSelected = computed(() => {
+    return selectedItems.value.length > 0 && !allSelected.value;
+});
+
+// Methods
+const toggleSelectAll = () => {
+    if (allSelected.value) {
+        selectedItems.value = [];
+    } else {
+        selectedItems.value = filteredItems.value.map(item => item.id);
+    }
+};
+
+const toggleItem = (itemId) => {
+    const index = selectedItems.value.indexOf(itemId);
+    if (index > -1) {
+        selectedItems.value.splice(index, 1);
+    } else {
+        selectedItems.value.push(itemId);
+    }
+};
+
 const handleExport = () => {
     // Construir URL con parámetros
     const params = new URLSearchParams({
@@ -49,6 +99,11 @@ const handleExport = () => {
         only_available: onlyAvailable.value ? '1' : '0',
         only_platillos: onlyPlatillos.value ? '1' : '0',
     });
+
+    // Si se seleccionaron platillos específicos, agregar sus IDs
+    if (selectSpecificItems.value && selectedItems.value.length > 0) {
+        params.append('items', selectedItems.value.join(','));
+    }
 
     // Abrir en nueva ventana
     window.open(route('menu.export.pdf') + '?' + params.toString(), '_blank');
@@ -65,10 +120,10 @@ const currentFormat = computed(() => {
     <SlideOver
         :show="show"
         title="Exportar Menú"
+        size="lg"
         @close="$emit('close')"
     >
-        <template #content>
-            <div class="space-y-6 px-6 py-4">
+        <div class="space-y-6">
                 <!-- Formato de Exportación -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -231,6 +286,107 @@ const currentFormat = computed(() => {
                     </div>
                 </div>
 
+                <!-- Selección de Platillos Específicos -->
+                <div>
+                    <div class="flex items-start mb-3">
+                        <div class="flex items-center h-5">
+                            <input
+                                id="select-specific"
+                                type="checkbox"
+                                v-model="selectSpecificItems"
+                                class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                            />
+                        </div>
+                        <div class="ml-3">
+                            <label for="select-specific" class="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Seleccionar Platillos Específicos
+                            </label>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                Elige manualmente qué platillos incluir en el menú
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Lista de platillos -->
+                    <div v-if="selectSpecificItems" class="mt-3 border border-gray-300 dark:border-gray-600 rounded-lg max-h-64 overflow-y-auto">
+                        <!-- Seleccionar todos -->
+                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-600 p-3">
+                            <label class="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    :checked="allSelected"
+                                    :indeterminate="someSelected"
+                                    @change="toggleSelectAll"
+                                    class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                />
+                                <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Seleccionar Todos ({{ selectedItems.length }} / {{ filteredItems.length }})
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Items individuales -->
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <label
+                                v-for="item in filteredItems"
+                                :key="item.id"
+                                class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :value="item.id"
+                                    :checked="selectedItems.includes(item.id)"
+                                    @change="toggleItem(item.id)"
+                                    class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                />
+                                <div class="ml-3 flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ item.name }}
+                                        </span>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                                            ${{ parseFloat(item.price).toFixed(2) }}
+                                        </span>
+                                    </div>
+                                    <p v-if="item.description" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
+                                        {{ item.description }}
+                                    </p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span
+                                            v-if="item.is_service"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                        >
+                                            Servicio
+                                        </span>
+                                        <span
+                                            v-if="!item.is_available"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                        >
+                                            No disponible
+                                        </span>
+                                        <span
+                                            v-if="item.image_path"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                        >
+                                            Con imagen
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div v-if="filteredItems.length === 0" class="p-6 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                No hay platillos que coincidan con los filtros seleccionados
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Preview Info -->
                 <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
                     <div class="flex items-start">
@@ -252,10 +408,9 @@ const currentFormat = computed(() => {
                     </div>
                 </div>
             </div>
-        </template>
 
         <template #footer>
-            <div class="flex items-center justify-end space-x-3 px-6 py-4">
+            <div class="flex items-center justify-end space-x-3">
                 <BaseButton
                     variant="secondary"
                     @click="$emit('close')"

@@ -182,7 +182,17 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.'
 
 Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->group(function () {
     Route::get('/', function () {
-        return Inertia::render('Menu/Index');
+        $stats = [
+            'total_items' => \App\Models\MenuItem::count(),
+            'available_items' => \App\Models\MenuItem::where('is_available', true)->count(),
+            'with_recipes' => \App\Models\MenuItem::has('recipes')->count(),
+            'total_recipes' => \App\Models\Recipe::count(),
+            'total_simple_products' => \App\Models\SimpleProduct::count(),
+        ];
+
+        return Inertia::render('Menu/Index', [
+            'stats' => $stats,
+        ]);
     })->name('index');
 
     // Menu Items (Platillos)
