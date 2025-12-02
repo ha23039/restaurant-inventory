@@ -86,12 +86,12 @@ const deleteUser = () => {
 // Role badge color
 const getRoleBadgeClass = (role) => {
     const classes = {
-        admin: 'bg-purple-100 text-purple-800',
-        chef: 'bg-orange-100 text-orange-800',
-        almacenero: 'bg-blue-100 text-blue-800',
-        cajero: 'bg-green-100 text-green-800',
+        admin: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+        chef: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
+        almacenero: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+        cajero: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
     };
-    return classes[role] || 'bg-gray-100 text-gray-800';
+    return classes[role] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
 };
 
 // Has active filters
@@ -106,7 +106,7 @@ const hasActiveFilters = computed(() => {
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Gestión de Usuarios
                 </h2>
                 <button
@@ -124,73 +124,73 @@ const hasActiveFilters = computed(() => {
         <div class="space-y-6">
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                                 </svg>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-500">Total Usuarios</div>
-                            <div class="text-2xl font-bold text-gray-900">{{ statistics?.total || 0 }}</div>
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Usuarios</div>
+                            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics?.total || 0 }}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                 </svg>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-500">Activos</div>
-                            <div class="text-2xl font-bold text-green-600">{{ statistics?.active || 0 }}</div>
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Activos</div>
+                            <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ statistics?.active || 0 }}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd" />
                                 </svg>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-500">Inactivos</div>
-                            <div class="text-2xl font-bold text-red-600">{{ statistics?.inactive || 0 }}</div>
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Inactivos</div>
+                            <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ statistics?.inactive || 0 }}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                                 </svg>
                             </div>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-500">Administradores</div>
-                            <div class="text-2xl font-bold text-purple-600">{{ statistics?.by_role?.admin || 0 }}</div>
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Administradores</div>
+                            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ statistics?.by_role?.admin || 0 }}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
@@ -251,31 +251,31 @@ const hasActiveFilters = computed(() => {
             </div>
 
             <!-- Users Table -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Usuario
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Email / Teléfono
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Rol
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Estado
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Creado
                             </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Acciones
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
@@ -285,13 +285,13 @@ const hasActiveFilters = computed(() => {
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ user.name }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-900">{{ user.email }}</div>
-                                <div v-if="user.phone" class="text-sm text-gray-500">{{ user.phone }}</div>
+                                <div class="text-sm text-gray-900 dark:text-white">{{ user.email }}</div>
+                                <div v-if="user.phone" class="text-sm text-gray-500 dark:text-gray-400">{{ user.phone }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span :class="[getRoleBadgeClass(user.role), 'px-2 py-1 text-xs font-semibold rounded-full']">
@@ -301,12 +301,12 @@ const hasActiveFilters = computed(() => {
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span :class="[
                                     'px-2 py-1 text-xs font-semibold rounded-full',
-                                    user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    user.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
                                 ]">
                                     {{ user.status_label }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                 {{ user.created_at_formatted }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -353,8 +353,8 @@ const hasActiveFilters = computed(() => {
 
                         <tr v-if="users.data.length === 0">
                             <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="text-gray-500">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="text-gray-500 dark:text-gray-400">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                     </svg>
                                     <p class="mt-2 text-sm">No se encontraron usuarios</p>
@@ -365,7 +365,7 @@ const hasActiveFilters = computed(() => {
                 </table>
 
                 <!-- Pagination -->
-                <div v-if="users.data.length > 0" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                <div v-if="users.data.length > 0" class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                     <div class="flex items-center justify-between">
                         <div class="text-sm text-gray-700">
                             Mostrando
@@ -387,7 +387,7 @@ const hasActiveFilters = computed(() => {
                                         link.active
                                             ? 'bg-blue-600 text-white'
                                             : link.url
-                                            ? 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                                            ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
                                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     ]"
                                     :preserve-scroll="true"
@@ -412,19 +412,19 @@ const hasActiveFilters = computed(() => {
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="showDeleteConfirm = false"></div>
 
-                <div class="relative inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div class="relative inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-gray-800 rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
                     <div class="sm:flex sm:items-start">
-                        <div class="flex items-center justify-center flex-shrink-0 w-12 h-12 mx-auto bg-red-100 rounded-full sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center justify-center flex-shrink-0 w-12 h-12 mx-auto bg-red-100 dark:bg-red-900 rounded-full sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg font-medium leading-6 text-gray-900">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
                                 Eliminar Usuario
                             </h3>
                             <div class="mt-2">
-                                <p class="text-sm text-gray-500">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
                                     ¿Estás seguro de que deseas eliminar a <strong>{{ userToDelete?.name }}</strong>?
                                     Esta acción no se puede deshacer.
                                 </p>
@@ -442,7 +442,7 @@ const hasActiveFilters = computed(() => {
                         <button
                             @click="showDeleteConfirm = false"
                             type="button"
-                            class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
+                            class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
                         >
                             Cancelar
                         </button>

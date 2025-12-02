@@ -103,7 +103,7 @@ const hasActiveFilters = computed(() => {
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Gestión de Mesas
                 </h2>
                 <button
@@ -121,70 +121,70 @@ const hasActiveFilters = computed(() => {
         <div class="space-y-6">
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-500 font-medium">Total Mesas</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1">{{ statistics.total }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Mesas</p>
+                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ statistics.total }}</p>
                         </div>
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-500 font-medium">Disponibles</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Disponibles</p>
                             <p class="text-3xl font-bold text-green-600 mt-1">{{ statistics.available }}</p>
                         </div>
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-500 font-medium">Ocupadas</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Ocupadas</p>
                             <p class="text-3xl font-bold text-red-600 mt-1">{{ statistics.occupied }}</p>
                         </div>
-                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-500 font-medium">Reservadas</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Reservadas</p>
                             <p class="text-3xl font-bold text-yellow-600 mt-1">{{ statistics.reserved }}</p>
                         </div>
-                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-500 font-medium">Ocupación</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Ocupación</p>
                             <p class="text-3xl font-bold text-purple-600 mt-1">{{ statistics.occupancy_rate }}%</p>
                         </div>
-                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </div>
@@ -193,24 +193,24 @@ const hasActiveFilters = computed(() => {
             </div>
 
             <!-- Filters -->
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
                         <input
                             v-model="localFilters.search"
                             type="text"
                             placeholder="Número o nombre..."
-                            class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500"
                             @keyup.enter="applyFilters"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
                         <select
                             v-model="localFilters.status"
-                            class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500"
                             @change="applyFilters"
                         >
                             <option value="">Todos</option>
@@ -231,7 +231,7 @@ const hasActiveFilters = computed(() => {
                         <button
                             v-if="hasActiveFilters"
                             @click="clearFilters"
-                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
                         >
                             Limpiar
                         </button>
@@ -246,32 +246,32 @@ const hasActiveFilters = computed(() => {
                     :key="table.id"
                     @click="openTable(table)"
                     :class="[
-                        'relative bg-white rounded-lg shadow-md border-2 cursor-pointer transition-all hover:shadow-lg hover:scale-105',
+                        'relative bg-white dark:bg-gray-800 rounded-lg shadow-md border-2 cursor-pointer transition-all hover:shadow-lg hover:scale-105',
                         getStatusColor(table.status)
                     ]"
                 >
                     <div class="p-6 text-center">
                         <!-- Table Icon -->
                         <div class="mb-3 flex justify-center">
-                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                <svg class="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-16 h-16 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-sm">
+                                <svg class="w-8 h-8 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                                 </svg>
                             </div>
                         </div>
 
                         <!-- Table Number -->
-                        <h3 class="text-2xl font-bold text-gray-900 mb-1">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                             Mesa {{ table.table_number }}
                         </h3>
 
                         <!-- Table Name -->
-                        <p v-if="table.name" class="text-sm text-gray-600 mb-2">
+                        <p v-if="table.name" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
                             {{ table.name }}
                         </p>
 
                         <!-- Capacity -->
-                        <div class="flex items-center justify-center text-sm text-gray-600 mb-3">
+                        <div class="flex items-center justify-center text-sm text-gray-600 dark:text-gray-400 mb-3">
                             <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                             </svg>
@@ -290,7 +290,7 @@ const hasActiveFilters = computed(() => {
 
                         <!-- Sale Info (if occupied) -->
                         <div v-if="table.status === 'ocupada' && table.current_sale" class="mt-3 pt-3 border-t border-red-300">
-                            <p class="text-xs text-gray-600">
+                            <p class="text-xs text-gray-600 dark:text-gray-400">
                                 Venta: #{{ table.current_sale.sale_number }}
                             </p>
                         </div>
@@ -306,12 +306,12 @@ const hasActiveFilters = computed(() => {
 
                 <!-- Empty state -->
                 <div v-if="tables.length === 0" class="col-span-full">
-                    <div class="bg-white rounded-lg shadow p-12 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay mesas</h3>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No hay mesas</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             Comienza creando una nueva mesa
                         </p>
                         <div class="mt-6">

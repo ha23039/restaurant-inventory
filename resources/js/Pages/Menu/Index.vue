@@ -5,10 +5,10 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
-                    <svg class="w-6 h-6 text-gray-800 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                         Gestión de Menú
                     </h2>
                 </div>
@@ -90,24 +90,24 @@
                 </div>
 
                 <!-- Info Section -->
-                <div class="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Gestión de Menú del Restaurante</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-900 mb-2">Platillos del Menú</h4>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
                                 Son los platillos preparados que se venden en el restaurante. Cada platillo tiene una receta asociada que define qué ingredientes se necesitan y en qué cantidades.
                             </p>
                         </div>
                         <div>
                             <h4 class="font-medium text-gray-900 mb-2">Recetas</h4>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
                                 Define la lista de materiales (BOM) para cada platillo. Cuando se vende un platillo, el sistema deduce automáticamente los ingredientes del inventario según la receta.
                             </p>
                         </div>
                         <div>
                             <h4 class="font-medium text-gray-900 mb-2">Productos Simples</h4>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
                                 Productos individuales vendibles vinculados directamente al inventario. Ej: bebidas embotelladas, snacks. Se deduce 1:1 del stock base.
                             </p>
                         </div>
@@ -116,29 +116,29 @@
 
                 <!-- Quick Stats -->
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
                                         <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
                                     </svg>
                                 </div>
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-500">Total Platillos</div>
-                                <div class="text-2xl font-bold text-gray-900">{{ stats?.total_items || 0 }}</div>
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Platillos</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.total_items || 0 }}</div>
                                 <div class="text-xs text-gray-500 mt-1">{{ stats?.with_recipes || 0 }} con receta</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"></path>
                                         <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"></path>
                                         <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"></path>
@@ -146,25 +146,25 @@
                                 </div>
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-500">Recetas Definidas</div>
-                                <div class="text-2xl font-bold text-gray-900">{{ stats?.total_recipes || 0 }}</div>
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Recetas Definidas</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.total_recipes || 0 }}</div>
                                 <div class="text-xs text-gray-500 mt-1">{{ stats?.total_simple_products || 0 }} productos simples</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                     </svg>
                                 </div>
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-500">Disponibles</div>
-                                <div class="text-2xl font-bold text-gray-900">{{ stats?.available_items || 0 }}</div>
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Disponibles</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.available_items || 0 }}</div>
                                 <div class="text-xs text-gray-500 mt-1">{{ stats?.total_items ? ((stats.available_items / stats.total_items) * 100).toFixed(0) : 0 }}% del total</div>
                             </div>
                         </div>
