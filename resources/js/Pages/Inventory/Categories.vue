@@ -23,25 +23,25 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Grid de categorías -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div 
-                        v-for="category in categories" 
+                    <div
+                        v-for="category in categories"
                         :key="category.id"
-                        class="bg-white overflow-hidden shadow-sm sm:rounded-lg border-l-4"
+                        class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border-l-4"
                         :style="{ borderLeftColor: category.color }"
                     >
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center">
-                                    <div 
+                                    <div
                                         class="w-6 h-6 rounded-full mr-3"
                                         :style="{ backgroundColor: category.color }"
                                     ></div>
-                                    <h3 class="text-lg font-semibold text-gray-900">{{ category.name }}</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ category.name }}</h3>
                                 </div>
                                 <div class="flex space-x-2">
                                     <button
                                         @click="openEditModal(category)"
-                                        class="text-blue-600 hover:text-blue-800"
+                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                                         title="Editar"
                                     >
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -50,7 +50,7 @@
                                     </button>
                                     <button
                                         @click="deleteCategory(category)"
-                                        class="text-red-600 hover:text-red-800"
+                                        class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                         title="Eliminar"
                                     >
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -59,12 +59,12 @@
                                     </button>
                                 </div>
                             </div>
-                            
-                            <p class="text-gray-600 text-sm mb-4">{{ category.description || 'Sin descripción' }}</p>
-                            
-                            <div class="flex items-center justify-between text-sm text-gray-500">
+
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">{{ category.description || 'Sin descripción' }}</p>
+
+                            <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                                 <span>{{ category.products_count }} productos</span>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                     {{ category.color }}
                                 </span>
                             </div>
@@ -72,12 +72,12 @@
                     </div>
 
                     <!-- Mensaje si no hay categorías -->
-                    <div v-if="categories.length === 0" class="col-span-full text-center py-12 text-gray-500">
+                    <div v-if="categories.length === 0" class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
                         No hay categorías creadas
                         <br>
                         <button
                             @click="openCreateModal"
-                            class="mt-4 text-blue-600 hover:text-blue-800 underline"
+                            class="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                         >
                             Crear la primera categoría
                         </button>
@@ -87,17 +87,17 @@
         </div>
 
         <!-- Modal para crear/editar categoría -->
-        <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div v-if="showModal" class="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
                 <div class="mt-3">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
                         {{ editingCategory ? 'Editar Categoría' : 'Nueva Categoría' }}
                     </h3>
-                    
+
                     <form @submit.prevent="submitForm" class="space-y-4">
                         <!-- Nombre -->
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Nombre *
                             </label>
                             <input
@@ -105,34 +105,34 @@
                                 v-model="form.name"
                                 type="text"
                                 required
-                                class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                 :class="{ 'border-red-500': form.errors.name }"
                             />
-                            <div v-if="form.errors.name" class="text-red-500 text-sm mt-1">
+                            <div v-if="form.errors.name" class="text-red-500 dark:text-red-400 text-sm mt-1">
                                 {{ form.errors.name }}
                             </div>
                         </div>
 
                         <!-- Descripción -->
                         <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Descripción
                             </label>
                             <textarea
                                 id="description"
                                 v-model="form.description"
                                 rows="3"
-                                class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                 :class="{ 'border-red-500': form.errors.description }"
                             ></textarea>
-                            <div v-if="form.errors.description" class="text-red-500 text-sm mt-1">
+                            <div v-if="form.errors.description" class="text-red-500 dark:text-red-400 text-sm mt-1">
                                 {{ form.errors.description }}
                             </div>
                         </div>
 
                         <!-- Color -->
                         <div>
-                            <label for="color" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Color *
                             </label>
                             <div class="flex items-center space-x-2">
@@ -141,30 +141,30 @@
                                     v-model="form.color"
                                     type="color"
                                     required
-                                    class="h-10 w-20 border border-gray-300 rounded cursor-pointer"
+                                    class="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
                                 />
                                 <input
                                     v-model="form.color"
                                     type="text"
                                     placeholder="#6366f1"
-                                    class="flex-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    class="flex-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                     :class="{ 'border-red-500': form.errors.color }"
                                 />
                             </div>
-                            <div v-if="form.errors.color" class="text-red-500 text-sm mt-1">
+                            <div v-if="form.errors.color" class="text-red-500 dark:text-red-400 text-sm mt-1">
                                 {{ form.errors.color }}
                             </div>
                         </div>
 
                         <!-- Vista previa -->
-                        <div class="bg-gray-50 p-3 rounded-md">
-                            <p class="text-sm text-gray-600 mb-2">Vista previa:</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Vista previa:</p>
                             <div class="flex items-center">
-                                <div 
+                                <div
                                     class="w-4 h-4 rounded-full mr-2"
                                     :style="{ backgroundColor: form.color }"
                                 ></div>
-                                <span class="font-medium">{{ form.name || 'Nombre de la categoría' }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ form.name || 'Nombre de la categoría' }}</span>
                             </div>
                         </div>
 
@@ -173,7 +173,7 @@
                             <button
                                 type="button"
                                 @click="closeModal"
-                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                class="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded"
                             >
                                 Cancelar
                             </button>

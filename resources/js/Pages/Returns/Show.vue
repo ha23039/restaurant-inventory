@@ -4,25 +4,28 @@
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    🔄 Detalle de Devolución #{{ returnData?.return_number || 'N/A' }}
-                    <span v-if="returnData?.return_type" class="ml-2 text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded capitalize">
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-white leading-tight flex items-center gap-2">
+                    <component :is="icons.returns" class="w-6 h-6" />
+                    Detalle de Devolución #{{ returnData?.return_number || 'N/A' }}
+                    <span v-if="returnData?.return_type" class="ml-2 text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded capitalize">
                         {{ returnData.return_type === 'total' ? 'Devolución Total' : 'Devolución Parcial' }}
                     </span>
                 </h2>
                 <div class="flex space-x-2">
-                    <Link :href="route('returns.index')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    <Link :href="route('returns.index')" class="inline-flex items-center gap-1 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                         ← Volver
                     </Link>
-                    <Link 
+                    <Link
                         v-if="returnData?.sale"
-                        :href="route('sales.show', returnData.sale.id)" 
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        :href="route('sales.show', returnData.sale.id)"
+                        class="inline-flex items-center gap-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                     >
-                        🧾 Ver Venta Original
+                        <component :is="icons.receipt" class="w-4 h-4" />
+                        Ver Venta Original
                     </Link>
-                    <Link :href="route('returns.create')" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
-                        ➕ Nueva Devolución
+                    <Link :href="route('returns.create')" class="inline-flex items-center gap-1 bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
+                        <component :is="icons.add" class="w-4 h-4" />
+                        Nueva Devolución
                     </Link>
                 </div>
             </div>
@@ -31,97 +34,109 @@
         <div class="py-12">
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
                 <!-- Información General de la Devolución -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                             <!-- Número de Devolución -->
-                            <div class="text-center p-4 bg-orange-50 rounded-lg">
-                                <div class="text-2xl font-bold text-orange-600">
+                            <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                     #{{ returnData?.return_number || 'N/A' }}
                                 </div>
-                                <div class="text-sm text-gray-600">Número de Devolución</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Número de Devolución</div>
                             </div>
 
                             <!-- Venta Original -->
-                            <div class="text-center p-4 bg-blue-50 rounded-lg">
-                                <div class="text-2xl font-bold text-blue-600">
+                            <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                     #{{ returnData?.sale?.sale_number || 'N/A' }}
                                 </div>
-                                <div class="text-sm text-gray-600">Venta Original</div>
-                                <div class="text-xs text-gray-500 mt-1">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Venta Original</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
                                     ${{ formatPrice(returnData?.sale?.total || 0) }}
                                 </div>
                             </div>
 
                             <!-- Total Devuelto -->
-                            <div class="text-center p-4 bg-red-50 rounded-lg">
-                                <div class="text-3xl font-bold text-red-600">
+                            <div class="text-center p-4 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                                <div class="text-3xl font-bold text-red-600 dark:text-red-400">
                                     ${{ formatPrice(returnData?.total_returned) }}
                                 </div>
-                                <div class="text-sm text-gray-600">Total Devuelto</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Devuelto</div>
                             </div>
 
                             <!-- Estado -->
-                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
                                 <div class="text-2xl font-bold">
-                                    <span 
+                                    <span
                                         :class="{
-                                            'text-green-600': returnData?.status === 'completed',
-                                            'text-yellow-600': returnData?.status === 'pending',
-                                            'text-red-600': returnData?.status === 'cancelled'
+                                            'text-green-600 dark:text-green-400': returnData?.status === 'completed',
+                                            'text-yellow-600 dark:text-yellow-400': returnData?.status === 'pending',
+                                            'text-red-600 dark:text-red-400': returnData?.status === 'cancelled'
                                         }"
                                     >
                                         {{ getStatusIcon(returnData?.status) }}
                                     </span>
                                 </div>
-                                <div class="text-sm text-gray-600 capitalize">{{ getStatusText(returnData?.status) }}</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400 capitalize">{{ getStatusText(returnData?.status) }}</div>
                             </div>
 
                             <!-- Fecha -->
-                            <div class="text-center p-4 bg-purple-50 rounded-lg">
-                                <div class="text-lg font-bold text-purple-600">
+                            <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                                <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
                                     {{ formatDate(returnData?.return_date) }}
                                 </div>
-                                <div class="text-sm text-gray-600">Fecha de Devolución</div>
-                                <div class="text-xs text-gray-500 mt-1">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Fecha de Devolución</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
                                     {{ formatTime(returnData?.created_at) }}
                                 </div>
                             </div>
                         </div>
 
                         <!-- Información Adicional -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-200">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">👤 Procesado por</h4>
-                                <p class="text-gray-600">{{ returnData?.processed_by_user?.name || 'Sistema' }}</p>
-                                <p class="text-sm text-gray-500">{{ formatTime(returnData?.processed_at) }}</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1">
+                                    <component :is="icons.profile" class="w-4 h-4" />
+                                    Procesado por
+                                </h4>
+                                <p class="text-gray-600 dark:text-gray-300">{{ returnData?.processed_by_user?.name || 'Sistema' }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatTime(returnData?.processed_at) }}</p>
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">💰 Método de Reembolso</h4>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1">
+                                    <component :is="icons.cash" class="w-4 h-4" />
+                                    Método de Reembolso
+                                </h4>
                                 <div class="flex items-center space-x-2">
                                     <span class="text-2xl">{{ getRefundIcon(returnData?.refund_method) }}</span>
-                                    <span class="text-gray-600 capitalize">{{ returnData?.refund_method || 'N/A' }}</span>
+                                    <span class="text-gray-600 dark:text-gray-300 capitalize">{{ returnData?.refund_method || 'N/A' }}</span>
                                 </div>
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">📋 Razón</h4>
-                                <p class="text-gray-600">{{ getReasonText(returnData?.reason) }}</p>
-                                <div class="text-sm text-gray-500 mt-1">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1">
+                                    <component :is="icons.receipt" class="w-4 h-4" />
+                                    Razón
+                                </h4>
+                                <p class="text-gray-600 dark:text-gray-300">{{ getReasonText(returnData?.reason) }}</p>
+                                <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     {{ returnData?.return_type === 'total' ? 'Devolución completa' : 'Devolución parcial' }}
                                 </div>
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">⚡ Estado del Proceso</h4>
-                                <div class="text-sm space-y-1">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1">
+                                    <component :is="icons.chart" class="w-4 h-4" />
+                                    Estado del Proceso
+                                </h4>
+                                <div class="text-sm space-y-1 text-gray-600 dark:text-gray-300">
                                     <div class="flex items-center space-x-2">
-                                        <span class="text-green-500">{{ returnData?.inventory_restored ? '✅' : '⏳' }}</span>
+                                        <span class="text-green-500 dark:text-green-400">{{ returnData?.inventory_restored ? '✅' : '⏳' }}</span>
                                         <span>Inventario {{ returnData?.inventory_restored ? 'restaurado' : 'pendiente' }}</span>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <span class="text-green-500">{{ returnData?.cash_flow_adjusted ? '✅' : '⏳' }}</span>
+                                        <span class="text-green-500 dark:text-green-400">{{ returnData?.cash_flow_adjusted ? '✅' : '⏳' }}</span>
                                         <span>Flujo de caja {{ returnData?.cash_flow_adjusted ? 'ajustado' : 'pendiente' }}</span>
                                     </div>
                                 </div>
@@ -129,27 +144,33 @@
                         </div>
 
                         <!-- Notas -->
-                        <div v-if="returnData?.notes" class="mt-6 pt-6 border-t border-gray-200">
-                            <h4 class="font-semibold text-gray-900 mb-2">📝 Notas</h4>
-                            <p class="text-gray-600 bg-gray-50 p-4 rounded-lg">{{ returnData.notes }}</p>
+                        <div v-if="returnData?.notes" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1">
+                                <component :is="icons.document" class="w-4 h-4" />
+                                Notas
+                            </h4>
+                            <p class="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">{{ returnData.notes }}</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Items Devueltos -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-between">
-                            <span>🛒 Productos Devueltos</span>
-                            <span class="text-sm text-gray-500">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <component :is="icons.pos" class="w-5 h-5" />
+                                Productos Devueltos
+                            </span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ returnData?.return_items?.length || 0 }} productos devueltos
                             </span>
                         </h3>
-                        
+
                         <!-- Verificar si hay items -->
                         <div v-if="!returnData?.return_items || returnData.return_items.length === 0">
-                            <div class="text-center py-12 text-gray-500">
-                                <div class="text-4xl mb-4">📦</div>
+                            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                                <component :is="icons.package" class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
                                 <div class="text-lg font-medium">No se encontraron productos devueltos</div>
                                 <div class="text-sm">Esta devolución no tiene productos asociados</div>
                             </div>
@@ -160,7 +181,7 @@
                             <div
                                 v-for="(item, index) in returnData.return_items"
                                 :key="item.id || index"
-                                class="border border-orange-200 rounded-lg p-4 bg-orange-50"
+                                class="border border-orange-200 dark:border-orange-800 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20"
                             >
                                 <div class="flex items-center justify-between">
                                     <!-- Información del Producto -->
@@ -168,53 +189,56 @@
                                         <div class="flex items-center space-x-3">
                                             <!-- Tipo de Producto Icon -->
                                             <div class="flex-shrink-0">
-                                                <span 
-                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full text-lg"
+                                                <span
+                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full"
                                                     :class="{
-                                                        'bg-orange-100 text-orange-600': item.sale_item?.product_type === 'menu',
-                                                        'bg-blue-100 text-blue-600': item.sale_item?.product_type === 'simple'
+                                                        'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400': item.sale_item?.product_type === 'menu',
+                                                        'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400': item.sale_item?.product_type === 'simple'
                                                     }"
                                                 >
-                                                    {{ item.sale_item?.product_type === 'menu' ? '🍽️' : '🥤' }}
+                                                    <component
+                                                        :is="item.sale_item?.product_type === 'menu' ? icons.menu : icons.product"
+                                                        class="w-5 h-5"
+                                                    />
                                                 </span>
                                             </div>
 
                                             <!-- Detalles del Producto -->
                                             <div class="flex-1">
-                                                <h4 class="text-lg font-semibold text-gray-900">
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                                                     {{ getItemName(item) }}
                                                 </h4>
-                                                
-                                                <p class="text-sm text-gray-600" v-if="getItemDescription(item)">
+
+                                                <p class="text-sm text-gray-600 dark:text-gray-400" v-if="getItemDescription(item)">
                                                     {{ getItemDescription(item) }}
                                                 </p>
 
                                                 <div class="flex items-center space-x-2 mt-1">
                                                     <!-- Badge de Tipo -->
-                                                    <span 
+                                                    <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                         :class="{
-                                                            'bg-orange-100 text-orange-800': item.sale_item?.product_type === 'menu',
-                                                            'bg-blue-100 text-blue-800': item.sale_item?.product_type === 'simple'
+                                                            'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200': item.sale_item?.product_type === 'menu',
+                                                            'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200': item.sale_item?.product_type === 'simple'
                                                         }"
                                                     >
                                                         {{ item.sale_item?.product_type === 'menu' ? 'Platillo del Menú' : 'Producto Individual' }}
                                                     </span>
 
                                                     <!-- Badge de estado de inventario -->
-                                                    <span 
+                                                    <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                                        :class="item.inventory_restored ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                                        :class="item.inventory_restored ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'"
                                                     >
                                                         {{ item.inventory_restored ? '✅ Inventario procesado' : '⏳ Inventario pendiente' }}
                                                     </span>
                                                 </div>
 
                                                 <!-- Info de devolución -->
-                                                <div class="mt-2 text-sm text-gray-600">
+                                                <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                                                     <div class="flex items-center space-x-4">
                                                         <span>Cantidad original: {{ item.original_quantity }}</span>
-                                                        <span class="text-red-600 font-medium">Devuelto: {{ item.quantity_returned }}</span>
+                                                        <span class="text-red-600 dark:text-red-400 font-medium">Devuelto: {{ item.quantity_returned }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -223,13 +247,13 @@
 
                                     <!-- Cantidad y Precios -->
                                     <div class="text-right ml-6">
-                                        <div class="text-2xl font-bold text-red-600">
+                                        <div class="text-2xl font-bold text-red-600 dark:text-red-400">
                                             -{{ item.quantity_returned }}
                                         </div>
-                                        <div class="text-sm text-gray-600">
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">
                                             ${{ formatPrice(item.unit_price) }} c/u
                                         </div>
-                                        <div class="text-lg font-bold text-red-600 mt-1">
+                                        <div class="text-lg font-bold text-red-600 dark:text-red-400 mt-1">
                                             -${{ formatPrice(item.total_price) }}
                                         </div>
                                     </div>
@@ -237,10 +261,10 @@
                             </div>
 
                             <!-- Resumen Final -->
-                            <div class="mt-8 pt-6 border-t-2 border-red-300">
-                                <div class="flex justify-between items-center text-xl font-bold">
+                            <div class="mt-8 pt-6 border-t-2 border-red-300 dark:border-red-700">
+                                <div class="flex justify-between items-center text-xl font-bold text-gray-900 dark:text-white">
                                     <span>Total devuelto de {{ returnData.return_items.length }} productos:</span>
-                                    <span class="text-red-600">-${{ formatPrice(returnData?.total_returned) }}</span>
+                                    <span class="text-red-600 dark:text-red-400">-${{ formatPrice(returnData?.total_returned) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -248,49 +272,52 @@
                 </div>
 
                 <!-- Línea de Tiempo de la Devolución -->
-                <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="mt-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-6">📅 Línea de Tiempo</h3>
-                        
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                            <component :is="icons.calendar" class="w-5 h-5" />
+                            Línea de Tiempo
+                        </h3>
+
                         <div class="space-y-4">
                             <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span class="text-blue-600 text-sm">1</span>
+                                <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+                                    <span class="text-blue-600 dark:text-blue-400 text-sm">1</span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">Devolución solicitada</div>
-                                    <div class="text-sm text-gray-500">{{ formatDateTime(returnData?.created_at) }}</div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">Devolución solicitada</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ formatDateTime(returnData?.created_at) }}</div>
                                 </div>
                             </div>
 
                             <div v-if="returnData?.processed_at" class="flex items-center space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                    <span class="text-green-600 text-sm">2</span>
+                                <div class="flex-shrink-0 w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
+                                    <span class="text-green-600 dark:text-green-400 text-sm">2</span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">Devolución procesada</div>
-                                    <div class="text-sm text-gray-500">{{ formatDateTime(returnData.processed_at) }}</div>
-                                    <div class="text-xs text-gray-400">Por: {{ returnData?.processed_by_user?.name || 'Sistema' }}</div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">Devolución procesada</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ formatDateTime(returnData.processed_at) }}</div>
+                                    <div class="text-xs text-gray-400 dark:text-gray-500">Por: {{ returnData?.processed_by_user?.name || 'Sistema' }}</div>
                                 </div>
                             </div>
 
                             <div v-if="returnData?.inventory_restored" class="flex items-center space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <span class="text-purple-600 text-sm">3</span>
+                                <div class="flex-shrink-0 w-8 h-8 bg-purple-100 dark:bg-purple-900/40 rounded-full flex items-center justify-center">
+                                    <span class="text-purple-600 dark:text-purple-400 text-sm">3</span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">Inventario ajustado</div>
-                                    <div class="text-sm text-gray-500">Automáticamente</div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">Inventario ajustado</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Automáticamente</div>
                                 </div>
                             </div>
 
                             <div v-if="returnData?.cash_flow_adjusted" class="flex items-center space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                    <span class="text-emerald-600 text-sm">4</span>
+                                <div class="flex-shrink-0 w-8 h-8 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 dark:text-emerald-400 text-sm">4</span>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">Flujo de caja ajustado</div>
-                                    <div class="text-sm text-gray-500">Automáticamente</div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">Flujo de caja ajustado</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Automáticamente</div>
                                 </div>
                             </div>
                         </div>
@@ -299,26 +326,28 @@
 
                 <!-- Acciones -->
                 <div class="mt-6 flex justify-center space-x-4">
-                    <Link 
-                        :href="route('returns.index')" 
+                    <Link
+                        :href="route('returns.index')"
                         class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
                     >
                         ← Volver a Devoluciones
                     </Link>
-                    
-                    <Link 
+
+                    <Link
                         v-if="returnData?.sale"
-                        :href="route('sales.show', returnData.sale.id)" 
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                        :href="route('sales.show', returnData.sale.id)"
+                        class="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
                     >
-                        🧾 Ver Venta Original
+                        <component :is="icons.receipt" class="w-5 h-5" />
+                        Ver Venta Original
                     </Link>
-                    
-                    <Link 
-                        :href="route('returns.create')" 
-                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+
+                    <Link
+                        :href="route('returns.create')"
+                        class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
                     >
-                        ➕ Nueva Devolución
+                        <component :is="icons.add" class="w-5 h-5" />
+                        Nueva Devolución
                     </Link>
                 </div>
             </div>
@@ -329,6 +358,10 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useIcons } from '@/composables/useIcons';
+
+// Icons
+const { icons } = useIcons();
 
 // Props
 const props = defineProps({

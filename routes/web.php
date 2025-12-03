@@ -13,12 +13,13 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    // Si el usuario está autenticado, redirigir al dashboard
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    // Si no está autenticado, redirigir al login
+    return redirect()->route('login');
 });
 
 /*

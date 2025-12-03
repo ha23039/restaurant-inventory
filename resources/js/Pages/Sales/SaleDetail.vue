@@ -4,9 +4,9 @@
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-white leading-tight">
                     Detalle de Venta #{{ sale?.sale_number || 'N/A' }}
-                    <span v-if="sale?.has_returns" class="ml-2 text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                    <span v-if="sale?.has_returns" class="ml-2 text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded">
                         Con devoluciones
                     </span>
                 </h2>
@@ -31,81 +31,81 @@
         <div class="py-12">
             <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
                 <!-- Información General de la Venta -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                             <!-- Ticket Number -->
-                            <div class="text-center p-4 bg-blue-50 rounded-lg">
-                                <div class="text-3xl font-bold text-blue-600">
+                            <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">
                                     #{{ sale?.sale_number || 'N/A' }}
                                 </div>
-                                <div class="text-sm text-gray-600">Número de Ticket</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Número de Ticket</div>
                             </div>
 
                             <!-- Total Bruto -->
-                            <div class="text-center p-4 bg-green-50 rounded-lg">
-                                <div class="text-3xl font-bold text-green-600">
+                            <div class="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                                <div class="text-3xl font-bold text-green-600 dark:text-green-400">
                                     ${{ formatPrice(sale?.total) }}
                                 </div>
-                                <div class="text-sm text-gray-600">Total Bruto</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Bruto</div>
                             </div>
 
                             <!-- Total Devuelto -->
-                            <div class="text-center p-4 bg-red-50 rounded-lg">
-                                <div class="text-3xl font-bold text-red-600">
+                            <div class="text-center p-4 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                                <div class="text-3xl font-bold text-red-600 dark:text-red-400">
                                     ${{ formatPrice(sale?.total_returned || 0) }}
                                 </div>
-                                <div class="text-sm text-gray-600">Total Devuelto</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Devuelto</div>
                             </div>
 
                             <!-- Total Neto -->
-                            <div class="text-center p-4 bg-emerald-50 rounded-lg">
-                                <div class="text-3xl font-bold text-emerald-600">
+                            <div class="text-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+                                <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                                     ${{ formatPrice(sale?.net_total || sale?.total) }}
                                 </div>
-                                <div class="text-sm text-gray-600">Total Neto</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Neto</div>
                             </div>
 
                             <!-- Estado -->
-                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                            <div class="text-center p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
                                 <div class="text-2xl font-bold">
-                                    <span 
+                                    <span
                                         :class="{
-                                            'text-green-600': sale?.status === 'completada',
-                                            'text-yellow-600': sale?.status === 'pendiente',
-                                            'text-red-600': sale?.status === 'cancelada'
+                                            'text-green-600 dark:text-green-400': sale?.status === 'completada',
+                                            'text-yellow-600 dark:text-yellow-400': sale?.status === 'pendiente',
+                                            'text-red-600 dark:text-red-400': sale?.status === 'cancelada'
                                         }"
                                     >
                                         {{ getStatusIcon(sale?.status) }}
                                     </span>
                                 </div>
-                                <div class="text-sm text-gray-600 capitalize">{{ sale?.status || 'N/A' }}</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400 capitalize">{{ sale?.status || 'N/A' }}</div>
                             </div>
                         </div>
 
                         <!-- Información Adicional -->
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mt-6 pt-6 border-t border-gray-200">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">Información del Cajero</h4>
-                                <p class="text-gray-600">{{ sale?.user?.name || 'Usuario no disponible' }}</p>
-                                <p class="text-sm text-gray-500">{{ sale?.user?.email || 'Email no disponible' }}</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Información del Cajero</h4>
+                                <p class="text-gray-600 dark:text-gray-300">{{ sale?.user?.name || 'Usuario no disponible' }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ sale?.user?.email || 'Email no disponible' }}</p>
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">Fecha y Hora</h4>
-                                <p class="text-gray-600">{{ formatDate(sale?.created_at) }}</p>
-                                <p class="text-sm text-gray-500">{{ formatTime(sale?.created_at) }}</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Fecha y Hora</h4>
+                                <p class="text-gray-600 dark:text-gray-300">{{ formatDate(sale?.created_at) }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatTime(sale?.created_at) }}</p>
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">Mesa</h4>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Mesa</h4>
                                 <div v-if="sale?.table" class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                     </svg>
                                     <div>
-                                        <p class="text-gray-600 font-semibold">Mesa {{ sale.table.table_number }}</p>
-                                        <p v-if="sale.table.name" class="text-sm text-gray-500">{{ sale.table.name }}</p>
+                                        <p class="text-gray-600 dark:text-gray-300 font-semibold">Mesa {{ sale.table.table_number }}</p>
+                                        <p v-if="sale.table.name" class="text-sm text-gray-500 dark:text-gray-400">{{ sale.table.name }}</p>
                                         <p class="text-xs text-gray-400">Capacidad: {{ sale.table.capacity }} pers.</p>
                                     </div>
                                 </div>
@@ -118,21 +118,21 @@
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">Método de Pago</h4>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Método de Pago</h4>
                                 <div class="flex items-center space-x-2">
                                     <span class="text-2xl">{{ getPaymentIcon(sale?.payment_method) }}</span>
-                                    <span class="text-gray-600 capitalize">{{ sale?.payment_method || 'N/A' }}</span>
+                                    <span class="text-gray-600 dark:text-gray-300 capitalize">{{ sale?.payment_method || 'N/A' }}</span>
                                 </div>
                             </div>
 
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-2">Desglose Financiero</h4>
-                                <div class="text-sm space-y-1">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Desglose Financiero</h4>
+                                <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                                     <div class="flex justify-between">
                                         <span>Subtotal:</span>
                                         <span>${{ formatPrice(sale?.subtotal) }}</span>
                                     </div>
-                                    <div v-if="sale?.discount > 0" class="flex justify-between text-red-600">
+                                    <div v-if="sale?.discount > 0" class="flex justify-between text-red-600 dark:text-red-400">
                                         <span>Descuento:</span>
                                         <span>-${{ formatPrice(sale?.discount) }}</span>
                                     </div>
@@ -140,11 +140,11 @@
                                         <span>Impuesto:</span>
                                         <span>+${{ formatPrice(sale?.tax) }}</span>
                                     </div>
-                                    <div v-if="sale?.has_returns" class="flex justify-between text-red-600 border-t pt-1">
+                                    <div v-if="sale?.has_returns" class="flex justify-between text-red-600 dark:text-red-400 border-t border-gray-200 dark:border-gray-600 pt-1">
                                         <span>Devuelto:</span>
                                         <span>-${{ formatPrice(sale?.total_returned) }}</span>
                                     </div>
-                                    <div class="flex justify-between font-bold border-t pt-1" :class="{'text-emerald-600': sale?.has_returns, 'text-green-600': !sale?.has_returns}">
+                                    <div class="flex justify-between font-bold border-t border-gray-200 dark:border-gray-600 pt-1" :class="{'text-emerald-600 dark:text-emerald-400': sale?.has_returns, 'text-green-600 dark:text-green-400': !sale?.has_returns}">
                                         <span>{{ sale?.has_returns ? 'Total Neto:' : 'Total:' }}</span>
                                         <span>${{ formatPrice(sale?.net_total || sale?.total) }}</span>
                                     </div>
@@ -155,9 +155,9 @@
                 </div>
 
                 <!-- Sistema de Tickets e Impresión -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                             Sistema de Tickets e Impresión
                         </h3>
                         
@@ -217,9 +217,10 @@
                                 <div class="flex space-x-2">
                                     <button
                                         @click="previewKitchenOrder"
-                                        class="flex-1 bg-orange-100 hover:bg-orange-200 text-orange-800 font-medium py-2 px-3 rounded text-sm transition-colors"
+                                        class="flex-1 bg-orange-100 dark:bg-orange-900 hover:bg-orange-200 dark:hover:bg-orange-800 text-orange-800 dark:text-orange-200 font-medium py-2 px-3 rounded text-sm transition-colors inline-flex items-center justify-center gap-1"
                                     >
-                                        👁️ Vista Previa
+                                        <component :is="icons.view" class="w-4 h-4" />
+                                        Vista Previa
                                     </button>
                                     <button
                                         @click="printKitchenTicket"
@@ -250,9 +251,10 @@
                                 <div class="flex space-x-2">
                                     <button
                                         @click="previewCustomerReceipt"
-                                        class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium py-2 px-3 rounded text-sm transition-colors"
+                                        class="flex-1 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 font-medium py-2 px-3 rounded text-sm transition-colors inline-flex items-center justify-center gap-1"
                                     >
-                                        👁️ Vista Previa
+                                        <component :is="icons.view" class="w-4 h-4" />
+                                        Vista Previa
                                     </button>
                                     <button
                                         @click="printCustomerTicket"
@@ -279,11 +281,11 @@
                             </button>
                         </div>
                         <!-- Información adicional -->
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <h5 class="font-medium text-gray-900 mb-2">Información del Ticket</h5>
-                                    <ul class="space-y-1 text-gray-600">
+                                    <h5 class="font-medium text-gray-900 dark:text-white mb-2">Información del Ticket</h5>
+                                    <ul class="space-y-1 text-gray-600 dark:text-gray-300">
                                         <li>• Ticket: #{{ sale?.sale_number }}</li>
                                         <li>• Fecha: {{ formatDate(sale?.created_at) }}</li>
                                         <li>• Cajero: {{ sale?.user?.name }}</li>
@@ -291,13 +293,13 @@
                                     </ul>
                                 </div>
                                 <div>
-                                    <h5 class="font-medium text-gray-900 mb-2">Estado de Impresión</h5>
+                                    <h5 class="font-medium text-gray-900 dark:text-white mb-2">Estado de Impresión</h5>
                                     <div class="space-y-2">
-                                        <div class="flex items-center text-gray-600">
-                                            <span class="w-3 h-3 bg-gray-300 rounded-full mr-2"></span>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-300">
+                                            <span class="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full mr-2"></span>
                                             <span>Los tickets se pueden reimprimir las veces necesarias</span>
                                         </div>
-                                        <div class="flex items-center text-gray-600">
+                                        <div class="flex items-center text-gray-600 dark:text-gray-300">
                                             <span class="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
                                             <span>Sistema de impresión térmica activo</span>
                                         </div>
@@ -309,46 +311,46 @@
                 </div>
 
                 <!-- Sección de Devoluciones (si existen) -->
-                <div v-if="sale?.has_returns && sale?.returns?.length > 0" class="bg-orange-50 border border-orange-200 rounded-lg mb-6 p-6">
-                    <h3 class="text-lg font-semibold text-orange-900 mb-4 flex items-center">
+                <div v-if="sale?.has_returns && sale?.returns?.length > 0" class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg mb-6 p-6">
+                    <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-300 mb-4 flex items-center">
                         Historial de Devoluciones
-                        <span class="ml-2 bg-orange-200 text-orange-800 px-2 py-1 rounded text-sm">
+                        <span class="ml-2 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 px-2 py-1 rounded text-sm">
                             {{ sale.returns.length }} {{ sale.returns.length === 1 ? 'devolución' : 'devoluciones' }}
                         </span>
                     </h3>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div 
-                            v-for="return_item in sale.returns" 
+                        <div
+                            v-for="return_item in sale.returns"
                             :key="return_item.id"
-                            class="bg-white rounded-lg p-4 border border-orange-200"
+                            class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700"
                         >
                             <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <div class="font-semibold text-gray-900">#{{ return_item.return_number }}</div>
-                                    <div class="text-sm text-gray-600">{{ formatDate(return_item.return_date) }}</div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">#{{ return_item.return_number }}</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ formatDate(return_item.return_date) }}</div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="font-bold text-red-600">${{ formatPrice(return_item.total_returned) }}</div>
-                                    <div class="text-xs text-gray-500">{{ return_item.items_count }} items</div>
+                                    <div class="font-bold text-red-600 dark:text-red-400">${{ formatPrice(return_item.total_returned) }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ return_item.items_count }} items</div>
                                 </div>
                             </div>
-                            
+
                             <div class="text-sm">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Razón:</span>
-                                    <span class="text-gray-900">{{ getReturnReasonText(return_item.reason) }}</span>
+                                    <span class="text-gray-600 dark:text-gray-400">Razón:</span>
+                                    <span class="text-gray-900 dark:text-white">{{ getReturnReasonText(return_item.reason) }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Reembolso:</span>
-                                    <span class="text-gray-900 capitalize">{{ return_item.refund_method }}</span>
+                                    <span class="text-gray-600 dark:text-gray-400">Reembolso:</span>
+                                    <span class="text-gray-900 dark:text-white capitalize">{{ return_item.refund_method }}</span>
                                 </div>
                             </div>
-                            
-                            <div class="mt-3 pt-3 border-t border-orange-100">
-                                <Link 
+
+                            <div class="mt-3 pt-3 border-t border-orange-100 dark:border-orange-700">
+                                <Link
                                     :href="route('returns.show', return_item.id)"
-                                    class="text-orange-600 hover:text-orange-800 text-sm font-medium"
+                                    class="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 text-sm font-medium"
                                 >
                                     Ver detalle de devolución
                                 </Link>
@@ -358,18 +360,18 @@
                 </div>
 
                 <!-- Items de la Venta -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center justify-between">
                             <span>Productos Vendidos</span>
-                            <span class="text-sm text-gray-500">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ getTotalItems() }} productos | {{ getTotalQuantity() }} unidades
                             </span>
                         </h3>
-                        
+
                         <div v-if="!sale?.sale_items || sale.sale_items.length === 0">
-                            <div class="text-center py-12 text-gray-500">
-                                <div class="text-4xl mb-4">📦</div>
+                            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                                <component :is="icons.package" class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
                                 <div class="text-lg font-medium">No se encontraron productos</div>
                                 <div class="text-sm">Esta venta no tiene productos asociados</div>
                             </div>
@@ -379,31 +381,34 @@
                             <div
                                 v-for="(item, index) in sale.sale_items"
                                 :key="item.id || index"
-                                class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                                :class="{'border-orange-200 bg-orange-50': hasItemReturns(item)}"
+                                class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                :class="{'border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20': hasItemReturns(item)}"
                             >
                                 <div class="flex items-center justify-between">
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-3">
                                             <div class="flex-shrink-0">
-                                                <span 
-                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full text-lg"
+                                                <span
+                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full"
                                                     :class="{
-                                                        'bg-orange-100 text-orange-600': item.product_type === 'menu',
-                                                        'bg-blue-100 text-blue-600': item.product_type === 'simple',
-                                                        'bg-purple-100 text-purple-600': item.product_type === 'free'
+                                                        'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400': item.product_type === 'menu',
+                                                        'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400': item.product_type === 'simple',
+                                                        'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400': item.product_type === 'free'
                                                     }"
                                                 >
-                                                    {{ item.product_type === 'menu' ? '🍽️' : item.product_type === 'simple' ? '🥤' : '✨' }}
+                                                    <component
+                                                        :is="item.product_type === 'menu' ? icons.menu : item.product_type === 'simple' ? icons.product : icons.add"
+                                                        class="w-5 h-5"
+                                                    />
                                                 </span>
                                             </div>
 
                                             <div class="flex-1">
-                                                <h4 class="text-lg font-semibold text-gray-900">
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
                                                     {{ getProductName(item) }}
                                                 </h4>
-                                                
-                                                <p class="text-sm text-gray-600" v-if="getProductDescription(item)">
+
+                                                <p class="text-sm text-gray-600 dark:text-gray-400" v-if="getProductDescription(item)">
                                                     {{ getProductDescription(item) }}
                                                 </p>
 
@@ -411,39 +416,39 @@
                                                     <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                         :class="{
-                                                            'bg-orange-100 text-orange-800': item.product_type === 'menu',
-                                                            'bg-blue-100 text-blue-800': item.product_type === 'simple',
-                                                            'bg-purple-100 text-purple-800': item.product_type === 'free'
+                                                            'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200': item.product_type === 'menu',
+                                                            'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200': item.product_type === 'simple',
+                                                            'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200': item.product_type === 'free'
                                                         }"
                                                     >
                                                         {{ item.product_type === 'menu' ? 'Platillo del Menú' : item.product_type === 'simple' ? 'Producto Individual' : 'Venta Libre' }}
                                                     </span>
 
-                                                    <span 
+                                                    <span
                                                         v-if="hasItemReturns(item)"
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                                                     >
                                                         {{ item.quantity_returned || 0 }} devueltos
                                                     </span>
-                                                    
-                                                    <span 
+
+                                                    <span
                                                         v-if="canReturnItem(item)"
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
                                                     >
                                                         {{ item.can_return_quantity || item.quantity }} disponibles
                                                     </span>
                                                 </div>
 
                                                 <div v-if="item.product_type === 'menu' && item.menu_item?.recipes" class="mt-2">
-                                                    <p class="text-xs text-gray-500 mb-1">Ingredientes utilizados:</p>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Ingredientes utilizados:</p>
                                                     <div class="flex flex-wrap gap-1">
-                                                        <span 
-                                                            v-for="recipe in item.menu_item.recipes" 
+                                                        <span
+                                                            v-for="recipe in item.menu_item.recipes"
                                                             :key="recipe.id"
-                                                            class="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-700"
+                                                            class="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                                                         >
                                                             {{ recipe.product?.name || 'Producto no disponible' }}
-                                                            <span class="ml-1 text-gray-500">
+                                                            <span class="ml-1 text-gray-500 dark:text-gray-400">
                                                                 ({{ (recipe.quantity_needed * item.quantity).toFixed(2) }} {{ recipe.product?.unit_type || 'unidades' }})
                                                             </span>
                                                         </span>
@@ -454,24 +459,24 @@
                                     </div>
 
                                     <div class="text-right ml-6">
-                                        <div class="text-2xl font-bold text-gray-900">
+                                        <div class="text-2xl font-bold text-gray-900 dark:text-white">
                                             × {{ item.quantity }}
                                         </div>
-                                        <div v-if="hasItemReturns(item)" class="text-sm text-red-600">
+                                        <div v-if="hasItemReturns(item)" class="text-sm text-red-600 dark:text-red-400">
                                             - {{ item.quantity_returned || 0 }} devueltos
                                         </div>
-                                        <div v-if="canReturnItem(item)" class="text-sm text-green-600">
+                                        <div v-if="canReturnItem(item)" class="text-sm text-green-600 dark:text-green-400">
                                             {{ item.can_return_quantity || item.quantity }} disponibles
                                         </div>
-                                        
-                                        <div class="text-sm text-gray-600 mt-1">
+
+                                        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                             ${{ formatPrice(item.unit_price) }} c/u
                                         </div>
-                                        <div class="text-lg font-bold text-green-600 mt-1">
+                                        <div class="text-lg font-bold text-green-600 dark:text-green-400 mt-1">
                                             ${{ formatPrice(item.total_price || (item.unit_price * item.quantity)) }}
                                         </div>
-                                        
-                                        <div v-if="hasItemReturns(item)" class="text-sm text-red-600 mt-1">
+
+                                        <div v-if="hasItemReturns(item)" class="text-sm text-red-600 dark:text-red-400 mt-1">
                                             -${{ formatPrice((item.quantity_returned || 0) * item.unit_price) }}
                                         </div>
                                     </div>
@@ -479,18 +484,18 @@
                             </div>
 
                             <!-- Resumen Final -->
-                            <div class="mt-8 pt-6 border-t-2 border-gray-300 space-y-2">
-                                <div class="flex justify-between items-center text-lg">
+                            <div class="mt-8 pt-6 border-t-2 border-gray-300 dark:border-gray-600 space-y-2">
+                                <div class="flex justify-between items-center text-lg text-gray-900 dark:text-white">
                                     <span>Total de {{ getTotalItems() }} productos ({{ getTotalQuantity() }} unidades):</span>
-                                    <span class="text-green-600 font-bold">${{ formatPrice(sale?.total) }}</span>
+                                    <span class="text-green-600 dark:text-green-400 font-bold">${{ formatPrice(sale?.total) }}</span>
                                 </div>
-                                
-                                <div v-if="sale?.has_returns" class="flex justify-between items-center text-lg text-red-600">
+
+                                <div v-if="sale?.has_returns" class="flex justify-between items-center text-lg text-red-600 dark:text-red-400">
                                     <span>Total devuelto:</span>
                                     <span class="font-bold">-${{ formatPrice(sale?.total_returned) }}</span>
                                 </div>
-                                
-                                <div v-if="sale?.has_returns" class="flex justify-between items-center text-xl font-bold border-t pt-2" :class="{'text-emerald-600': sale?.has_returns}">
+
+                                <div v-if="sale?.has_returns" class="flex justify-between items-center text-xl font-bold border-t border-gray-300 dark:border-gray-600 pt-2" :class="{'text-emerald-600 dark:text-emerald-400': sale?.has_returns}">
                                     <span>Total neto:</span>
                                     <span>${{ formatPrice(sale?.net_total || sale?.total) }}</span>
                                 </div>
@@ -560,37 +565,37 @@
 
 <!-- Modal de Vista Previa de Comanda de Cocina -->
 <div v-if="showKitchenPreview" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg w-11/12 max-w-md max-h-96 flex flex-col">
-        <div class="flex items-center justify-between p-4 border-b">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                <svg class="w-5 h-5 text-orange-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+    <div class="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-md max-h-96 flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <svg class="w-5 h-5 text-orange-600 dark:text-orange-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                 </svg>
                 Vista Previa - Comanda de Cocina
             </h3>
             <button
                 @click="showKitchenPreview = false"
-                class="text-gray-400 hover:text-gray-600"
+                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        
+
         <div class="flex-1 overflow-y-auto p-4">
             <div v-if="loadingPreview" class="flex items-center justify-center py-8">
-                <svg class="animate-spin h-8 w-8 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-8 w-8 text-orange-600 dark:text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span class="ml-2 text-gray-600">Generando vista previa...</span>
+                <span class="ml-2 text-gray-600 dark:text-gray-400">Generando vista previa...</span>
             </div>
-            
-            <pre v-else class="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-3 rounded border text-gray-800 leading-tight">{{ kitchenPreviewContent }}</pre>
+
+            <pre v-else class="whitespace-pre-wrap text-sm font-mono bg-gray-50 dark:bg-gray-900 p-3 rounded border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 leading-tight">{{ kitchenPreviewContent }}</pre>
         </div>
-        
-        <div class="flex space-x-3 p-4 border-t bg-gray-50">
+
+        <div class="flex space-x-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
                 @click="showKitchenPreview = false"
                 class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded"
@@ -610,37 +615,37 @@
 
 <!-- Modal de Vista Previa de Ticket de Cliente -->
 <div v-if="showCustomerPreview" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg w-11/12 max-w-md max-h-96 flex flex-col">
-        <div class="flex items-center justify-between p-4 border-b">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+    <div class="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-md max-h-96 flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                 </svg>
                 Vista Previa - Ticket de Cliente
             </h3>
             <button
                 @click="showCustomerPreview = false"
-                class="text-gray-400 hover:text-gray-600"
+                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        
+
         <div class="flex-1 overflow-y-auto p-4">
             <div v-if="loadingPreview" class="flex items-center justify-center py-8">
-                <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-8 w-8 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span class="ml-2 text-gray-600">Generando vista previa...</span>
+                <span class="ml-2 text-gray-600 dark:text-gray-400">Generando vista previa...</span>
             </div>
-            
-            <pre v-else class="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-3 rounded border text-gray-800 leading-tight">{{ customerPreviewContent }}</pre>
+
+            <pre v-else class="whitespace-pre-wrap text-sm font-mono bg-gray-50 dark:bg-gray-900 p-3 rounded border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 leading-tight">{{ customerPreviewContent }}</pre>
         </div>
-        
-        <div class="flex space-x-3 p-4 border-t bg-gray-50">
+
+        <div class="flex space-x-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
                 @click="showCustomerPreview = false"
                 class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded"
@@ -664,6 +669,10 @@
 import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useIcons } from '@/composables/useIcons';
+
+// Icons
+const { icons } = useIcons();
 
 // Props
 const props = defineProps({
