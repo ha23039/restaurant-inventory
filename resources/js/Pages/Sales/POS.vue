@@ -629,11 +629,11 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Panel de Productos -->
                     <div class="lg:col-span-2">
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
                                 <!-- Header con controles -->
                                 <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-lg font-semibold text-gray-900">Catálogo de Productos</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Catálogo de Productos</h3>
                                     <div class="flex items-center space-x-3">
                                         <button
                                             @click="showFreeSaleSlideOver = true"
@@ -648,11 +648,11 @@ onBeforeUnmount(() => {
                                             v-model="searchTerm"
                                             type="text"
                                             placeholder="Buscar producto..."
-                                            class="text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                            class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                         />
                                         <select
                                             v-model="selectedCategory"
-                                            class="text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                            class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                         >
                                             <option value="">Todas las categorías</option>
                                             <option
@@ -667,7 +667,7 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <!-- Tabs de categorías -->
-                                <div class="border-b border-gray-200 mb-6">
+                                <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
                                     <nav class="-mb-px flex space-x-8">
                                         <button
                                             v-for="(group, key) in groupedProducts"
@@ -675,8 +675,8 @@ onBeforeUnmount(() => {
                                             @click="activeTab = key"
                                             :class="[
                                                 activeTab === key
-                                                    ? 'border-indigo-500 text-indigo-600'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
                                                 'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
                                             ]"
                                         >
@@ -692,42 +692,42 @@ onBeforeUnmount(() => {
                                         :key="`${item.product_type}-${item.id}`"
                                         class="border rounded-lg p-4 transition-all duration-200 cursor-pointer relative"
                                         :class="[
-                                            item.is_in_stock 
-                                                ? 'hover:shadow-md hover:border-blue-300 bg-white' 
-                                                : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                                            item.is_in_stock
+                                                ? 'hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed opacity-60'
                                         ]"
                                         @click="addToCart(item)"
                                     >
                                         <!-- Badge de disponibilidad -->
                                         <div class="absolute top-2 right-2">
-                                            <span 
+                                            <span
                                                 v-if="item.is_in_stock"
-                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
                                             >
                                                 Stock: {{ item.available_quantity }}
                                             </span>
-                                            <span 
+                                            <span
                                                 v-else
-                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                                             >
                                                 Agotado
                                             </span>
                                         </div>
 
                                         <div class="mt-4">
-                                            <h4 class="font-semibold text-gray-900 text-lg">{{ item.name }}</h4>
-                                            <p class="text-sm text-gray-600 mt-1" v-if="item.description">
+                                            <h4 class="font-semibold text-gray-900 dark:text-white text-lg">{{ item.name }}</h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" v-if="item.description">
                                                 {{ item.description }}
                                             </p>
-                                            
+
                                             <!-- Ingredientes para platillos del menú -->
                                             <div class="mt-2" v-if="item.product_type === 'menu' && item.recipes && item.recipes.length > 0">
-                                                <p class="text-xs text-gray-500 mb-1">Ingredientes:</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Ingredientes:</p>
                                                 <div class="flex flex-wrap gap-1">
-                                                    <span 
-                                                        v-for="recipe in item.recipes" 
+                                                    <span
+                                                        v-for="recipe in item.recipes"
                                                         :key="recipe.id"
-                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-200 text-gray-700"
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300"
                                                     >
                                                         {{ recipe.product.name }}
                                                     </span>
@@ -736,23 +736,23 @@ onBeforeUnmount(() => {
 
                                             <!-- Información para productos simples -->
                                             <div class="mt-2" v-else-if="item.product_type === 'simple'">
-                                                <p class="text-xs text-gray-500">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">
                                                     Categoría: {{ item.category }}
                                                 </p>
                                             </div>
 
                                             <div class="flex justify-between items-center mt-4">
-                                                <span class="text-2xl font-bold text-green-600">
+                                                <span class="text-2xl font-bold text-green-600 dark:text-green-400">
                                                     ${{ formatPrice(item.price) }}
                                                 </span>
                                                 <button
                                                     v-if="item.is_in_stock"
                                                     @click.stop="addToCart(item)"
-                                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                                                    class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
                                                 >
                                                     Agregar
                                                 </button>
-                                                <span v-else class="text-sm text-red-500 font-medium">
+                                                <span v-else class="text-sm text-red-500 dark:text-red-400 font-medium">
                                                     Agotado
                                                 </span>
                                             </div>
@@ -762,7 +762,7 @@ onBeforeUnmount(() => {
 
                                 <!-- Mensaje si no hay productos -->
                                 <div v-if="(groupedProducts[activeTab]?.items || []).length === 0" class="text-center py-12">
-                                    <div class="text-gray-500">
+                                    <div class="text-gray-500 dark:text-gray-400">
                                         <div class="text-4xl mb-4">📦</div>
                                         <div>No hay productos disponibles en esta categoría</div>
                                     </div>
@@ -773,13 +773,13 @@ onBeforeUnmount(() => {
 
                     <!-- Panel del Carrito -->
                     <div class="lg:col-span-1">
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg sticky top-6">
+                        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg sticky top-6">
                             <div class="p-6">
                                 <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-lg font-semibold text-gray-900">Carrito de Compras</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Carrito de Compras</h3>
                                     <div class="flex items-center space-x-2">
                                         <!-- Indicador de carrito guardado -->
-                                        <div v-if="cartItems.length > 0" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        <div v-if="cartItems.length > 0" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
                                             Guardado automáticamente
                                         </div>
                                         <button
@@ -856,21 +856,21 @@ onBeforeUnmount(() => {
                                         <div class="flex items-center space-x-2">
                                             <button
                                                 @click="decrementQuantity(index)"
-                                                class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 font-medium"
+                                                class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center text-gray-600 dark:text-gray-200 font-medium"
                                             >
                                                 -
                                             </button>
-                                            <span class="w-8 text-center font-medium">{{ item.quantity }}</span>
+                                            <span class="w-8 text-center font-medium dark:text-white">{{ item.quantity }}</span>
                                             <button
                                                 @click="incrementQuantity(index)"
                                                 :disabled="item.quantity >= item.available_quantity"
-                                                class="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 flex items-center justify-center text-white font-medium"
+                                                class="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 flex items-center justify-center text-white font-medium"
                                             >
                                                 +
                                             </button>
                                             <button
                                                 @click="removeFromCart(index)"
-                                                class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white font-medium ml-2"
+                                                class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center text-white font-medium ml-2"
                                             >
                                                 ×
                                             </button>
@@ -878,33 +878,16 @@ onBeforeUnmount(() => {
                                     </div>
                                 </div>
 
-                                <!-- Toggle de Venta Libre -->
-                                <div class="border-t border-gray-200 pt-4 mb-4">
-                                    <label class="flex items-center cursor-pointer">
-                                        <input
-                                            v-model="isFreeSale"
-                                            type="checkbox"
-                                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        >
-                                        <span class="ml-2 text-sm font-medium text-gray-700">
-                                            Venta Libre (sin productos)
-                                        </span>
-                                    </label>
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        Para ventas que no afectan el inventario
-                                    </p>
-                                </div>
-
-                                <!-- Form de Venta Libre -->
-                                <div v-if="isFreeSale" class="border border-blue-200 rounded-lg p-4 mb-4 bg-blue-50">
-                                    <h4 class="text-sm font-semibold text-blue-900 mb-3">
-                                        Datos de Venta Libre
+                                <!-- Form de Venta Libre (solo si está activado) -->
+                                <div v-if="isFreeSale" class="border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 bg-blue-50 dark:bg-blue-900/20">
+                                    <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                                        💵 Datos de Venta Libre
                                     </h4>
 
                                     <div class="space-y-3">
                                         <!-- Descripción -->
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                 Descripción *
                                             </label>
                                             <textarea
@@ -912,13 +895,13 @@ onBeforeUnmount(() => {
                                                 rows="3"
                                                 maxlength="500"
                                                 placeholder="Ej: Servicio de catering para evento corporativo"
-                                                class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm text-sm"
+                                                class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm text-sm"
                                             ></textarea>
                                             <div class="flex justify-between items-center mt-1">
-                                                <span class="text-xs text-gray-500">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">
                                                     Mínimo 3 caracteres
                                                 </span>
-                                                <span class="text-xs text-gray-500">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">
                                                     {{ freeSaleDescription.length }}/500
                                                 </span>
                                             </div>
@@ -926,21 +909,21 @@ onBeforeUnmount(() => {
 
                                         <!-- Monto -->
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                 Monto Total *
                                             </label>
                                             <div class="relative">
-                                                <span class="absolute left-3 top-2.5 text-gray-500">$</span>
+                                                <span class="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400">$</span>
                                                 <input
                                                     v-model="freeSaleTotal"
                                                     type="number"
                                                     step="0.01"
                                                     min="0.01"
                                                     placeholder="0.00"
-                                                    class="w-full pl-7 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                                    class="w-full pl-7 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                                                 >
                                             </div>
-                                            <p class="mt-1 text-xs text-gray-500">
+                                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                                 Este monto no afectará el inventario
                                             </p>
                                         </div>
@@ -948,13 +931,13 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <!-- Totales -->
-                                <div v-if="cartItems.length > 0 && !isFreeSale" class="border-t border-gray-200 pt-4">
+                                <div v-if="cartItems.length > 0 && !isFreeSale" class="border-t border-gray-200 dark:border-gray-700 pt-4">
                                     <div class="space-y-3">
-                                        <div class="flex justify-between text-sm">
+                                        <div class="flex justify-between text-sm dark:text-gray-300">
                                             <span class="font-medium">Subtotal:</span>
                                             <span>${{ formatPrice(subtotal) }}</span>
                                         </div>
-                                        <div class="flex justify-between text-sm items-center">
+                                        <div class="flex justify-between text-sm items-center dark:text-gray-300">
                                             <span class="font-medium">Descuento:</span>
                                             <div class="flex items-center space-x-2">
                                                 <span class="text-xs">$</span>
@@ -964,11 +947,11 @@ onBeforeUnmount(() => {
                                                     step="0.01"
                                                     min="0"
                                                     :max="subtotal"
-                                                    class="w-20 text-right text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded"
+                                                    class="w-20 text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded"
                                                 />
                                             </div>
                                         </div>
-                                        <div class="flex justify-between text-sm items-center">
+                                        <div class="flex justify-between text-sm items-center dark:text-gray-300">
                                             <span class="font-medium">Impuesto:</span>
                                             <div class="flex items-center space-x-2">
                                                 <span class="text-xs">$</span>
@@ -977,23 +960,23 @@ onBeforeUnmount(() => {
                                                     type="number"
                                                     step="0.01"
                                                     min="0"
-                                                    class="w-20 text-right text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded"
+                                                    class="w-20 text-right text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded"
                                                 />
                                             </div>
                                         </div>
-                                        <div class="flex justify-between text-lg font-bold border-t pt-3">
+                                        <div class="flex justify-between text-lg font-bold border-t dark:border-gray-700 pt-3 dark:text-white">
                                             <span>Total:</span>
-                                            <span class="text-green-600">${{ formatPrice(total) }}</span>
+                                            <span class="text-green-600 dark:text-green-400">${{ formatPrice(total) }}</span>
                                         </div>
                                     </div>
 
                                     <!-- Resumen de Venta Libre -->
-                                    <div v-if="isFreeSale" class="border-t border-gray-200 pt-4">
-                                        <div class="flex justify-between text-lg font-bold">
+                                    <div v-if="isFreeSale" class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                        <div class="flex justify-between text-lg font-bold dark:text-white">
                                             <span>Total (Venta Libre):</span>
-                                            <span class="text-green-600">${{ formatPrice(parseFloat(freeSaleTotal || 0)) }}</span>
+                                            <span class="text-green-600 dark:text-green-400">${{ formatPrice(parseFloat(freeSaleTotal || 0)) }}</span>
                                         </div>
-                                        <p class="text-xs text-blue-600 mt-2">
+                                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
                                             Esta venta no afectará el inventario
                                         </p>
                                     </div>
@@ -1045,20 +1028,25 @@ onBeforeUnmount(() => {
                                     <!-- Botones de acción -->
                                     <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4 space-y-2">
                                         <!-- Información de orden existente -->
-                                        <div v-if="selectedExistingSale && cartItems.length > 0" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
+                                        <div v-if="selectedExistingSale" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
                                             <p class="text-sm text-blue-900 dark:text-blue-100">
-                                                ℹ️ Agregando items a orden #{{ selectedExistingSale.sale_number }}
+                                                <span v-if="cartItems.length > 0">
+                                                    ℹ️ Agregando items a orden #{{ selectedExistingSale.sale_number }}
+                                                </span>
+                                                <span v-else>
+                                                    📋 Orden activa #{{ selectedExistingSale.sale_number }}
+                                                </span>
                                             </p>
                                             <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                                                Total anterior: ${{ parseFloat(selectedExistingSale.total).toFixed(2) }}
+                                                Total {{ cartItems.length > 0 ? 'anterior' : 'actual' }}: ${{ parseFloat(selectedExistingSale.total).toFixed(2) }}
                                             </p>
                                         </div>
 
-                                        <!-- Botón: Guardar Pendiente (solo si no es venta libre) -->
+                                        <!-- Botón: Guardar Pendiente (solo si HAY items nuevos en carrito) -->
                                         <button
-                                            v-if="!isFreeSale"
+                                            v-if="!isFreeSale && cartItems.length > 0"
                                             @click="processSale('save_pending')"
-                                            :disabled="processing || (cartItems.length === 0 && !selectedExistingSale)"
+                                            :disabled="processing"
                                             class="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
                                         >
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1072,7 +1060,7 @@ onBeforeUnmount(() => {
                                             </span>
                                         </button>
 
-                                        <!-- Botón: Completar y Pagar -->
+                                        <!-- Botón: Completar y Pagar (SIEMPRE disponible si hay orden activa O carrito) -->
                                         <button
                                             @click="processSale('complete')"
                                             :disabled="processing || (!isFreeSale && cartItems.length === 0 && !selectedExistingSale) || (isFreeSale && (!freeSaleDescription || !freeSaleTotal || parseFloat(freeSaleTotal) <= 0))"
@@ -1088,8 +1076,11 @@ onBeforeUnmount(() => {
                                             <span v-else-if="isFreeSale">
                                                 💵 Completar Venta Libre (${{ formatPrice(parseFloat(freeSaleTotal || 0)) }})
                                             </span>
-                                            <span v-else-if="selectedExistingSale">
+                                            <span v-else-if="selectedExistingSale && cartItems.length > 0">
                                                 💳 Completar y Pagar (${{ formatPrice(total) }})
+                                            </span>
+                                            <span v-else-if="selectedExistingSale">
+                                                💳 Completar Orden (${{ parseFloat(selectedExistingSale.total).toFixed(2) }})
                                             </span>
                                             <span v-else>
                                                 💳 Completar y Pagar (${{ formatPrice(total) }})
