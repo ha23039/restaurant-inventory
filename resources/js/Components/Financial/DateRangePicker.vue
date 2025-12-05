@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-4">
         <div class="flex items-center justify-between">
-            <label class="block text-sm font-medium text-gray-700">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Rango de Fechas
             </label>
             <div class="flex items-center gap-2">
@@ -13,7 +13,7 @@
                         'text-xs px-2 py-1 rounded border transition-colors',
                         isPresetActive(preset)
                             ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white text-gray-600 border-gray-300 hover:border-blue-500 hover:text-blue-500'
+                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-500 hover:text-blue-500 dark:hover:text-blue-400'
                     ]"
                     @click="applyPreset(preset)"
                 >
@@ -41,7 +41,7 @@
             />
         </div>
 
-        <div v-if="from && to" class="text-sm text-gray-600">
+        <div v-if="from && to" class="text-sm text-gray-600 dark:text-gray-400">
             <span class="font-medium">{{ getDaysDifference() }}</span> días seleccionados
         </div>
     </div>

@@ -128,12 +128,12 @@ onUnmounted(() => {
         <!-- Dropdown Button -->
         <button
             type="button"
-            class="inline-flex items-center justify-between w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="inline-flex items-center justify-between w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             @click="toggleDropdown"
         >
             <span class="flex items-center gap-2">
                 <!-- Filter Icon -->
-                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -142,7 +142,7 @@ onUnmounted(() => {
                     />
                 </svg>
 
-                <span :class="hasSelection ? 'text-gray-900 font-semibold' : 'text-gray-500'">
+                <span :class="hasSelection ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-500 dark:text-gray-400'">
                     {{ label }}: {{ selectedLabel }}
                 </span>
             </span>
@@ -152,7 +152,7 @@ onUnmounted(() => {
                 <button
                     v-if="showClear && hasSelection"
                     type="button"
-                    class="text-gray-400 hover:text-gray-600"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     @click.stop="clearSelection"
                 >
                     <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
@@ -166,7 +166,7 @@ onUnmounted(() => {
 
                 <!-- Chevron Icon -->
                 <svg
-                    class="h-5 w-5 text-gray-400 transition-transform"
+                    class="h-5 w-5 text-gray-400 dark:text-gray-500 transition-transform"
                     :class="{ 'rotate-180': isOpen }"
                     fill="none"
                     stroke="currentColor"
@@ -188,17 +188,17 @@ onUnmounted(() => {
         >
             <div
                 v-show="isOpen"
-                class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 dark:ring-opacity-100 z-10"
             >
                 <div class="py-1 max-h-60 overflow-y-auto" role="menu">
                     <button
                         v-for="option in options"
                         :key="option.value"
                         type="button"
-                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between"
+                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-between"
                         :class="{
-                            'bg-blue-50 text-blue-700': isSelected(option),
-                            'text-gray-700': !isSelected(option),
+                            'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200': isSelected(option),
+                            'text-gray-700 dark:text-gray-300': !isSelected(option),
                         }"
                         @click="selectOption(option)"
                     >
@@ -207,7 +207,7 @@ onUnmounted(() => {
                         <!-- Checkmark for selected items -->
                         <svg
                             v-if="isSelected(option)"
-                            class="h-5 w-5 text-blue-600"
+                            class="h-5 w-5 text-blue-600 dark:text-blue-400"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                         >

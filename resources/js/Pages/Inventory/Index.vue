@@ -16,85 +16,85 @@
                 <!-- Métricas principales -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
                     <!-- Total productos -->
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden shadow-lg sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                        <component :is="icons.product" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <component :is="icons.product" class="w-5 h-5" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Productos</div>
-                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ metrics.total_products }}</div>
+                                    <div class="text-sm font-medium text-blue-100">Total Productos</div>
+                                    <div class="text-2xl font-bold">{{ metrics.total_products }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Total categorías -->
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white overflow-hidden shadow-lg sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
-                                        <component :is="icons.category" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <component :is="icons.category" class="w-5 h-5" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Categorías</div>
-                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ metrics.total_categories }}</div>
+                                    <div class="text-sm font-medium text-purple-100">Categorías</div>
+                                    <div class="text-2xl font-bold">{{ metrics.total_categories }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Stock bajo -->
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white overflow-hidden shadow-lg sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                                        <component :is="icons.warning" class="w-5 h-5 text-red-600 dark:text-red-400" />
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <component :is="icons.warning" class="w-5 h-5" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Stock Bajo</div>
-                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ metrics.low_stock_products }}</div>
+                                    <div class="text-sm font-medium text-orange-100">Stock Bajo</div>
+                                    <div class="text-2xl font-bold">{{ metrics.low_stock_products }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Productos vencidos -->
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white overflow-hidden shadow-lg sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                                        <component :is="icons.calendar" class="w-5 h-5 text-red-600 dark:text-red-400" />
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <component :is="icons.calendar" class="w-5 h-5" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Vencidos</div>
-                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ metrics.expired_products }}</div>
+                                    <div class="text-sm font-medium text-red-100">Vencidos</div>
+                                    <div class="text-2xl font-bold">{{ metrics.expired_products }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Por vencer pronto -->
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white overflow-hidden shadow-lg sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
-                                        <component :is="icons.pending" class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <component :is="icons.pending" class="w-5 h-5" />
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Vencen Pronto</div>
-                                    <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ metrics.expiring_soon_products }}</div>
+                                    <div class="text-sm font-medium text-yellow-100">Vencen Pronto</div>
+                                    <div class="text-2xl font-bold">{{ metrics.expiring_soon_products }}</div>
                                 </div>
                             </div>
                         </div>

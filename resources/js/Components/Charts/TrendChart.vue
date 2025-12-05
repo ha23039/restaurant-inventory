@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Line } from 'vue-chartjs';
 import {
     Chart as ChartJS,
@@ -30,6 +30,24 @@ ChartJS.register(
     Legend,
     Filler
 );
+
+// Detect dark mode
+const isDarkMode = ref(document.documentElement.classList.contains('dark'));
+
+const updateDarkMode = () => {
+    isDarkMode.value = document.documentElement.classList.contains('dark');
+};
+
+onMounted(() => {
+    // Watch for dark mode changes
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+
+    onUnmounted(() => observer.disconnect());
+});
 
 const props = defineProps({
     data: {
@@ -80,7 +98,8 @@ const chartOptions = computed(() => ({
                 font: {
                     size: 12,
                     family: "'Inter', sans-serif"
-                }
+                },
+                color: isDarkMode.value ? '#d1d5db' : '#374151', // gray-300 : gray-700
             }
         },
         title: {
@@ -91,6 +110,7 @@ const chartOptions = computed(() => ({
                 weight: 'bold',
                 family: "'Inter', sans-serif"
             },
+            color: isDarkMode.value ? '#f3f4f6' : '#111827', // gray-100 : gray-900
             padding: {
                 top: 10,
                 bottom: 20
@@ -135,19 +155,21 @@ const chartOptions = computed(() => ({
             ticks: {
                 font: {
                     size: 11
-                }
+                },
+                color: isDarkMode.value ? '#9ca3af' : '#6b7280', // gray-400 : gray-500
             }
         },
         y: {
             beginAtZero: true,
             grid: {
-                color: 'rgba(0, 0, 0, 0.05)',
+                color: isDarkMode.value ? 'rgba(75, 85, 99, 0.2)' : 'rgba(0, 0, 0, 0.05)', // gray-600 with opacity
                 drawBorder: false
             },
             ticks: {
                 font: {
                     size: 11
                 },
+                color: isDarkMode.value ? '#9ca3af' : '#6b7280', // gray-400 : gray-500
                 callback: function(value) {
                     return '$' + new Intl.NumberFormat('es-MX', {
                         notation: 'compact',

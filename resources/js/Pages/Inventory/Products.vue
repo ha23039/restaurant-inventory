@@ -22,12 +22,12 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Filtros con búsqueda en tiempo real -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <!-- Búsqueda en tiempo real -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@
                                         @input="searchProducts"
                                         type="text"
                                         placeholder="Busca por nombre... ej: hambu"
-                                        class="w-full pl-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        class="w-full pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                     />
                                     <!-- Indicador de búsqueda -->
                                     <div v-if="searching" class="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -50,18 +50,18 @@
                                     </div>
                                 </div>
                                 <!-- Sugerencias de búsqueda -->
-                                <div v-if="form.search && form.search.length >= 2" class="mt-1 text-xs text-gray-500">
+                                <div v-if="form.search && form.search.length >= 2" class="mt-1 text-xs text-gray-500 dark:text-gray-300">
                                     Sugerencias: "pan", "carne", "soda", "queso"
                                 </div>
                             </div>
 
                             <!-- Categoría con contador -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
                                 <select
                                     v-model="form.category_id"
                                     @change="search"
-                                    class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                 >
                                     <option value="">Todas las categorías</option>
                                     <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -72,18 +72,18 @@
 
                             <!-- Filtros especiales con badges -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Filtros Rápidos</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filtros Rápidos</label>
                                 <div class="space-y-2">
                                     <label class="flex items-center cursor-pointer">
                                         <input
                                             v-model="form.low_stock"
                                             @change="search"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
+                                            class="rounded border-gray-300 dark:border-gray-600 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
                                         />
-                                        <span class="ml-2 text-sm text-gray-600">
+                                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">
                                             Stock bajo
-                                            <span v-if="lowStockCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span v-if="lowStockCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                                 {{ lowStockCount }}
                                             </span>
                                         </span>
@@ -93,11 +93,11 @@
                                             v-model="form.expired"
                                             @change="search"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
+                                            class="rounded border-gray-300 dark:border-gray-600 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
                                         />
-                                        <span class="ml-2 text-sm text-gray-600">
+                                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">
                                             Vencidos
-                                            <span v-if="expiredCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span v-if="expiredCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                                 {{ expiredCount }}
                                             </span>
                                         </span>
@@ -107,11 +107,11 @@
                                             v-model="form.expiring_soon"
                                             @change="search"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-yellow-600 shadow-sm focus:border-yellow-300 focus:ring focus:ring-yellow-200 focus:ring-opacity-50"
+                                            class="rounded border-gray-300 dark:border-gray-600 text-yellow-600 shadow-sm focus:border-yellow-300 focus:ring focus:ring-yellow-200 focus:ring-opacity-50"
                                         />
-                                        <span class="ml-2 text-sm text-gray-600">
+                                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">
                                             Vencen pronto
-                                            <span v-if="expiringSoonCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span v-if="expiringSoonCount > 0" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
                                                 {{ expiringSoonCount }}
                                             </span>
                                         </span>
@@ -122,7 +122,7 @@
                             <!-- Acciones y resultados -->
                             <div class="flex flex-col justify-between">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Acciones</label>
                                     <button
                                         @click="clearFilters"
                                         class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors"
@@ -139,24 +139,24 @@
 
                         <!-- Filtros activos -->
                         <div v-if="hasActiveFilters" class="mt-4 flex flex-wrap gap-2">
-                            <span class="text-sm text-gray-600">Filtros activos:</span>
-                            <span v-if="form.search" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Filtros activos:</span>
+                            <span v-if="form.search" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                                  "{{ form.search }}"
                                 <button @click="form.search = ''; search()" class="ml-1 text-blue-600 hover:text-blue-800">×</button>
                             </span>
-                            <span v-if="form.category_id" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span v-if="form.category_id" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
                                 {{ getCategoryName(form.category_id) }}
                                 <button @click="form.category_id = ''; search()" class="ml-1 text-purple-600 hover:text-purple-800">×</button>
                             </span>
-                            <span v-if="form.low_stock" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span v-if="form.low_stock" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                 Stock bajo
                                 <button @click="form.low_stock = false; search()" class="ml-1 text-red-600 hover:text-red-800">×</button>
                             </span>
-                            <span v-if="form.expired" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span v-if="form.expired" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                 Vencidos
                                 <button @click="form.expired = false; search()" class="ml-1 text-red-600 hover:text-red-800">×</button>
                             </span>
-                            <span v-if="form.expiring_soon" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <span v-if="form.expiring_soon" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
                                 Vencen pronto
                                 <button @click="form.expiring_soon = false; search()" class="ml-1 text-yellow-600 hover:text-yellow-800">×</button>
                             </span>
@@ -165,7 +165,7 @@
                 </div>
 
                 <!-- Tabla de productos -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <!-- Mensaje de carga -->
                         <div v-if="searching" class="text-center py-8">
@@ -174,48 +174,48 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span class="text-gray-600">Buscando productos...</span>
+                                <span class="text-gray-600 dark:text-gray-300">Buscando productos...</span>
                             </div>
                         </div>
 
                         <!-- Tabla -->
                         <div v-else class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Producto
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Categoría
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Stock Actual
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Stock Mínimo
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Costo Unitario
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Estado
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Acciones
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="product in products.data" :key="product.id" class="hover:bg-gray-50 transition-colors">
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr v-for="product in products.data" :key="product.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div>
-                                                    <div class="text-sm font-medium text-gray-900">
+                                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
                                                         <!-- Highlight de búsqueda -->
                                                         <span v-html="highlightSearch(product.name)"></span>
                                                     </div>
-                                                    <div class="text-sm text-gray-500">
+                                                    <div class="text-sm text-gray-500 dark:text-gray-300">
                                                         {{ product.unit_type }}
                                                     </div>
                                                 </div>
@@ -230,30 +230,30 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 font-semibold">{{ formatNumber(product.current_stock) }}</div>
+                                            <div class="text-sm text-gray-900 dark:text-white font-semibold">{{ formatNumber(product.current_stock) }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ formatNumber(product.min_stock) }}</div>
+                                            <div class="text-sm text-gray-900 dark:text-white">{{ formatNumber(product.min_stock) }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 font-semibold">${{ formatNumber(product.unit_cost) }}</div>
+                                            <div class="text-sm text-gray-900 dark:text-white font-semibold">${{ formatNumber(product.unit_cost) }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span
                                                 v-if="product.current_stock <= product.min_stock"
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                                             >
                                                 Stock Bajo
                                             </span>
                                             <span
                                                 v-else-if="product.current_stock <= product.min_stock * 1.5"
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
                                             >
                                                 Stock Medio
                                             </span>
                                             <span
                                                 v-else
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
                                             >
                                                 Stock OK
                                             </span>

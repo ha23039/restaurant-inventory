@@ -82,7 +82,7 @@ const resetFilters = () => {
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Dashboard Financiero
                 </h2>
                 <div class="flex items-center gap-3">
@@ -98,9 +98,9 @@ const resetFilters = () => {
 
         <div class="py-6 space-y-6">
             <!-- Date Range Filter -->
-            <BaseCard class="bg-white">
+            <BaseCard class="bg-white dark:bg-gray-800">
                 <div class="p-6">
-                    <h3 class="text-sm font-medium text-gray-700 mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
                         Filtrar por Rango de Fechas
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -418,7 +418,7 @@ const resetFilters = () => {
             </div>
 
             <!-- Charts Row 1: Trend Chart -->
-            <BaseCard class="bg-white">
+            <BaseCard class="bg-white dark:bg-gray-800">
                 <div class="p-6">
                     <TrendChart :data="trends" :height="350" />
                 </div>
@@ -426,7 +426,7 @@ const resetFilters = () => {
 
             <!-- Charts Row 2: Pie Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <BaseCard class="bg-white">
+                <BaseCard class="bg-white dark:bg-gray-800">
                     <div class="p-6">
                         <CategoryPieChart
                             v-if="categoryChart.labels.length > 0"
@@ -435,14 +435,14 @@ const resetFilters = () => {
                         />
                         <div
                             v-else
-                            class="h-[350px] flex items-center justify-center text-gray-400"
+                            class="h-[350px] flex items-center justify-center text-gray-400 dark:text-gray-500"
                         >
                             No hay datos de gastos en este período
                         </div>
                     </div>
                 </BaseCard>
 
-                <BaseCard class="bg-white">
+                <BaseCard class="bg-white dark:bg-gray-800">
                     <div class="p-6">
                         <PaymentMethodChart
                             v-if="paymentMethodChart.labels.length > 0"
@@ -451,7 +451,7 @@ const resetFilters = () => {
                         />
                         <div
                             v-else
-                            class="h-[350px] flex items-center justify-center text-gray-400"
+                            class="h-[350px] flex items-center justify-center text-gray-400 dark:text-gray-500"
                         >
                             No hay datos de métodos de pago en este período
                         </div>
@@ -462,9 +462,9 @@ const resetFilters = () => {
             <!-- Top Expenses & Recent Transactions -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Top Expenses -->
-                <BaseCard class="bg-white">
+                <BaseCard class="bg-white dark:bg-gray-800">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                             Top 5 Categorías de Gastos
                         </h3>
                         <div v-if="topExpenses.length > 0" class="space-y-3">
@@ -480,13 +480,13 @@ const resetFilters = () => {
                                         {{ index + 1 }}
                                     </div>
                                     <div>
-                                        <div class="font-medium text-gray-900">
+                                        <div class="font-medium text-gray-900 dark:text-white">
                                             {{ expense.label }}
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="font-semibold text-gray-900">
+                                    <div class="font-semibold text-gray-900 dark:text-white">
                                         {{ formatCurrency(expense.total) }}
                                     </div>
                                 </div>
@@ -494,7 +494,7 @@ const resetFilters = () => {
                         </div>
                         <div
                             v-else
-                            class="py-12 text-center text-gray-400"
+                            class="py-12 text-center text-gray-400 dark:text-gray-500"
                         >
                             No hay gastos registrados
                         </div>
@@ -502,9 +502,9 @@ const resetFilters = () => {
                 </BaseCard>
 
                 <!-- Recent Transactions -->
-                <BaseCard class="bg-white">
+                <BaseCard class="bg-white dark:bg-gray-800">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                             Transacciones Recientes
                         </h3>
                         <div v-if="recentTransactions.length > 0" class="space-y-3">
@@ -552,10 +552,10 @@ const resetFilters = () => {
                                         </svg>
                                     </div>
                                     <div>
-                                        <div class="font-medium text-gray-900">
+                                        <div class="font-medium text-gray-900 dark:text-white">
                                             {{ transaction.description }}
                                         </div>
-                                        <div class="text-xs text-gray-500">
+                                        <div class="text-xs text-gray-500 dark:text-gray-300">
                                             {{ transaction.flow_date_formatted }} •
                                             {{ transaction.category_label }}
                                         </div>
@@ -573,7 +573,7 @@ const resetFilters = () => {
                         </div>
                         <div
                             v-else
-                            class="py-12 text-center text-gray-400"
+                            class="py-12 text-center text-gray-400 dark:text-gray-500"
                         >
                             No hay transacciones recientes
                         </div>

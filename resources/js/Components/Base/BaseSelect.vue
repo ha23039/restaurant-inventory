@@ -41,7 +41,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change']);
 
 const selectClasses = computed(() => {
-    const base = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500';
+    const base = 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white';
 
     const sizes = {
         sm: 'text-sm py-1 px-2',
@@ -50,10 +50,10 @@ const selectClasses = computed(() => {
     };
 
     const state = props.error
-        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500';
+        ? 'border-red-300 dark:border-red-500 focus:border-red-500 focus:ring-red-500'
+        : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500';
 
-    const disabled = props.disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : '';
+    const disabled = props.disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-60' : '';
 
     return [base, sizes[props.size], state, disabled].filter(Boolean).join(' ');
 });
@@ -99,7 +99,7 @@ const handleChange = (event) => {
             </option>
         </select>
 
-        <p v-if="error" class="mt-1 text-sm text-red-600">
+        <p v-if="error" class="mt-1 text-sm text-red-600 dark:text-red-400">
             {{ error }}
         </p>
     </div>

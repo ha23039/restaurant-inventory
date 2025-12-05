@@ -1,9 +1,9 @@
 <template>
-    <BaseCard class="bg-white">
+    <BaseCard class="bg-white dark:bg-gray-800">
         <div class="p-6">
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Filtros Avanzados
                 </h3>
                 <div class="flex items-center gap-2">
@@ -17,7 +17,7 @@
                     </BaseButton>
                     <button
                         type="button"
-                        class="text-gray-400 hover:text-gray-600"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         @click="toggleExpanded"
                     >
                         <svg
@@ -174,7 +174,7 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <BaseButton
                         variant="secondary"
                         size="md"

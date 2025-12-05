@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Doughnut } from 'vue-chartjs';
 import {
     Chart as ChartJS,
@@ -16,6 +16,24 @@ import {
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
+
+// Detect dark mode
+const isDarkMode = ref(document.documentElement.classList.contains('dark'));
+
+const updateDarkMode = () => {
+    isDarkMode.value = document.documentElement.classList.contains('dark');
+};
+
+onMounted(() => {
+    // Watch for dark mode changes
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+
+    onUnmounted(() => observer.disconnect());
+});
 
 const props = defineProps({
     data: {
@@ -67,6 +85,7 @@ const chartOptions = computed(() => ({
                     size: 12,
                     family: "'Inter', sans-serif"
                 },
+                color: isDarkMode.value ? '#d1d5db' : '#374151', // gray-300 : gray-700
                 generateLabels: function(chart) {
                     const data = chart.data;
                     if (data.labels.length && data.datasets.length) {
@@ -95,6 +114,7 @@ const chartOptions = computed(() => ({
                 weight: 'bold',
                 family: "'Inter', sans-serif"
             },
+            color: isDarkMode.value ? '#f3f4f6' : '#111827', // gray-100 : gray-900
             padding: {
                 top: 10,
                 bottom: 20

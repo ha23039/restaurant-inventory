@@ -101,11 +101,11 @@ const tableRowClasses = (index) => {
     const classes = [];
 
     if (props.hoverable) {
-        classes.push('hover:bg-gray-50 cursor-pointer');
+        classes.push('hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer');
     }
 
     if (props.striped && index % 2 === 1) {
-        classes.push('bg-gray-50');
+        classes.push('bg-gray-50 dark:bg-gray-700');
     }
 
     return classes.join(' ');
@@ -113,16 +113,16 @@ const tableRowClasses = (index) => {
 </script>
 
 <template>
-    <div class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-        <table class="min-w-full divide-y divide-gray-300">
+    <div class="overflow-x-auto shadow ring-1 ring-black dark:ring-gray-700 ring-opacity-5 dark:ring-opacity-100 rounded-lg">
+        <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
             <!-- Table Header -->
-            <thead class="bg-gray-50">
+            <thead class="bg-gray-50 dark:bg-gray-700">
                 <tr>
                     <th
                         v-for="column in columns"
                         :key="column.key"
                         scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                         :class="[
                             column.sortable !== false && sortable ? 'cursor-pointer select-none' : '',
                             column.align === 'center' ? 'text-center' : '',
@@ -187,7 +187,7 @@ const tableRowClasses = (index) => {
             </thead>
 
             <!-- Table Body -->
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 <!-- Loading State -->
                 <tr v-if="loading">
                     <td :colspan="columns.length" class="px-6 py-12 text-center">
@@ -213,7 +213,7 @@ const tableRowClasses = (index) => {
                     <td
                         v-for="column in columns"
                         :key="column.key"
-                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
                         :class="[
                             column.align === 'center' ? 'text-center' : '',
                             column.align === 'right' ? 'text-right' : '',

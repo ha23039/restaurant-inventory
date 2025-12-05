@@ -2,7 +2,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Flujo de Efectivo
                 </h2>
                 <div class="flex items-center gap-3">
@@ -113,7 +113,7 @@
             />
 
             <!-- Transactions Table -->
-            <BaseCard class="bg-white">
+            <BaseCard class="bg-white dark:bg-gray-800">
                 <div class="p-6">
                     <DataTable
                         :columns="columns"
@@ -121,7 +121,7 @@
                         :loading="loading"
                     >
                         <template #cell-flow_date="{ row }">
-                            <div class="text-sm text-gray-900">
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
                                 {{ row.flow_date_formatted }}
                             </div>
                         </template>
@@ -143,10 +143,10 @@
 
                         <template #cell-description="{ row }">
                             <div>
-                                <div class="text-sm font-medium text-gray-900">
+                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {{ row.description }}
                                 </div>
-                                <div v-if="row.notes" class="text-xs text-gray-500 mt-1">
+                                <div v-if="row.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     {{ row.notes }}
                                 </div>
                             </div>
@@ -164,11 +164,11 @@
                         </template>
 
                         <template #cell-user="{ row }">
-                            <div v-if="row.user" class="text-sm text-gray-900">
+                            <div v-if="row.user" class="text-sm text-gray-900 dark:text-gray-100">
                                 <div class="font-medium">{{ row.user.name }}</div>
-                                <div class="text-xs text-gray-500">{{ row.user.role }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ row.user.role }}</div>
                             </div>
-                            <div v-else class="text-sm text-gray-400">
+                            <div v-else class="text-sm text-gray-400 dark:text-gray-500">
                                 N/A
                             </div>
                         </template>
@@ -177,35 +177,35 @@
                             <div v-if="row.sale">
                                 <Link
                                     :href="route('sales.show', row.sale.id)"
-                                    class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                                 >
                                     #{{ row.sale.sale_number }}
                                 </Link>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
                                     {{ row.sale.payment_method }}
                                 </div>
                             </div>
-                            <div v-else class="text-sm text-gray-400">
+                            <div v-else class="text-sm text-gray-400 dark:text-gray-500">
                                 -
                             </div>
                         </template>
                     </DataTable>
 
                     <!-- Pagination -->
-                    <div v-if="transactions.data.length > 0" class="px-4 py-3 border-t border-gray-200 sm:px-6">
+                    <div v-if="transactions.data.length > 0" class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                         <div class="flex items-center justify-between">
                             <div class="flex-1 flex justify-between sm:hidden">
                                 <Link
                                     v-if="transactions.prev_page_url"
                                     :href="transactions.prev_page_url"
-                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                                 >
                                     Anterior
                                 </Link>
                                 <Link
                                     v-if="transactions.next_page_url"
                                     :href="transactions.next_page_url"
-                                    class="relative ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                    class="relative ml-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                                 >
                                     Siguiente
                                 </Link>
@@ -256,7 +256,7 @@
                         class="py-12 text-center"
                     >
                         <svg
-                            class="w-16 h-16 mx-auto text-gray-300 mb-4"
+                            class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -268,10 +268,10 @@
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                             />
                         </svg>
-                        <h3 class="text-lg font-medium text-gray-900 mb-1">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">
                             No se encontraron transacciones
                         </h3>
-                        <p class="text-gray-500">
+                        <p class="text-gray-500 dark:text-gray-400">
                             Intenta ajustar los filtros de búsqueda
                         </p>
                     </div>

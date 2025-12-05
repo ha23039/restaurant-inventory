@@ -103,7 +103,7 @@ const handleSubmit = () => {
                                     v-model="form.restaurant_name"
                                     type="text"
                                     required
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                 />
                             </div>
 
@@ -114,7 +114,7 @@ const handleSubmit = () => {
                                 <input
                                     v-model="form.restaurant_tax_id"
                                     type="text"
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                 />
                             </div>
 
@@ -125,7 +125,7 @@ const handleSubmit = () => {
                                 <input
                                     v-model="form.restaurant_address"
                                     type="text"
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                 />
                             </div>
 
@@ -136,7 +136,7 @@ const handleSubmit = () => {
                                 <input
                                     v-model="form.restaurant_phone"
                                     type="tel"
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                 />
                             </div>
 
@@ -147,7 +147,7 @@ const handleSubmit = () => {
                                 <input
                                     v-model="form.restaurant_email"
                                     type="email"
-                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                 />
                             </div>
                         </div>
@@ -161,7 +161,7 @@ const handleSubmit = () => {
 
                         <div class="flex items-center space-x-4">
                             <div v-if="logoPreview" class="flex-shrink-0">
-                                <img :src="logoPreview" class="h-20 w-20 object-contain rounded border border-gray-300" alt="Logo" />
+                                <img :src="logoPreview" class="h-20 w-20 object-contain rounded border border-gray-300 dark:border-gray-600" alt="Logo" />
                             </div>
 
                             <div class="flex-1">
@@ -169,9 +169,9 @@ const handleSubmit = () => {
                                     type="file"
                                     @change="handleLogoChange"
                                     accept="image/png,image/jpg,image/jpeg,image/svg+xml,image/webp"
-                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                    class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 dark:file:bg-purple-900 file:text-purple-700 dark:file:text-purple-200 hover:file:bg-purple-100 dark:hover:file:bg-purple-800"
                                 />
-                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, SVG, WEBP (MAX. 2MB)</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">PNG, JPG, SVG, WEBP (MAX. 2MB)</p>
                             </div>
                         </div>
                     </div>
@@ -191,12 +191,12 @@ const handleSubmit = () => {
                                     <input
                                         v-model="form.primary_color"
                                         type="color"
-                                        class="h-10 w-20 rounded border border-gray-300"
+                                        class="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
                                     />
                                     <input
                                         v-model="form.primary_color"
                                         type="text"
-                                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                     />
                                 </div>
                             </div>
@@ -209,12 +209,12 @@ const handleSubmit = () => {
                                     <input
                                         v-model="form.secondary_color"
                                         type="color"
-                                        class="h-10 w-20 rounded border border-gray-300"
+                                        class="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
                                     />
                                     <input
                                         v-model="form.secondary_color"
                                         type="text"
-                                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                     />
                                 </div>
                             </div>
@@ -227,12 +227,12 @@ const handleSubmit = () => {
                                     <input
                                         v-model="form.accent_color"
                                         type="color"
-                                        class="h-10 w-20 rounded border border-gray-300"
+                                        class="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
                                     />
                                     <input
                                         v-model="form.accent_color"
                                         type="text"
-                                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                     />
                                 </div>
                             </div>

@@ -18,7 +18,7 @@ defineProps({
 
 <template>
     <div :class="[
-        'bg-white rounded-lg border border-gray-200 overflow-hidden',
+        'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden',
         {
             'shadow-none': shadow === 'none',
             'shadow-sm': shadow === 'sm',
@@ -26,9 +26,9 @@ defineProps({
             'shadow-lg': shadow === 'lg'
         }
     ]">
-        <div v-if="title || $slots.header" class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div v-if="title || $slots.header" class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
             <slot name="header">
-                <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ title }}</h3>
             </slot>
         </div>
 
@@ -36,7 +36,7 @@ defineProps({
             <slot />
         </div>
 
-        <div v-if="$slots.footer" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div v-if="$slots.footer" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
             <slot name="footer" />
         </div>
     </div>

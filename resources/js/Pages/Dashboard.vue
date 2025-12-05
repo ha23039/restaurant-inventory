@@ -34,7 +34,7 @@ const formatCurrency = (amount) => {
 
     <AdminLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 Dashboard - {{ $page.props.auth.user.name }} ({{ $page.props.auth.user.role }})
             </h2>
         </template>
@@ -44,7 +44,7 @@ const formatCurrency = (amount) => {
                 <!-- Métricas principales -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                     <!-- Stock Bajo (Admin + Almacenero) -->
-                    <div v-if="canAccess(['admin', 'almacenero'])" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div v-if="canAccess(['admin', 'almacenero'])" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -55,15 +55,15 @@ const formatCurrency = (amount) => {
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500">Productos con Stock Bajo</div>
-                                    <div class="text-2xl font-bold text-gray-900">{{ metrics.low_stock_products }}</div>
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-300">Productos con Stock Bajo</div>
+                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ metrics.low_stock_products }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Ventas del Día (Admin + Cajero) -->
-                    <div v-if="canAccess(['admin', 'cajero'])" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div v-if="canAccess(['admin', 'cajero'])" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -74,15 +74,15 @@ const formatCurrency = (amount) => {
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500">Ventas del Día</div>
-                                    <div class="text-2xl font-bold text-gray-900">{{ formatCurrency(metrics.today_sales) }}</div>
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-300">Ventas del Día</div>
+                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(metrics.today_sales) }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Transacciones del Día (Admin + Cajero) -->
-                    <div v-if="canAccess(['admin', 'cajero'])" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div v-if="canAccess(['admin', 'cajero'])" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -93,15 +93,15 @@ const formatCurrency = (amount) => {
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500">Transacciones del Día</div>
-                                    <div class="text-2xl font-bold text-gray-900">{{ metrics.today_transactions }}</div>
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-300">Transacciones del Día</div>
+                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ metrics.today_transactions }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Flujo de Caja (Solo Admin) -->
-                    <div v-if="canAccess(['admin'])" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div v-if="canAccess(['admin'])" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -113,8 +113,8 @@ const formatCurrency = (amount) => {
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-500">Saldo del Día</div>
-                                    <div class="text-2xl font-bold text-gray-900">{{ formatCurrency(metrics.today_cash_flow) }}</div>
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-300">Saldo del Día</div>
+                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(metrics.today_cash_flow) }}</div>
                                 </div>
                             </div>
                         </div>
@@ -141,86 +141,86 @@ const formatCurrency = (amount) => {
                 </div>
 
                 <!-- Panel de acceso rápido -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900 dark:text-white">
                         <h3 class="text-lg font-semibold mb-4">¡Bienvenido al Sistema de Gestión de Restaurante!</h3>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <!-- Acceso rápido según rol -->
-                            <div v-if="canAccess(['admin', 'almacenero'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin', 'almacenero'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('inventory.products.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.product" class="w-5 h-5 text-blue-600 mr-2" />
                                         <h4 class="font-medium text-blue-600">Gestionar Productos</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Ver y editar inventario de productos</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Ver y editar inventario de productos</p>
                                 </Link>
                             </div>
-                            <div v-if="canAccess(['admin', 'almacenero'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin', 'almacenero'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('inventory.products.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.list" class="w-5 h-5 text-blue-600 mr-2" />
                                         <h4 class="font-medium text-blue-600">Ver Todos los Productos</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Lista completa del inventario</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Lista completa del inventario</p>
                                 </Link>
                             </div>
-                            <div v-if="canAccess(['admin', 'cajero'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin', 'cajero'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('sales.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.pos" class="w-5 h-5 text-green-600 mr-2" />
                                         <h4 class="font-medium text-green-600">Punto de Venta</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Procesar ventas y generar tickets</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Procesar ventas y generar tickets</p>
                                 </Link>
                             </div>
 
-                            <div v-if="canAccess(['admin', 'chef'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin', 'chef'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('menu.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.menu" class="w-5 h-5 text-purple-600 mr-2" />
                                         <h4 class="font-medium text-purple-600">Gestionar Recetas</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Configurar ingredientes por platillo</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Configurar ingredientes por platillo</p>
                                 </Link>
                             </div>
 
-                            <div v-if="canAccess(['admin'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('admin.reports')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.reports" class="w-5 h-5 text-red-600 mr-2" />
                                         <h4 class="font-medium text-red-600">Reportes</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Ver análisis y reportes detallados</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Ver análisis y reportes detallados</p>
                                 </Link>
                             </div>
 
-                            <div v-if="canAccess(['admin'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('cashflow.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.cashflow" class="w-5 h-5 text-yellow-600 mr-2" />
                                         <h4 class="font-medium text-yellow-600">Flujo de Caja</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Controlar ingresos y gastos</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Controlar ingresos y gastos</p>
                                 </Link>
                             </div>
-                            <div v-if="canAccess(['admin', 'cajero'])" class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div v-if="canAccess(['admin', 'cajero'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('returns.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.returns" class="w-5 h-5 text-orange-600 mr-2" />
                                         <h4 class="font-medium text-orange-600">Gestionar Devoluciones</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Procesar devoluciones y reembolsos</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Procesar devoluciones y reembolsos</p>
                                 </Link>
                             </div>
 
-                            <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <Link :href="route('profile.edit')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.settings" class="w-5 h-5 text-gray-600 mr-2" />
-                                        <h4 class="font-medium text-gray-600">Mi Perfil</h4>
+                                        <h4 class="font-medium text-gray-600 dark:text-gray-300">Mi Perfil</h4>
                                     </div>
-                                    <p class="text-sm text-gray-600 mt-1">Actualizar información personal</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Actualizar información personal</p>
                                 </Link>
                             </div>
                         </div>
