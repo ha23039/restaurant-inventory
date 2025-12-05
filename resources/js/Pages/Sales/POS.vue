@@ -1,6 +1,6 @@
 <script setup>
 // 1. IMPORTS CORRECTOS AL INICIO
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FreeSaleSlideOver from '@/Components/FreeSaleSlideOver.vue';
@@ -311,7 +311,14 @@ const clearCart = () => {
 };
 
 // 7. GESTIÓN DE ÓRDENES PENDIENTES
-const selectExistingSale = (sale) => {
+const selectExistingSale = async (sale) => {
+    // Cerrar panel de órdenes pendientes
+    showPendingSales.value = false;
+
+    // Esperar a que el DOM se actualice
+    await nextTick();
+
+    // Asignar la venta seleccionada
     selectedExistingSale.value = sale;
 
     // Cargar datos de la venta seleccionada
@@ -320,9 +327,42 @@ const selectExistingSale = (sale) => {
     paymentMethod.value = sale.payment_method || 'efectivo';
     selectedTable.value = sale.table_id || null;
 
-    // Opcional: cargar items existentes para mostrar (no agregar al carrito)
-    showPendingSales.value = false;
-    showNotification(`Orden #${sale.sale_number} seleccionada. Agrega más productos.`, 'info');
+    showNotification(`Orden #${sale.sale_number} seleccionada. Agrega items o completala desde el carrito.`, 'info');
+};
+
+const completeExistingSale = async (sale) => {
+    if (processing.value) return;
+
+    const confirmed = confirm(`¿Completar orden #${sale.sale_number} por $${parseFloat(sale.total).toFixed(2)}?`);
+    if (!confirmed) return;
+
+    processing.value = true;
+
+    try {
+        const response = await fetch(route('sales.complete-pending', sale.id), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification(data.message || `Orden #${sale.sale_number} completada exitosamente`, 'success');
+
+            // Recargar página para actualizar lista de órdenes pendientes
+            router.reload({ only: ['pending_sales'] });
+        } else {
+            showNotification(data.message || 'Error al completar la orden', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error al procesar la orden', 'error');
+    } finally {
+        processing.value = false;
+    }
 };
 
 const clearSelectedSale = () => {
@@ -611,6 +651,21 @@ onBeforeUnmount(() => {
                                 <span class="text-lg font-bold text-green-600 dark:text-green-400">
                                     ${{ parseFloat(sale.total).toFixed(2) }}
                                 </span>
+                            </div>
+
+                            <div class="mt-3 grid grid-cols-2 gap-2">
+                                <button
+                                    @click.stop="selectExistingSale(sale)"
+                                    class="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                >
+                                    ➕ Agregar Items
+                                </button>
+                                <button
+                                    @click.stop="completeExistingSale(sale)"
+                                    class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                >
+                                    ✓ Completar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1009,8 +1064,8 @@ onBeforeUnmount(() => {
                                         </p>
                                     </div>
 
-                                    <!-- Método de pago (siempre visible si hay carrito o es venta libre) -->
-                                    <div v-if="cartItems.length > 0 || isFreeSale" class="mt-4">
+                                    <!-- Método de pago (siempre visible si hay carrito, venta libre o orden seleccionada) -->
+                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Método de Pago
                                         </label>
@@ -1063,7 +1118,7 @@ onBeforeUnmount(() => {
                                         <!-- Botón: Completar y Pagar (SIEMPRE disponible si hay orden activa O carrito) -->
                                         <button
                                             @click="processSale('complete')"
-                                            :disabled="processing || (!isFreeSale && cartItems.length === 0 && !selectedExistingSale) || (isFreeSale && (!freeSaleDescription || !freeSaleTotal || parseFloat(freeSaleTotal) <= 0))"
+                                            :disabled="processing || (isFreeSale && (!freeSaleDescription || !freeSaleTotal || parseFloat(freeSaleTotal) <= 0)) || (!isFreeSale && !selectedExistingSale && cartItems.length === 0)"
                                             class="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors"
                                         >
                                             <span v-if="processing" class="flex items-center justify-center">

@@ -169,6 +169,7 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.'
     Route::middleware('validate.cashregister')->group(function () {
         Route::get('/pos', [App\Http\Controllers\POSController::class, 'index'])->name('pos');
         Route::post('/pos', [App\Http\Controllers\POSController::class, 'store'])->name('pos.store');
+        Route::post('/{sale}/complete-pending', [App\Http\Controllers\POSController::class, 'completePendingSale'])->name('complete-pending');
     });
 
     // Ver venta específica

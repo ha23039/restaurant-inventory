@@ -71,4 +71,32 @@ class POSController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+
+    public function completePendingSale(\App\Models\Sale $sale)
+    {
+        try {
+            // Verificar que la venta esté pendiente
+            if ($sale->status !== 'pendiente') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta orden ya fue procesada'
+                ], 400);
+            }
+
+            // Completar la venta usando el servicio
+            $completedSale = $this->saleService->completePendingSale($sale);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Orden #{$sale->sale_number} completada exitosamente",
+                'sale' => $completedSale
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

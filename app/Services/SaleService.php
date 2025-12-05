@@ -352,4 +352,49 @@ class SaleService
             ]);
         }
     }
+
+    /**
+     * Completar una venta pendiente sin agregar items adicionales
+     */
+    public function completePendingSale(Sale $sale): Sale
+    {
+        DB::beginTransaction();
+
+        try {
+            // Cambiar estado a completada
+            $sale->update(['status' => 'completada']);
+
+            // Imprimir tickets (cocina y cliente) si están configurados
+            if (config('thermal_printer.auto_print_kitchen')) {
+                app(\App\Services\ThermalTicketService::class)->printKitchenOrder($sale);
+            }
+
+            if (config('thermal_printer.auto_print_customer')) {
+                app(\App\Services\ThermalTicketService::class)->printCustomerReceipt($sale);
+            }
+
+            // Liberar mesa si estaba asignada
+            if ($sale->table_id) {
+                $this->releaseTable($sale);
+            }
+
+            DB::commit();
+
+            Log::info('Venta pendiente completada', [
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'total' => $sale->total,
+            ]);
+
+            return $sale->fresh();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al completar venta pendiente', [
+                'sale_id' => $sale->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
 }
