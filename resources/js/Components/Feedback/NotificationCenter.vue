@@ -1,8 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useNotificationsStore } from '@/stores/notifications';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 const notificationStore = useNotificationsStore();
 
@@ -11,8 +9,12 @@ const isOpen = ref(false);
 const notifications = computed(() => notificationStore.notifications);
 const unreadCount = computed(() => notificationStore.unreadCount);
 const hasNotifications = computed(() => notifications.value.length > 0);
+const loading = computed(() => notificationStore.loading);
 
 const togglePanel = () => {
+    if (!isOpen.value) {
+        notificationStore.fetchNotifications();
+    }
     isOpen.value = !isOpen.value;
 };
 
@@ -37,23 +39,12 @@ const removeNotification = (id) => {
     notificationStore.removeNotification(id);
 };
 
-const getRelativeTime = (timestamp) => {
-    try {
-        return formatDistanceToNow(new Date(timestamp), {
-            addSuffix: true,
-            locale: es,
-        });
-    } catch {
-        return 'hace un momento';
-    }
-};
-
 const getIconClasses = (type) => {
     const variants = {
-        success: 'bg-green-100 text-green-600',
-        error: 'bg-red-100 text-red-600',
-        warning: 'bg-yellow-100 text-yellow-600',
-        info: 'bg-blue-100 text-blue-600',
+        success: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+        error: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+        warning: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
+        info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
     };
 
     return variants[type] || variants.info;
@@ -69,6 +60,14 @@ const getIconPath = (type) => {
 
     return icons[type] || icons.info;
 };
+
+onMounted(() => {
+    notificationStore.startPolling(30000);
+});
+
+onUnmounted(() => {
+    notificationStore.stopPolling();
+});
 </script>
 
 <template>
@@ -76,7 +75,7 @@ const getIconPath = (type) => {
         <!-- Notification Bell Button -->
         <button
             type="button"
-            class="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
+            class="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-full transition-colors"
             @click="togglePanel"
         >
             <!-- Bell Icon -->
@@ -92,7 +91,7 @@ const getIconPath = (type) => {
             <!-- Badge -->
             <span
                 v-if="unreadCount > 0"
-                class="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-600 text-xs text-white flex items-center justify-center"
+                class="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-600 dark:bg-red-500 text-xs text-white flex items-center justify-center"
             >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
@@ -109,18 +108,18 @@ const getIconPath = (type) => {
         >
             <div
                 v-show="isOpen"
-                class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-black dark:ring-gray-800 ring-opacity-5 z-50"
             >
                 <!-- Header -->
-                <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                    <h3 class="text-sm font-semibold text-gray-900">
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
                         Notificaciones
                     </h3>
                     <div class="flex items-center gap-2">
                         <button
                             v-if="unreadCount > 0"
                             type="button"
-                            class="text-xs text-blue-600 hover:text-blue-700"
+                            class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                             @click="markAllAsRead"
                         >
                             Marcar todo leído
@@ -128,7 +127,7 @@ const getIconPath = (type) => {
                         <button
                             v-if="hasNotifications"
                             type="button"
-                            class="text-xs text-gray-500 hover:text-gray-700"
+                            class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                             @click="clearAll"
                         >
                             Limpiar todo
@@ -138,10 +137,21 @@ const getIconPath = (type) => {
 
                 <!-- Notifications List -->
                 <div class="max-h-96 overflow-y-auto">
+                    <!-- Loading State -->
+                    <div v-if="loading" class="px-4 py-8 text-center">
+                        <svg class="animate-spin mx-auto h-8 w-8 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            Cargando notificaciones...
+                        </p>
+                    </div>
+
                     <!-- Empty State -->
-                    <div v-if="!hasNotifications" class="px-4 py-8 text-center">
+                    <div v-else-if="!hasNotifications" class="px-4 py-8 text-center">
                         <svg
-                            class="mx-auto h-12 w-12 text-gray-400"
+                            class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -153,17 +163,18 @@ const getIconPath = (type) => {
                                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                             />
                         </svg>
-                        <p class="mt-2 text-sm text-gray-500">
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                             No tienes notificaciones
                         </p>
                     </div>
 
                     <!-- Notification Items -->
                     <div
+                        v-else
                         v-for="notification in notifications"
                         :key="notification.id"
-                        class="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer transition-colors"
-                        :class="{ 'bg-blue-50': !notification.read }"
+                        class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-colors"
+                        :class="{ 'bg-blue-50 dark:bg-blue-900/20': !notification.read }"
                         @click="markAsRead(notification)"
                     >
                         <div class="flex items-start gap-3">
@@ -191,15 +202,15 @@ const getIconPath = (type) => {
                             <div class="flex-1 min-w-0">
                                 <p
                                     v-if="notification.title"
-                                    class="text-sm font-medium text-gray-900"
+                                    class="text-sm font-medium text-gray-900 dark:text-white"
                                 >
                                     {{ notification.title }}
                                 </p>
-                                <p class="text-sm text-gray-600 mt-1">
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                                     {{ notification.message }}
                                 </p>
-                                <p class="text-xs text-gray-400 mt-1">
-                                    {{ getRelativeTime(notification.timestamp) }}
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                    {{ notification.time_ago }}
                                 </p>
                             </div>
 
@@ -207,11 +218,11 @@ const getIconPath = (type) => {
                             <div class="flex-shrink-0 flex items-center gap-1">
                                 <span
                                     v-if="!notification.read"
-                                    class="h-2 w-2 bg-blue-600 rounded-full"
+                                    class="h-2 w-2 bg-blue-600 dark:bg-blue-500 rounded-full"
                                 ></span>
                                 <button
                                     type="button"
-                                    class="text-gray-400 hover:text-gray-600"
+                                    class="text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
                                     @click.stop="removeNotification(notification.id)"
                                 >
                                     <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">

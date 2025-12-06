@@ -98,60 +98,7 @@
                 </div>
 
                 <!-- Notifications -->
-                <Menu as="div" class="relative">
-                    <MenuButton class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        <span v-if="notificationCount > 0" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </MenuButton>
-
-                    <transition
-                        enter-active-class="transition duration-100 ease-out"
-                        enter-from-class="transform scale-95 opacity-0"
-                        enter-to-class="transform scale-100 opacity-100"
-                        leave-active-class="transition duration-75 ease-in"
-                        leave-from-class="transform scale-100 opacity-100"
-                        leave-to-class="transform scale-95 opacity-0"
-                    >
-                        <MenuItems class="absolute right-0 mt-2 w-80 origin-top-right bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 focus:outline-none overflow-hidden">
-                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-                                <div class="flex items-center justify-between">
-                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Notificaciones</h3>
-                                    <span class="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">Marcar todas como leídas</span>
-                                </div>
-                            </div>
-
-                            <div class="max-h-96 overflow-y-auto">
-                                <MenuItem v-for="notification in notifications" :key="notification.id" v-slot="{ active }">
-                                    <div :class="['px-4 py-3 border-b border-gray-100 dark:border-gray-800 cursor-pointer', active ? 'bg-gray-50 dark:bg-gray-800' : '']">
-                                        <div class="flex items-start space-x-3">
-                                            <div :class="[
-                                                'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-                                                notification.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                                notification.type === 'success' ? 'bg-green-100 text-green-600' :
-                                                'bg-blue-100 text-blue-600'
-                                            ]">
-                                                <component :is="getNotificationIcon(notification.type)" class="w-4 h-4" />
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ notification.title }}</p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ notification.message }}</p>
-                                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ notification.time }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </MenuItem>
-                            </div>
-
-                            <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 text-center">
-                                <Link href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                                    Ver todas las notificaciones
-                                </Link>
-                            </div>
-                        </MenuItems>
-                    </transition>
-                </Menu>
+                <NotificationCenter />
 
                 <!-- Dark Mode Toggle -->
                 <button
@@ -236,10 +183,11 @@
 </template>
 
 <script setup>
-import { computed, h } from 'vue';
+import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
 import { useDarkMode } from '@/composables/useDarkMode';
+import NotificationCenter from '@/Components/Feedback/NotificationCenter.vue';
 
 const props = defineProps({
     breadcrumbs: {
@@ -284,46 +232,4 @@ const userInitials = computed(() => {
         ? names[0][0] + names[1][0]
         : names[0][0] + (names[0][1] || '');
 });
-
-// Mock notifications (replace with real data later)
-const notifications = [
-    {
-        id: 1,
-        type: 'warning',
-        title: 'Stock Bajo',
-        message: '3 productos necesitan reabastecimiento',
-        time: 'Hace 5 minutos'
-    },
-    {
-        id: 2,
-        type: 'success',
-        title: 'Venta Completada',
-        message: 'Nueva venta de $1,250.00 registrada',
-        time: 'Hace 15 minutos'
-    },
-    {
-        id: 3,
-        type: 'info',
-        title: 'Nueva Devolución',
-        message: 'Se procesó una devolución de $350.00',
-        time: 'Hace 1 hora'
-    }
-];
-
-const notificationCount = computed(() => notifications.length);
-
-const getNotificationIcon = (type) => {
-    const icons = {
-        warning: h('svg', { fill: 'currentColor', viewBox: '0 0 20 20' }, [
-            h('path', { 'fill-rule': 'evenodd', d: 'M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z', 'clip-rule': 'evenodd' })
-        ]),
-        success: h('svg', { fill: 'currentColor', viewBox: '0 0 20 20' }, [
-            h('path', { 'fill-rule': 'evenodd', d: 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z', 'clip-rule': 'evenodd' })
-        ]),
-        info: h('svg', { fill: 'currentColor', viewBox: '0 0 20 20' }, [
-            h('path', { 'fill-rule': 'evenodd', d: 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z', 'clip-rule': 'evenodd' })
-        ])
-    };
-    return icons[type] || icons.info;
-};
 </script>

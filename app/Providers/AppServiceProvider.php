@@ -16,6 +16,12 @@ use App\Repositories\Eloquent\SimpleProductRepository;
 use App\Repositories\Eloquent\TableRepository;
 use App\Repositories\Interfaces\CashRegisterRepositoryInterface;
 use App\Repositories\CashRegisterRepository;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleReturn;
+use App\Observers\ProductObserver;
+use App\Observers\SaleObserver;
+use App\Observers\SaleReturnObserver;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -42,5 +48,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        Product::observe(ProductObserver::class);
+        Sale::observe(SaleObserver::class);
+        SaleReturn::observe(SaleReturnObserver::class);
     }
 }

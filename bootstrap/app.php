@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\ValidateCashRegister;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withSchedule(function (Schedule $schedule) {
+        $schedule->command('products:check-low-stock')->hourly();
+        $schedule->command('products:check-expiring')->dailyAt('09:00');
+    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,

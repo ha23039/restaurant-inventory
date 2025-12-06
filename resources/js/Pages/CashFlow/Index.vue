@@ -102,6 +102,59 @@
                 </BaseCard>
             </div>
 
+            <!-- Quick Navigation to Cash Register -->
+            <BaseCard class="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/30 border-2 border-teal-200 dark:border-teal-700">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-teal-500 dark:bg-teal-600 rounded-full flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-teal-900 dark:text-teal-100">
+                                    Caja Registradora
+                                </h3>
+                                <p class="text-sm text-teal-700 dark:text-teal-300">
+                                    Accede a la gestión completa de la caja registradora
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <Link
+                            :href="route('cashregister.history')"
+                            class="flex-1 bg-white dark:bg-gray-800 border-2 border-teal-300 dark:border-teal-600 rounded-lg p-4 hover:shadow-md transition-all transform hover:-translate-y-0.5"
+                        >
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-teal-600 dark:text-teal-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                    <div class="font-medium text-teal-900 dark:text-teal-100">Historial</div>
+                                    <div class="text-xs text-teal-700 dark:text-teal-300">Ver movimientos</div>
+                                </div>
+                            </div>
+                        </Link>
+                        <Link
+                            :href="route('cashregister.stats')"
+                            class="flex-1 bg-white dark:bg-gray-800 border-2 border-teal-300 dark:border-teal-600 rounded-lg p-4 hover:shadow-md transition-all transform hover:-translate-y-0.5"
+                        >
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-teal-600 dark:text-teal-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                <div>
+                                    <div class="font-medium text-teal-900 dark:text-teal-100">Estadísticas</div>
+                                    <div class="text-xs text-teal-700 dark:text-teal-300">Ver métricas</div>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+            </BaseCard>
+
             <!-- Filters -->
             <TransactionFilters
                 :filters="filters"

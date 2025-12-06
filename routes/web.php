@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Notificaciones
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('/', [NotificationController::class, 'clearAll'])->name('clear-all');
+    });
 });
 
 /*
@@ -422,4 +433,19 @@ if (app()->environment(['local', 'development'])) {
         })->name('tickets.clean');
     });
 }
+
+/*
+|--------------------------------------------------------------------------
+| 📊 RUTAS PARA REPORTES CONSOLIDADOS (Admin solamente)
+|--------------------------------------------------------------------------
+| Rutas para exportar reportes consolidados en diferentes formatos
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('consolidated-reports')->name('consolidated-reports.')->group(function () {
+    Route::post('/executive/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportExecutiveReport'])->name('executive.export');
+    Route::post('/financial/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportFinancialReport'])->name('financial.export');
+    Route::post('/profitability/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportProfitabilityReport'])->name('profitability.export');
+    Route::post('/inventory/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportInventoryReport'])->name('inventory.export');
+});
+
 require __DIR__.'/auth.php';

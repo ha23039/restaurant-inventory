@@ -153,17 +153,58 @@
                         />
                     </div>
 
-                    <!-- Info for editing -->
-                    <div v-if="isEditing" class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <div class="flex">
-                            <svg class="w-5 h-5 text-blue-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="text-sm text-blue-700">
-                                <p class="font-medium">Nota sobre contraseña</p>
-                                <p class="mt-1">
-                                    Para cambiar la contraseña de este usuario, usa el botón "Resetear Contraseña" en la tabla de usuarios.
+                    <!-- Change Password Option (only when editing) -->
+                    <div v-if="isEditing">
+                        <div class="flex items-center mb-4">
+                            <input
+                                id="change_password"
+                                v-model="changePassword"
+                                type="checkbox"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label for="change_password" class="ml-2 block text-sm font-medium text-gray-700">
+                                Cambiar contraseña
+                            </label>
+                        </div>
+
+                        <div v-if="changePassword" class="space-y-4 pl-6 border-l-2 border-blue-200">
+                            <!-- New Password -->
+                            <div>
+                                <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Nueva Contraseña <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="new_password"
+                                    v-model="form.password"
+                                    type="password"
+                                    :required="changePassword"
+                                    autocomplete="new-password"
+                                    class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                    :class="{ 'border-red-500': form.errors.password }"
+                                    placeholder="Mínimo 8 caracteres"
+                                />
+                                <div v-if="form.errors.password" class="text-red-500 text-sm mt-1">
+                                    {{ form.errors.password }}
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    La contraseña debe tener al menos 8 caracteres
                                 </p>
+                            </div>
+
+                            <!-- Password Confirmation -->
+                            <div>
+                                <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Confirmar Nueva Contraseña <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="new_password_confirmation"
+                                    v-model="form.password_confirmation"
+                                    type="password"
+                                    :required="changePassword"
+                                    autocomplete="new-password"
+                                    class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                    placeholder="Confirmar contraseña"
+                                />
                             </div>
                         </div>
                     </div>
@@ -209,7 +250,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import BaseModal from '@/Components/Base/BaseModal.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
@@ -232,6 +273,7 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const isEditing = computed(() => !!props.user);
+const changePassword = ref(false);
 
 const form = useForm({
     name: '',
@@ -247,6 +289,7 @@ const form = useForm({
 const resetForm = () => {
     form.reset();
     form.clearErrors();
+    changePassword.value = false;
 };
 
 // Watch for user changes to populate form
@@ -259,10 +302,20 @@ watch(() => props.user, (newUser) => {
         form.is_active = newUser.is_active ?? true;
         form.password = '';
         form.password_confirmation = '';
+        changePassword.value = false;
     } else {
         resetForm();
     }
 }, { immediate: true });
+
+// Watch changePassword to clear password fields when unchecked
+watch(changePassword, (newValue) => {
+    if (!newValue) {
+        form.password = '';
+        form.password_confirmation = '';
+        form.clearErrors('password');
+    }
+});
 
 const handleClose = () => {
     if (!form.processing) {
@@ -273,8 +326,23 @@ const handleClose = () => {
 
 const handleSubmit = () => {
     if (isEditing.value) {
+        // Prepare data for update
+        const data = {
+            name: form.name,
+            email: form.email,
+            phone: form.phone,
+            role: form.role,
+            is_active: form.is_active,
+        };
+
+        // Only include password if changePassword is checked
+        if (changePassword.value) {
+            data.password = form.password;
+            data.password_confirmation = form.password_confirmation;
+        }
+
         // Update existing user
-        form.put(route('users.update', props.user.id), {
+        form.transform(() => data).put(route('users.update', props.user.id), {
             preserveScroll: true,
             onSuccess: () => {
                 handleClose();
