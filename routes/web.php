@@ -334,8 +334,8 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('returns')->name('retur
     // Ver devolución específica
     Route::get('/{return}', [App\Http\Controllers\ReturnController::class, 'show'])->name('show');
     //  NUEVAS RUTAS PARA REPORTES
-    Route::get('/api/metrics', [ReturnController::class, 'getMetrics'])->name('api.metrics');
-    Route::get('/api/operational-losses', [ReturnController::class, 'getOperationalLossReport'])->name('api.operational-losses');
+    Route::get('/api/metrics', [App\Http\Controllers\ReturnController::class, 'getMetrics'])->name('api.metrics');
+    Route::get('/api/operational-losses', [App\Http\Controllers\ReturnController::class, 'getOperationalLossReport'])->name('api.operational-losses');
 });
 
 /*
