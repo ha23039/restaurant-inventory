@@ -129,7 +129,7 @@
 
                     <!-- Gestión de Usuarios -->
                     <Link
-                        :href="route('admin.users.index')"
+                        :href="route('users.index')"
                         class="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900 dark:to-pink-800 border-2 border-pink-200 dark:border-pink-700 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                     >
                         <div class="flex items-center mb-4">

@@ -11,9 +11,10 @@
     >
         <div class="flex items-center space-x-3">
             <!-- Icon -->
-            <div :class="['flex-shrink-0', active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300']">
-                <component :is="iconComponent" class="w-5 h-5" />
-            </div>
+            <div
+                :class="['flex-shrink-0', active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300']"
+                v-html="iconSvg"
+            ></div>
 
             <!-- Label (hidden when collapsed) -->
             <Transition
@@ -92,9 +93,9 @@ const icons = {
     table: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`
 };
 
-const iconComponent = computed(() => {
-    return {
-        template: icons[props.icon] || icons.dashboard
-    };
+const iconSvg = computed(() => {
+    const svg = icons[props.icon] || icons.dashboard;
+    // Añadir las clases w-5 h-5 al SVG
+    return svg.replace('<svg', '<svg class="w-5 h-5"');
 });
 </script>
