@@ -49,17 +49,24 @@
             :suppliers="suppliers"
             @close="closeExpenseSlideOver"
         />
+
+        <!-- Keyboard Shortcuts Help Modal -->
+        <KeyboardShortcutsModal
+            :show="shortcutsModalOpen"
+            @close="closeShortcutsModal"
+        />
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { usePage, router } from '@inertiajs/vue3';
 import { useToast } from '@/composables';
 import AdminSidebar from '@/Components/AdminSidebar.vue';
 import AdminHeader from '@/Components/AdminHeader.vue';
 import GlobalSearch from '@/Components/GlobalSearch.vue';
 import ExpenseSlideOver from '@/Components/ExpenseSlideOver.vue';
+import KeyboardShortcutsModal from '@/Components/KeyboardShortcutsModal.vue';
 
 const props = defineProps({
     breadcrumbs: {
@@ -105,6 +112,9 @@ const searchOpen = ref(false);
 // Expense state
 const expenseSlideOverOpen = ref(false);
 
+// Shortcuts modal state
+const shortcutsModalOpen = ref(false);
+
 // Expense categories and suppliers (pass from backend or fetch)
 const expenseCategories = ref([
     { value: 'servicios_publicos', label: 'Servicios Públicos' },
@@ -137,10 +147,49 @@ onUnmounted(() => {
 });
 
 const handleKeyboard = (event) => {
-    // Cmd+K or Ctrl+K for search
+    // Ignore if user is typing in an input/textarea
+    const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName);
+
+    // 1. Ctrl+K - Search
     if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
         openSearch();
+        return;
+    }
+
+    // 2. Ctrl+P - Go to POS
+    if ((event.metaKey || event.ctrlKey) && event.key === 'p') {
+        event.preventDefault();
+        router.visit(route('sales.pos'));
+        return;
+    }
+
+    // 3. Ctrl+E - New Expense
+    if ((event.metaKey || event.ctrlKey) && event.key === 'e') {
+        event.preventDefault();
+        openNewExpense();
+        return;
+    }
+
+    // 4. Ctrl+B - Toggle Sidebar
+    if ((event.metaKey || event.ctrlKey) && event.key === 'b') {
+        event.preventDefault();
+        toggleSidebar();
+        return;
+    }
+
+    // 5. Ctrl+D - Toggle Dark Mode
+    if ((event.metaKey || event.ctrlKey) && event.key === 'd') {
+        event.preventDefault();
+        toggleDarkMode();
+        return;
+    }
+
+    // ? - Show keyboard shortcuts help (only if not typing)
+    if (event.key === '?' && !event.ctrlKey && !event.metaKey && !isTyping) {
+        event.preventDefault();
+        openShortcutsModal();
+        return;
     }
 };
 
@@ -171,5 +220,29 @@ const openNewExpense = () => {
 
 const closeExpenseSlideOver = () => {
     expenseSlideOverOpen.value = false;
+};
+
+const openShortcutsModal = () => {
+    shortcutsModalOpen.value = true;
+};
+
+const closeShortcutsModal = () => {
+    shortcutsModalOpen.value = false;
+};
+
+const toggleDarkMode = () => {
+    // Toggle dark class on html element
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+
+    if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('darkMode', 'false');
+        toast.success('Modo claro activado');
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
+        toast.success('Modo oscuro activado');
+    }
 };
 </script>

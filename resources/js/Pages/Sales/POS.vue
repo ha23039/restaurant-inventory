@@ -16,6 +16,7 @@ const props = defineProps({
 
 // 3. ESTADO PRINCIPAL DEL POS
 const searchTerm = ref('');
+const searchInputRef = ref(null);
 const selectedCategory = ref('');
 const activeTab = ref('menu');
 const cartItems = ref([]);
@@ -158,8 +159,10 @@ const groupedProducts = computed(() => {
         const matchesSearch = !searchTerm.value ||
             product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
 
+        // Si hay búsqueda activa, ignorar filtro de categoría del dropdown
+        // para buscar en TODAS las categorías
         let matchesCategory = true;
-        if (selectedCategory.value) {
+        if (!searchTerm.value && selectedCategory.value) {
             if (selectedCategory.value === 'menu') {
                 matchesCategory = product.product_type === 'menu';
             } else {
@@ -525,15 +528,58 @@ watch([discount, tax, paymentMethod, selectedTable], () => {
     }
 });
 
+// 10. WATCHERS
+// Watch search term to auto-switch to first category with results
+watch(searchTerm, (newValue) => {
+    if (newValue && newValue.length > 0) {
+        // Si hay búsqueda activa, cambiar al primer tab que tenga resultados
+        const firstCategoryWithResults = Object.keys(groupedProducts.value)[0];
+        if (firstCategoryWithResults) {
+            activeTab.value = firstCategoryWithResults;
+        }
+    }
+});
+
 // 11. LIFECYCLE HOOKS
+// Keyboard shortcuts handler
+const handleKeyboardShortcuts = (event) => {
+    // Ctrl+F - Focus search
+    if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
+        event.preventDefault();
+        searchInputRef.value?.focus();
+        return;
+    }
+
+    // Ignore if user is typing in an input
+    const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName);
+    if (isTyping) return;
+
+    // / key - Focus search (like GitHub, Slack, etc.)
+    if (event.key === '/' && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        searchInputRef.value?.focus();
+        return;
+    }
+};
+
 onMounted(() => {
     // Cargar carrito guardado
     loadCartFromStorage();
     console.log('🛒 POS iniciado - Carrito persistente activado');
+
+    // Auto-focus en el input de búsqueda después de un pequeño delay
+    setTimeout(() => {
+        searchInputRef.value?.focus();
+    }, 300);
+
+    // Agregar keyboard shortcuts
+    document.addEventListener('keydown', handleKeyboardShortcuts);
 });
 
 onBeforeUnmount(() => {
     // Guardar antes de salir de la página
+    // Remove keyboard shortcuts
+    document.removeEventListener('keydown', handleKeyboardShortcuts);
     if (cartItems.value.length > 0) {
         saveCartToStorage();
     }
@@ -687,38 +733,70 @@ onBeforeUnmount(() => {
                         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
                                 <!-- Header con controles -->
-                                <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Catálogo de Productos</h3>
-                                    <div class="flex items-center space-x-3">
-                                        <button
-                                            @click="showFreeSaleSlideOver = true"
-                                            class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all shadow-sm hover:shadow-md"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                <div class="space-y-4 mb-6">
+                                    <!-- Search Bar Prominente -->
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                             </svg>
-                                            <span>Venta Libre</span>
-                                        </button>
+                                        </div>
                                         <input
+                                            ref="searchInputRef"
                                             v-model="searchTerm"
                                             type="text"
-                                            placeholder="Buscar producto..."
-                                            class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                            placeholder="Buscar productos rápidamente..."
+                                            class="w-full pl-11 pr-32 py-3 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900 rounded-lg shadow-sm transition-all"
                                         />
-                                        <select
-                                            v-model="selectedCategory"
-                                            class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                        >
-                                            <option value="">Todas las categorías</option>
-                                            <option
-                                                v-for="category in availableCategories"
-                                                :key="category"
-                                                :value="category"
-                                            >
-                                                {{ category === 'menu' ? 'Platillos del Menú' : getCategoryTitle(category) }}
-                                            </option>
-                                        </select>
+                                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center gap-2 pointer-events-none">
+                                            <kbd class="hidden sm:inline-flex items-center px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded">
+                                                Ctrl+F
+                                            </kbd>
+                                            <span class="text-gray-400 dark:text-gray-500">o</span>
+                                            <kbd class="hidden sm:inline-flex items-center px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded">
+                                                /
+                                            </kbd>
+                                        </div>
                                     </div>
+
+                                    <!-- Header y Filtros -->
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Catálogo de Productos</h3>
+                                        <div class="flex items-center space-x-3">
+                                            <button
+                                                @click="showFreeSaleSlideOver = true"
+                                                class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all shadow-sm hover:shadow-md"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                <span>Venta Libre</span>
+                                            </button>
+                                            <select
+                                                v-model="selectedCategory"
+                                                class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                            >
+                                                <option value="">Todas las categorías</option>
+                                                <option
+                                                    v-for="category in availableCategories"
+                                                    :key="category"
+                                                    :value="category"
+                                                >
+                                                    {{ category === 'menu' ? 'Platillos del Menú' : getCategoryTitle(category) }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Search Results Info -->
+                                <div v-if="searchTerm" class="mb-4 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                    <p class="text-sm text-blue-700 dark:text-blue-300 flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Buscando "<strong>{{ searchTerm }}</strong>" en todas las categorías
+                                    </p>
                                 </div>
 
                                 <!-- Tabs de categorías -->
