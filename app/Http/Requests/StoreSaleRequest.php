@@ -30,6 +30,8 @@ class StoreSaleRequest extends FormRequest
             'action' => 'nullable|in:complete,save_pending',
             'existing_sale_id' => 'nullable|integer|exists:sales,id',
             'table_id' => 'nullable|integer|exists:tables,id',
+            'customer_name' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
             'free_sale_description' => $isFreeSale ? 'required|string|min:3|max:500' : 'nullable|string|max:500',
             'free_sale_total' => $isFreeSale ? 'required|numeric|min:0.01' : 'nullable|numeric',
             'items' => ($isFreeSale || $action === 'save_pending') ? 'nullable|array' : 'required|array|min:1',

@@ -143,6 +143,8 @@ class SaleController extends Controller
         $transformedSale = [
             'id' => $sale->id,
             'sale_number' => $sale->sale_number,
+            'customer_name' => $sale->customer_name,
+            'notes' => $sale->notes,
             'subtotal' => floatval($sale->subtotal),
             'discount' => floatval($sale->discount),
             'tax' => floatval($sale->tax),

@@ -15,6 +15,8 @@ class Sale extends Model
         'cash_register_session_id',
         'table_id',
         'sale_number',
+        'customer_name',
+        'notes',
         'subtotal',
         'tax',
         'discount',

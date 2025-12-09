@@ -57,6 +57,8 @@ class SaleService
                 'cash_register_session_id' => $cashRegisterSession?->id,
                 'table_id' => $validatedData['table_id'] ?? null,
                 'sale_number' => $this->generateSaleNumber(),
+                'customer_name' => $validatedData['customer_name'] ?? null,
+                'notes' => $validatedData['notes'] ?? null,
                 'subtotal' => $totals['subtotal'],
                 'discount' => $totals['discount'] ?? 0,
                 'tax' => $totals['tax'] ?? 0,

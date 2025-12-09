@@ -23,6 +23,8 @@ const cartItems = ref([]);
 const discount = ref(0);
 const tax = ref(0);
 const paymentMethod = ref('efectivo');
+const customerName = ref('');
+const orderNotes = ref('');
 const processing = ref(false);
 const toast = useToast();
 
@@ -47,6 +49,8 @@ const saveCartToStorage = () => {
         tax: tax.value,
         paymentMethod: paymentMethod.value,
         selectedTable: selectedTable.value,
+        customerName: customerName.value,
+        orderNotes: orderNotes.value,
         timestamp: Date.now()
     };
     localStorage.setItem('pos_cart_data', JSON.stringify(cartData));
@@ -57,16 +61,18 @@ const loadCartFromStorage = () => {
         const savedCart = localStorage.getItem('pos_cart_data');
         if (savedCart) {
             const cartData = JSON.parse(savedCart);
-            
+
             // Verificar que no sea muy antiguo (24 horas)
             const isExpired = (Date.now() - cartData.timestamp) > 24 * 60 * 60 * 1000;
-            
+
             if (!isExpired && cartData.items) {
                 cartItems.value = cartData.items || [];
                 discount.value = cartData.discount || 0;
                 tax.value = cartData.tax || 0;
                 paymentMethod.value = cartData.paymentMethod || 'efectivo';
                 selectedTable.value = cartData.selectedTable || null;
+                customerName.value = cartData.customerName || '';
+                orderNotes.value = cartData.orderNotes || '';
 
                 if (cartItems.value.length > 0) {
                     showNotification(`Carrito restaurado con ${cartItems.value.length} productos`, 'info');
@@ -414,6 +420,8 @@ const processSale = (action = 'complete') => {
         free_sale_total: parseFloat(freeSaleTotal.value),
         payment_method: paymentMethod.value,
         table_id: selectedTable.value,
+        customer_name: customerName.value || null,
+        notes: orderNotes.value || null,
         action: action,
         discount: 0,
         tax: 0
@@ -423,6 +431,8 @@ const processSale = (action = 'complete') => {
         action: action,
         existing_sale_id: selectedExistingSale.value?.id || null,
         table_id: selectedTable.value,
+        customer_name: customerName.value || null,
+        notes: orderNotes.value || null,
         items: cartItems.value.map(item => {
             // Construir objeto base con campos comunes
             const itemData = {
@@ -472,6 +482,8 @@ const processSale = (action = 'complete') => {
             discount.value = 0;
             tax.value = 0;
             paymentMethod.value = 'efectivo';
+            customerName.value = '';
+            orderNotes.value = '';
             selectedExistingSale.value = null;
             selectedTable.value = null;
 
@@ -522,7 +534,7 @@ const formatPrice = (price) => {
 };
 
 // 10. WATCHERS PARA AUTO-GUARDAR
-watch([discount, tax, paymentMethod, selectedTable], () => {
+watch([discount, tax, paymentMethod, selectedTable, customerName, orderNotes], () => {
     if (cartItems.value.length > 0) {
         saveCartToStorage();
     }
@@ -559,6 +571,70 @@ const handleKeyboardShortcuts = (event) => {
         event.preventDefault();
         searchInputRef.value?.focus();
         return;
+    }
+
+    // Payment method shortcuts (F1, F2, F3)
+    // Only work if there are items in cart or free sale is active or existing sale selected
+    if (cartItems.value.length > 0 || isFreeSale.value || selectedExistingSale.value) {
+        if (event.key === 'F1') {
+            event.preventDefault();
+            paymentMethod.value = 'efectivo';
+            showNotification('💵 Método de pago: Efectivo', 'info');
+            return;
+        }
+
+        if (event.key === 'F2') {
+            event.preventDefault();
+            paymentMethod.value = 'tarjeta';
+            showNotification('💳 Método de pago: Tarjeta', 'info');
+            return;
+        }
+
+        if (event.key === 'F3') {
+            event.preventDefault();
+            paymentMethod.value = 'transferencia';
+            showNotification('🏦 Método de pago: Transferencia', 'info');
+            return;
+        }
+
+        // F9 - Save as pending (only if there are new items in cart)
+        if (event.key === 'F9' && !isFreeSale.value && cartItems.value.length > 0) {
+            event.preventDefault();
+            processSale('save_pending');
+            return;
+        }
+
+        // F12 - Complete sale
+        if (event.key === 'F12') {
+            event.preventDefault();
+            // Check if sale can be completed
+            const canComplete = isFreeSale.value
+                ? (freeSaleDescription.value && freeSaleTotal.value && parseFloat(freeSaleTotal.value) > 0)
+                : (selectedExistingSale.value || cartItems.value.length > 0);
+
+            if (canComplete) {
+                processSale('complete');
+            } else {
+                showNotification('⚠️ Agrega productos al carrito para completar la venta', 'warning');
+            }
+            return;
+        }
+
+        // Ctrl+Enter - Alternative shortcut for complete sale (more intuitive)
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+            event.preventDefault();
+            // Check if sale can be completed
+            const canComplete = isFreeSale.value
+                ? (freeSaleDescription.value && freeSaleTotal.value && parseFloat(freeSaleTotal.value) > 0)
+                : (selectedExistingSale.value || cartItems.value.length > 0);
+
+            if (canComplete) {
+                processSale('complete');
+            } else {
+                showNotification('⚠️ Agrega productos al carrito para completar la venta', 'warning');
+            }
+            return;
+        }
     }
 };
 
@@ -652,15 +728,22 @@ onBeforeUnmount(() => {
                             @click="selectExistingSale(sale)"
                         >
                             <div class="flex justify-between items-start mb-3">
-                                <div>
+                                <div class="flex-1">
                                     <h4 class="font-bold text-gray-900 dark:text-white">
                                         #{{ sale.sale_number }}
                                     </h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    <!-- Nombre del Cliente (si existe) -->
+                                    <p v-if="sale.customer_name" class="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center mt-1">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        {{ sale.customer_name }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {{ new Date(sale.created_at).toLocaleString('es-ES') }}
                                     </p>
                                 </div>
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-semibold rounded-full">
                                     Pendiente
                                 </span>
                             </div>
@@ -1139,6 +1222,46 @@ onBeforeUnmount(() => {
                                         </select>
                                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             {{ selectedTable ? '✓ Mesa asignada' : 'Para llevar o sin mesa' }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Nombre del Cliente (opcional) -->
+                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            Nombre del Cliente (opcional)
+                                        </label>
+                                        <input
+                                            v-model="customerName"
+                                            type="text"
+                                            maxlength="100"
+                                            placeholder="Ej: Juan Pérez, Mesa 5..."
+                                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        />
+                                        <p v-if="customerName" class="mt-1 text-xs text-green-600 dark:text-green-400">
+                                            ✓ Orden guardada a nombre de: {{ customerName }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Notas de la Orden (opcional) -->
+                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Notas (opcional)
+                                        </label>
+                                        <textarea
+                                            v-model="orderNotes"
+                                            rows="2"
+                                            maxlength="500"
+                                            placeholder="Ej: Sin cebolla, extra picante, para llevar..."
+                                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                        ></textarea>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
+                                            {{ orderNotes.length }}/500
                                         </p>
                                     </div>
 
