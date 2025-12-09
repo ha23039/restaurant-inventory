@@ -133,26 +133,26 @@ const getStatusColorClass = (status) => {
     >
         <div
             v-if="show && table"
-            class="fixed top-0 right-0 h-full w-full md:w-2/3 lg:w-1/2 bg-white shadow-2xl z-50 overflow-y-auto"
+            class="fixed top-0 right-0 h-full w-full md:w-2/3 lg:w-1/2 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto"
         >
             <!-- Header -->
-            <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
+            <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
                         <button
                             @click="handleClose"
-                            class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
-                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
 
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900">
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                                 Mesa {{ table.table_number }}
                             </h2>
-                            <p v-if="table.name" class="text-sm text-gray-500">
+                            <p v-if="table.name" class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ table.name }}
                             </p>
                         </div>
@@ -167,35 +167,35 @@ const getStatusColorClass = (status) => {
             <!-- Content -->
             <div class="p-6 space-y-6">
                 <!-- Table Info -->
-                <div class="bg-gray-50 rounded-lg p-4">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <p class="text-sm text-gray-500">Capacidad</p>
-                            <p class="text-lg font-semibold text-gray-900">{{ table.capacity }} personas</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Capacidad</p>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ table.capacity }} personas</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Estado</p>
-                            <p class="text-lg font-semibold text-gray-900">{{ table.status_label }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ table.status_label }}</p>
                         </div>
                     </div>
 
-                    <div v-if="table.notes" class="mt-4 pt-4 border-t border-gray-200">
-                        <p class="text-sm text-gray-500">Notas</p>
-                        <p class="text-sm text-gray-900 mt-1">{{ table.notes }}</p>
+                    <div v-if="table.notes" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Notas</p>
+                        <p class="text-sm text-gray-900 dark:text-white mt-1">{{ table.notes }}</p>
                     </div>
                 </div>
 
                 <!-- Current Sale Section (if occupied) -->
                 <div v-if="isOccupied && currentSale" class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Venta Actual</h3>
-                        <span class="text-sm text-gray-500">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Venta Actual</h3>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
                             #{{ currentSale.sale_number }}
                         </span>
                     </div>
 
                     <!-- Cart Items -->
-                    <div class="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
+                    <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg divide-y divide-gray-200 dark:divide-gray-600">
                         <div
                             v-for="item in cartItems"
                             :key="item.id"
@@ -203,27 +203,27 @@ const getStatusColorClass = (status) => {
                         >
                             <div class="flex items-center justify-between">
                                 <div class="flex-1">
-                                    <p class="font-medium text-gray-900">{{ item.name }}</p>
-                                    <p class="text-sm text-gray-500">
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ item.name }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
                                         {{ item.quantity }} x ${{ item.unit_price.toFixed(2) }}
                                     </p>
                                 </div>
-                                <p class="text-lg font-semibold text-gray-900">
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">
                                     ${{ item.subtotal.toFixed(2) }}
                                 </p>
                             </div>
                         </div>
 
-                        <div v-if="cartItems.length === 0" class="p-8 text-center text-gray-500">
+                        <div v-if="cartItems.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
                             No hay productos en esta venta
                         </div>
                     </div>
 
                     <!-- Total -->
-                    <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-lg font-semibold text-gray-700">Total</span>
-                            <span class="text-2xl font-bold text-blue-600">
+                            <span class="text-lg font-semibold text-gray-700 dark:text-gray-300">Total</span>
+                            <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 ${{ cartTotal.toFixed(2) }}
                             </span>
                         </div>
@@ -242,7 +242,7 @@ const getStatusColorClass = (status) => {
                             Liberar Mesa
                         </button>
 
-                        <p class="text-xs text-center text-gray-500">
+                        <p class="text-xs text-center text-gray-500 dark:text-gray-400">
                             Nota: Para procesar el pago de esta venta, ve al módulo de POS o Ventas
                         </p>
                     </div>
@@ -250,12 +250,12 @@ const getStatusColorClass = (status) => {
 
                 <!-- Available Table Section -->
                 <div v-else class="space-y-4">
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                        <svg class="w-12 h-12 text-green-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
+                        <svg class="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
-                        <h3 class="text-lg font-semibold text-green-900 mb-2">Mesa Disponible</h3>
-                        <p class="text-sm text-green-700 mb-4">
+                        <h3 class="text-lg font-semibold text-green-900 dark:text-green-300 mb-2">Mesa Disponible</h3>
+                        <p class="text-sm text-green-700 dark:text-green-400 mb-4">
                             Esta mesa está disponible para nuevos clientes
                         </p>
 
@@ -272,13 +272,13 @@ const getStatusColorClass = (status) => {
 
                     <!-- Quick Status Changes -->
                     <div class="space-y-2">
-                        <p class="text-sm font-medium text-gray-700">Cambiar Estado</p>
+                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Cambiar Estado</p>
 
                         <div class="grid grid-cols-2 gap-2">
                             <button
                                 v-if="table.status !== 'reservada'"
                                 @click="updateStatus('reservada')"
-                                class="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-medium rounded-lg transition-colors"
+                                class="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 font-medium rounded-lg transition-colors"
                             >
                                 Reservar
                             </button>
@@ -286,7 +286,7 @@ const getStatusColorClass = (status) => {
                             <button
                                 v-if="table.status !== 'en_limpieza'"
                                 @click="updateStatus('en_limpieza')"
-                                class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
+                                class="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-300 font-medium rounded-lg transition-colors"
                             >
                                 En Limpieza
                             </button>
@@ -294,7 +294,7 @@ const getStatusColorClass = (status) => {
                             <button
                                 v-if="table.status !== 'disponible'"
                                 @click="updateStatus('disponible')"
-                                class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-800 font-medium rounded-lg transition-colors"
+                                class="px-4 py-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-800 dark:text-green-300 font-medium rounded-lg transition-colors"
                             >
                                 Disponible
                             </button>
@@ -303,7 +303,7 @@ const getStatusColorClass = (status) => {
                 </div>
 
                 <!-- Additional Info -->
-                <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400">
                     <p class="flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />

@@ -48,13 +48,32 @@ const loadProducts = async () => {
 };
 
 const filteredProducts = computed(() => {
-    if (!searchQuery.value) return products.value;
+    let filtered = products.value;
 
-    const query = searchQuery.value.toLowerCase();
-    return products.value.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        (p.code && p.code.toLowerCase().includes(query))
-    );
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        filtered = products.value.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            (p.code && p.code.toLowerCase().includes(query))
+        );
+    }
+
+    // Limitar a 50 productos para mejor performance
+    return filtered.slice(0, 50);
+});
+
+const hasMoreProducts = computed(() => {
+    let filtered = products.value;
+
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        filtered = products.value.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            (p.code && p.code.toLowerCase().includes(query))
+        );
+    }
+
+    return filtered.length > 50;
 });
 
 // Computed Set para búsqueda O(1) ultra rápida
@@ -184,9 +203,14 @@ const totalAmount = computed(() => {
 
             <!-- Product Grid -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Productos Disponibles
-                </label>
+                <div class="flex items-center justify-between mb-3">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Productos Disponibles
+                    </label>
+                    <span v-if="hasMoreProducts" class="text-xs text-blue-600 dark:text-blue-400">
+                        Mostrando primeros 50 - usa búsqueda para filtrar
+                    </span>
+                </div>
 
                 <div v-if="isLoading" class="text-center py-8">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -197,14 +221,18 @@ const totalAmount = computed(() => {
                     <p class="text-gray-500">No se encontraron productos</p>
                 </div>
 
-                <div v-else class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                <div
+                    v-else
+                    class="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto overscroll-contain"
+                    style="will-change: scroll-position;"
+                >
                     <button
                         v-for="product in filteredProducts"
                         :key="product.id"
                         @click="handleProductClick(product)"
                         type="button"
                         :class="[
-                            'text-left p-3 border-2 rounded-lg transition-colors',
+                            'text-left p-3 border-2 rounded-lg transition-colors transform-gpu',
                             selectedProduct?.id === product.id
                                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                 : isProductSelected(product.id)

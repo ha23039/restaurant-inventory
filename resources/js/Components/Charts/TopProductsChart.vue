@@ -1,4 +1,5 @@
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -23,6 +24,21 @@ const props = defineProps({
     }
 })
 
+const isDark = ref(false)
+
+onMounted(() => {
+    isDark.value = document.documentElement.classList.contains('dark')
+
+    const observer = new MutationObserver(() => {
+        isDark.value = document.documentElement.classList.contains('dark')
+    })
+
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+    })
+})
+
 const chartData = {
   labels: props.products.map(p => p.name),
   datasets: [{
@@ -39,7 +55,7 @@ const chartData = {
   }]
 }
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   indexAxis: 'y',
@@ -48,7 +64,9 @@ const chartOptions = {
       display: false
     },
     tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      backgroundColor: isDark.value ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+      titleColor: isDark.value ? '#1f2937' : '#fff',
+      bodyColor: isDark.value ? '#1f2937' : '#fff',
       padding: 12,
       callbacks: {
         label: function(context) {
@@ -60,22 +78,28 @@ const chartOptions = {
   scales: {
     x: {
       beginAtZero: true,
+      ticks: {
+        color: isDark.value ? '#9ca3af' : '#4b5563'
+      },
       grid: {
-        color: 'rgba(0, 0, 0, 0.05)'
+        color: isDark.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
       }
     },
     y: {
+      ticks: {
+        color: isDark.value ? '#9ca3af' : '#4b5563'
+      },
       grid: {
         display: false
       }
     }
   }
-}
+}))
 </script>
 
 <template>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ title }}</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ title }}</h3>
         <div class="h-64">
             <Bar :data="chartData" :options="chartOptions" />
         </div>

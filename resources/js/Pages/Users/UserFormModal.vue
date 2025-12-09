@@ -1,9 +1,9 @@
 <template>
     <BaseModal :show="show" max-width="2xl" @close="handleClose">
-        <div class="bg-white rounded-lg overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
             <!-- Header -->
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                     {{ isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario' }}
                 </h3>
             </div>
@@ -13,7 +13,7 @@
                 <div class="space-y-6">
                     <!-- Name -->
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Nombre Completo <span class="text-red-500">*</span>
                         </label>
                         <input
@@ -22,7 +22,7 @@
                             type="text"
                             required
                             autocomplete="name"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.name }"
                             placeholder="Ej: Juan Pérez"
                         />
@@ -33,7 +33,7 @@
 
                     <!-- Email -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Correo Electrónico <span class="text-red-500">*</span>
                         </label>
                         <input
@@ -42,7 +42,7 @@
                             type="email"
                             required
                             autocomplete="email"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.email }"
                             placeholder="usuario@ejemplo.com"
                         />
@@ -53,7 +53,7 @@
 
                     <!-- Phone -->
                     <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Teléfono
                         </label>
                         <input
@@ -61,7 +61,7 @@
                             v-model="form.phone"
                             type="tel"
                             autocomplete="tel"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.phone }"
                             placeholder="(555) 123-4567"
                         />
@@ -73,14 +73,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Role -->
                         <div>
-                            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Rol <span class="text-red-500">*</span>
                             </label>
                             <select
                                 id="role"
                                 v-model="form.role"
                                 required
-                                class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                                 :class="{ 'border-red-500': form.errors.role }"
                             >
                                 <option value="">Seleccionar rol</option>
@@ -97,7 +97,7 @@
 
                         <!-- Status -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Estado
                             </label>
                             <div class="flex items-center h-10">
@@ -105,9 +105,9 @@
                                     id="is_active"
                                     v-model="form.is_active"
                                     type="checkbox"
-                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
                                 />
-                                <label for="is_active" class="ml-2 block text-sm text-gray-700">
+                                <label for="is_active" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                                     Usuario activo
                                 </label>
                             </div>
@@ -116,7 +116,7 @@
 
                     <!-- Password (only for create or when editing to change password) -->
                     <div v-if="!isEditing">
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Contraseña <span class="text-red-500">*</span>
                         </label>
                         <input
@@ -125,21 +125,21 @@
                             type="password"
                             :required="!isEditing"
                             autocomplete="new-password"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.password }"
                             placeholder="Mínimo 8 caracteres"
                         />
                         <div v-if="form.errors.password" class="text-red-500 text-sm mt-1">
                             {{ form.errors.password }}
                         </div>
-                        <p class="mt-1 text-xs text-gray-500">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             La contraseña debe tener al menos 8 caracteres
                         </p>
                     </div>
 
                     <!-- Password confirmation (only for create) -->
                     <div v-if="!isEditing">
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Confirmar Contraseña <span class="text-red-500">*</span>
                         </label>
                         <input
@@ -148,7 +148,7 @@
                             type="password"
                             :required="!isEditing"
                             autocomplete="new-password"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             placeholder="Confirmar contraseña"
                         />
                     </div>
@@ -160,17 +160,17 @@
                                 id="change_password"
                                 v-model="changePassword"
                                 type="checkbox"
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
                             />
-                            <label for="change_password" class="ml-2 block text-sm font-medium text-gray-700">
+                            <label for="change_password" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Cambiar contraseña
                             </label>
                         </div>
 
-                        <div v-if="changePassword" class="space-y-4 pl-6 border-l-2 border-blue-200">
+                        <div v-if="changePassword" class="space-y-4 pl-6 border-l-2 border-blue-200 dark:border-blue-800">
                             <!-- New Password -->
                             <div>
-                                <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Nueva Contraseña <span class="text-red-500">*</span>
                                 </label>
                                 <input
@@ -179,21 +179,21 @@
                                     type="password"
                                     :required="changePassword"
                                     autocomplete="new-password"
-                                    class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                                     :class="{ 'border-red-500': form.errors.password }"
                                     placeholder="Mínimo 8 caracteres"
                                 />
                                 <div v-if="form.errors.password" class="text-red-500 text-sm mt-1">
                                     {{ form.errors.password }}
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     La contraseña debe tener al menos 8 caracteres
                                 </p>
                             </div>
 
                             <!-- Password Confirmation -->
                             <div>
-                                <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Confirmar Nueva Contraseña <span class="text-red-500">*</span>
                                 </label>
                                 <input
@@ -202,7 +202,7 @@
                                     type="password"
                                     :required="changePassword"
                                     autocomplete="new-password"
-                                    class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                                     placeholder="Confirmar contraseña"
                                 />
                             </div>
@@ -211,7 +211,7 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
                     <BaseButton
                         type="button"
                         variant="secondary"

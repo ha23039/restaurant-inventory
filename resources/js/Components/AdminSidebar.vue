@@ -131,6 +131,15 @@
                 >
                     Categorías
                 </NavItem>
+
+                <NavItem
+                    :href="route('suppliers.index')"
+                    :active="route().current('suppliers.*')"
+                    :collapsed="isCollapsed"
+                    icon="users"
+                >
+                    Proveedores
+                </NavItem>
             </template>
 
             <!-- Menú (Admin + Chef) -->

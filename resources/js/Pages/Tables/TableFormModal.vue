@@ -78,10 +78,10 @@ const handleSubmit = () => {
 
 <template>
     <BaseModal :show="show" max-width="2xl" @close="handleClose">
-        <div class="bg-white rounded-lg overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
             <!-- Header -->
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                     {{ isEditing ? 'Editar Mesa' : 'Crear Nueva Mesa' }}
                 </h3>
             </div>
@@ -91,7 +91,7 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                     <!-- Table Number -->
                     <div>
-                        <label for="table_number" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="table_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Número de Mesa <span class="text-red-500">*</span>
                         </label>
                         <input
@@ -99,7 +99,7 @@ const handleSubmit = () => {
                             v-model="form.table_number"
                             type="text"
                             required
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.table_number }"
                             placeholder="Ej: 1, A1, VIP-1"
                         />
@@ -110,14 +110,14 @@ const handleSubmit = () => {
 
                     <!-- Name -->
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Nombre (Opcional)
                         </label>
                         <input
                             id="name"
                             v-model="form.name"
                             type="text"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.name }"
                             placeholder="Ej: Mesa Principal, Mesa Terraza"
                         />
@@ -128,7 +128,7 @@ const handleSubmit = () => {
 
                     <!-- Capacity -->
                     <div>
-                        <label for="capacity" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Capacidad <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
@@ -139,16 +139,16 @@ const handleSubmit = () => {
                                 min="1"
                                 max="50"
                                 required
-                                class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                                class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                                 :class="{ 'border-red-500': form.errors.capacity }"
                             />
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                                 </svg>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Número de personas que puede acomodar la mesa</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Número de personas que puede acomodar la mesa</p>
                         <div v-if="form.errors.capacity" class="text-red-500 text-sm mt-1">
                             {{ form.errors.capacity }}
                         </div>
@@ -156,14 +156,14 @@ const handleSubmit = () => {
 
                     <!-- Notes -->
                     <div>
-                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Notas
                         </label>
                         <textarea
                             id="notes"
                             v-model="form.notes"
                             rows="3"
-                            class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
                             :class="{ 'border-red-500': form.errors.notes }"
                             placeholder="Notas adicionales sobre la mesa..."
                         ></textarea>
@@ -174,7 +174,7 @@ const handleSubmit = () => {
 
                     <!-- Status -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Estado
                         </label>
                         <div class="flex items-center h-10">
@@ -182,18 +182,18 @@ const handleSubmit = () => {
                                 id="is_active"
                                 v-model="form.is_active"
                                 type="checkbox"
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
                             />
-                            <label for="is_active" class="ml-2 block text-sm text-gray-700">
+                            <label for="is_active" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                                 Mesa activa
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Las mesas inactivas no aparecerán en el sistema</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Las mesas inactivas no aparecerán en el sistema</p>
                     </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
                     <BaseButton
                         type="button"
                         variant="secondary"

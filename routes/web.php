@@ -85,6 +85,23 @@ Route::middleware(['auth', 'role:admin'])->prefix('users')->name('users.')->grou
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para GESTIÓN DE PROVEEDORES (Admin + Almacenero)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,almacenero'])->prefix('suppliers')->name('suppliers.')->group(function () {
+    Route::get('/', [App\Http\Controllers\SupplierController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\SupplierController::class, 'store'])->name('store');
+    Route::get('/{supplier}', [App\Http\Controllers\SupplierController::class, 'show'])->name('show');
+    Route::put('/{supplier}', [App\Http\Controllers\SupplierController::class, 'update'])->name('update');
+    Route::delete('/{supplier}', [App\Http\Controllers\SupplierController::class, 'destroy'])->name('destroy');
+
+    // Special actions
+    Route::post('/{supplier}/toggle-status', [App\Http\Controllers\SupplierController::class, 'toggleStatus'])->name('toggle-status');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para GESTIÓN DE MESAS (Admin + Cajero)
 |--------------------------------------------------------------------------
 */
