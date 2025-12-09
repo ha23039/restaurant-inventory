@@ -160,7 +160,8 @@ const totalAmount = computed(() => {
         @close="handleClose"
         title="Seleccionar Productos"
         subtitle="Agrega productos e insumos a la compra"
-        size="lg"
+        size="md"
+        :nested="true"
     >
         <div class="space-y-6">
             <!-- Search -->
@@ -196,14 +197,14 @@ const totalAmount = computed(() => {
                     <p class="text-gray-500">No se encontraron productos</p>
                 </div>
 
-                <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+                <div v-else class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
                     <button
                         v-for="product in filteredProducts"
                         :key="product.id"
                         @click="handleProductClick(product)"
                         type="button"
                         :class="[
-                            'text-left p-4 border-2 rounded-lg transition-all',
+                            'text-left p-3 border-2 rounded-lg transition-colors',
                             selectedProduct?.id === product.id
                                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                 : isProductSelected(product.id)

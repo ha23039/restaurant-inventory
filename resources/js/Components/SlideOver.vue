@@ -26,6 +26,10 @@ const props = defineProps({
     preventClose: {
         type: Boolean,
         default: false
+    },
+    nested: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -49,9 +53,9 @@ const handleClose = () => {
 };
 
 const sizeClasses = {
-    sm: 'w-full md:w-1/3 lg:w-1/4',
-    md: 'w-full md:w-2/3 lg:w-1/2',
-    lg: 'w-full md:w-3/4 lg:w-2/3',
+    sm: 'w-full md:max-w-md',      // 28rem (448px)
+    md: 'w-full md:max-w-2xl',     // 42rem (672px)
+    lg: 'w-full md:max-w-4xl',     // 56rem (896px)
     full: 'w-full'
 };
 </script>
@@ -59,33 +63,37 @@ const sizeClasses = {
 <template>
     <!-- Backdrop -->
     <Transition
-        enter-active-class="transition-opacity duration-300"
+        enter-active-class="transition-opacity duration-200"
         enter-from-class="opacity-0"
         enter-to-class="opacity-100"
-        leave-active-class="transition-opacity duration-300"
+        leave-active-class="transition-opacity duration-200"
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
     >
         <div
             v-if="show"
             @click="handleBackdropClick"
-            class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40"
+            :class="[
+                'fixed inset-0 bg-gray-900/50 backdrop-blur-sm',
+                nested ? 'z-[60]' : 'z-40'
+            ]"
         ></div>
     </Transition>
 
     <!-- Slide-over panel -->
     <Transition
-        enter-active-class="transition-transform duration-300"
+        enter-active-class="transition-transform duration-200"
         enter-from-class="translate-x-full"
         enter-to-class="translate-x-0"
-        leave-active-class="transition-transform duration-300"
+        leave-active-class="transition-transform duration-200"
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
     >
         <div
             v-if="show"
             :class="[
-                'fixed top-0 right-0 h-full bg-white dark:bg-gray-900 shadow-2xl z-50 overflow-y-auto',
+                'fixed top-0 right-0 h-full bg-white dark:bg-gray-900 shadow-2xl overflow-y-auto',
+                nested ? 'z-[70]' : 'z-50',
                 sizeClasses[size]
             ]"
         >
