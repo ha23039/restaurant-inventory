@@ -23,6 +23,7 @@ const cartItems = ref([]);
 const discount = ref(0);
 const tax = ref(0);
 const paymentMethod = ref('efectivo');
+const cashReceived = ref(0);
 const customerName = ref('');
 const orderNotes = ref('');
 const processing = ref(false);
@@ -48,6 +49,7 @@ const saveCartToStorage = () => {
         discount: discount.value,
         tax: tax.value,
         paymentMethod: paymentMethod.value,
+        cashReceived: cashReceived.value,
         selectedTable: selectedTable.value,
         customerName: customerName.value,
         orderNotes: orderNotes.value,
@@ -70,6 +72,7 @@ const loadCartFromStorage = () => {
                 discount.value = cartData.discount || 0;
                 tax.value = cartData.tax || 0;
                 paymentMethod.value = cartData.paymentMethod || 'efectivo';
+                cashReceived.value = cartData.cashReceived || 0;
                 selectedTable.value = cartData.selectedTable || null;
                 customerName.value = cartData.customerName || '';
                 orderNotes.value = cartData.orderNotes || '';
@@ -233,6 +236,30 @@ const total = computed(() => {
     return Math.max(0, subtotal.value - parseFloat(discount.value || 0) + parseFloat(tax.value || 0));
 });
 
+// Calculadora de cambio
+const changeAmount = computed(() => {
+    const finalTotal = isFreeSale.value ? parseFloat(freeSaleTotal.value || 0) : total.value;
+    const received = parseFloat(cashReceived.value || 0);
+    return Math.max(0, received - finalTotal);
+});
+
+// Desglose de billetes y monedas mexicanas
+const changeBillBreakdown = computed(() => {
+    let remaining = changeAmount.value;
+    const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1, 0.50];
+    const breakdown = [];
+
+    for (const denom of denominations) {
+        if (remaining >= denom) {
+            const count = Math.floor(remaining / denom);
+            breakdown.push({ value: denom, count });
+            remaining = Math.round((remaining - (denom * count)) * 100) / 100;
+        }
+    }
+
+    return breakdown;
+});
+
 // 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
 const addToCart = (product) => {
     if (!product.is_in_stock) {
@@ -335,6 +362,10 @@ const selectExistingSale = async (sale) => {
     tax.value = parseFloat(sale.tax || 0);
     paymentMethod.value = sale.payment_method || 'efectivo';
     selectedTable.value = sale.table_id || null;
+
+    // Pre-llenar nombre del cliente y notas (si existen)
+    customerName.value = sale.customer_name || '';
+    orderNotes.value = sale.notes || '';
 
     showNotification(`Orden #${sale.sale_number} seleccionada. Agrega items o completala desde el carrito.`, 'info');
 };
@@ -482,6 +513,7 @@ const processSale = (action = 'complete') => {
             discount.value = 0;
             tax.value = 0;
             paymentMethod.value = 'efectivo';
+            cashReceived.value = 0;
             customerName.value = '';
             orderNotes.value = '';
             selectedExistingSale.value = null;
@@ -534,7 +566,7 @@ const formatPrice = (price) => {
 };
 
 // 10. WATCHERS PARA AUTO-GUARDAR
-watch([discount, tax, paymentMethod, selectedTable, customerName, orderNotes], () => {
+watch([discount, tax, paymentMethod, cashReceived, selectedTable, customerName, orderNotes], () => {
     if (cartItems.value.length > 0) {
         saveCartToStorage();
     }
@@ -1279,6 +1311,78 @@ onBeforeUnmount(() => {
                                             <option value="transferencia">Transferencia</option>
                                             <option value="mixto">Mixto</option>
                                         </select>
+                                    </div>
+
+                                    <!-- Calculadora de Cambio (solo para efectivo) -->
+                                    <div v-if="(cartItems.length > 0 || isFreeSale || selectedExistingSale) && (paymentMethod === 'efectivo' || paymentMethod === 'mixto')" class="mt-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            💵 Efectivo Recibido
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                                            <input
+                                                v-model.number="cashReceived"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                placeholder="0.00"
+                                                class="w-full pl-7 pr-3 py-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-lg font-semibold"
+                                                @focus="$event.target.select()"
+                                            />
+                                        </div>
+
+                                        <!-- Cambio calculado -->
+                                        <div v-if="cashReceived > 0" class="mt-3">
+                                            <div v-if="cashReceived < (isFreeSale ? parseFloat(freeSaleTotal || 0) : total)" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                                                <p class="text-sm text-red-700 dark:text-red-300 font-medium flex items-center">
+                                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                    ⚠️ Efectivo insuficiente: Faltan ${{ formatPrice((isFreeSale ? parseFloat(freeSaleTotal || 0) : total) - cashReceived) }}
+                                                </p>
+                                            </div>
+
+                                            <div v-else class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <span class="text-sm font-medium text-green-700 dark:text-green-300">💵 Cambio a devolver:</span>
+                                                    <span class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                        ${{ formatPrice(changeAmount) }}
+                                                    </span>
+                                                </div>
+
+                                                <!-- Desglose de billetes y monedas -->
+                                                <div v-if="changeBillBreakdown.length > 0" class="border-t border-green-200 dark:border-green-700 pt-3">
+                                                    <p class="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Desglose sugerido:</p>
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <div
+                                                            v-for="bill in changeBillBreakdown"
+                                                            :key="bill.value"
+                                                            class="flex items-center justify-between bg-white dark:bg-gray-700 rounded px-2 py-1 text-xs"
+                                                        >
+                                                            <span class="font-semibold text-gray-700 dark:text-gray-300">
+                                                                {{ bill.value >= 1 ? `$${bill.value}` : `${bill.value * 100}¢` }}
+                                                            </span>
+                                                            <span class="text-green-600 dark:text-green-400 font-bold">
+                                                                × {{ bill.count }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones de acceso rápido (solo si no hay cambio calculado) -->
+                                        <div v-if="!cashReceived || cashReceived === 0" class="mt-2 flex flex-wrap gap-2">
+                                            <button
+                                                v-for="quickAmount in [50, 100, 200, 500, 1000]"
+                                                :key="quickAmount"
+                                                @click="cashReceived = quickAmount"
+                                                type="button"
+                                                class="px-3 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded transition-colors"
+                                            >
+                                                ${{ quickAmount }}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Botones de acción -->
