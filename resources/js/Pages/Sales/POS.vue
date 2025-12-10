@@ -24,8 +24,10 @@ const discount = ref(0);
 const tax = ref(0);
 const paymentMethod = ref('efectivo');
 const cashReceived = ref(0);
+const cashReceivedInputRef = ref(null);
 const customerName = ref('');
 const orderNotes = ref('');
+const showCustomerInfo = ref(false);
 const processing = ref(false);
 const toast = useToast();
 
@@ -236,11 +238,22 @@ const total = computed(() => {
     return Math.max(0, subtotal.value - parseFloat(discount.value || 0) + parseFloat(tax.value || 0));
 });
 
+// Total final a cobrar (considera orden activa + nuevos items)
+const finalTotal = computed(() => {
+    if (isFreeSale.value) {
+        return parseFloat(freeSaleTotal.value || 0);
+    } else if (selectedExistingSale.value && cartItems.value.length > 0) {
+        // Si hay orden activa con nuevos items, sumar ambos totales
+        return parseFloat(selectedExistingSale.value.total) + total.value;
+    } else {
+        return total.value;
+    }
+});
+
 // Calculadora de cambio
 const changeAmount = computed(() => {
-    const finalTotal = isFreeSale.value ? parseFloat(freeSaleTotal.value || 0) : total.value;
     const received = parseFloat(cashReceived.value || 0);
-    return Math.max(0, received - finalTotal);
+    return Math.max(0, received - finalTotal.value);
 });
 
 // Desglose de billetes y monedas mexicanas
@@ -411,7 +424,11 @@ const clearSelectedSale = () => {
     discount.value = 0;
     tax.value = 0;
     paymentMethod.value = 'efectivo';
+    cashReceived.value = 0;
+    customerName.value = '';
+    orderNotes.value = '';
     selectedTable.value = null;
+    showPendingSales.value = false; // Cerrar modal
     showNotification('Nueva venta iniciada', 'info');
 };
 
@@ -605,6 +622,14 @@ const handleKeyboardShortcuts = (event) => {
         return;
     }
 
+    // * key - Focus cash received input (only if efectivo or mixto is selected)
+    if (event.key === '*' && (paymentMethod.value === 'efectivo' || paymentMethod.value === 'mixto') && (cartItems.value.length > 0 || isFreeSale.value || selectedExistingSale.value)) {
+        event.preventDefault();
+        cashReceivedInputRef.value?.focus();
+        showNotification('💵 Ingresa el efectivo recibido', 'info');
+        return;
+    }
+
     // Payment method shortcuts (F1, F2, F3)
     // Only work if there are items in cart or free sale is active or existing sale selected
     if (cartItems.value.length > 0 || isFreeSale.value || selectedExistingSale.value) {
@@ -636,8 +661,8 @@ const handleKeyboardShortcuts = (event) => {
             return;
         }
 
-        // F12 - Complete sale
-        if (event.key === 'F12') {
+        // F10 - Complete sale
+        if (event.key === 'F10') {
             event.preventDefault();
             // Check if sale can be completed
             const canComplete = isFreeSale.value
@@ -1257,44 +1282,64 @@ onBeforeUnmount(() => {
                                         </p>
                                     </div>
 
-                                    <!-- Nombre del Cliente (opcional) -->
+                                    <!-- Información del Cliente (colapsable) -->
                                     <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        <button
+                                            @click="showCustomerInfo = !showCustomerInfo"
+                                            type="button"
+                                            class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                        >
+                                            <span class="flex items-center">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                Información del Cliente
+                                                <span v-if="customerName || orderNotes" class="ml-2 text-xs text-green-600 dark:text-green-400">✓</span>
+                                            </span>
+                                            <svg
+                                                class="w-5 h-5 transition-transform"
+                                                :class="{ 'rotate-180': showCustomerInfo }"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                             </svg>
-                                            Nombre del Cliente (opcional)
-                                        </label>
-                                        <input
-                                            v-model="customerName"
-                                            type="text"
-                                            maxlength="100"
-                                            placeholder="Ej: Juan Pérez, Mesa 5..."
-                                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                        />
-                                        <p v-if="customerName" class="mt-1 text-xs text-green-600 dark:text-green-400">
-                                            ✓ Orden guardada a nombre de: {{ customerName }}
-                                        </p>
-                                    </div>
+                                        </button>
 
-                                    <!-- Notas de la Orden (opcional) -->
-                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                            Notas (opcional)
-                                        </label>
-                                        <textarea
-                                            v-model="orderNotes"
-                                            rows="2"
-                                            maxlength="500"
-                                            placeholder="Ej: Sin cebolla, extra picante, para llevar..."
-                                            class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
-                                        ></textarea>
-                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
-                                            {{ orderNotes.length }}/500
-                                        </p>
+                                        <!-- Contenido colapsable -->
+                                        <div v-show="showCustomerInfo" class="mt-3 space-y-3 pl-1">
+                                            <!-- Nombre del Cliente -->
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                    Nombre (opcional)
+                                                </label>
+                                                <input
+                                                    v-model="customerName"
+                                                    type="text"
+                                                    maxlength="100"
+                                                    placeholder="Ej: Juan Pérez, Mesa 5..."
+                                                    class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                />
+                                            </div>
+
+                                            <!-- Notas -->
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                    Notas (opcional)
+                                                </label>
+                                                <textarea
+                                                    v-model="orderNotes"
+                                                    rows="2"
+                                                    maxlength="500"
+                                                    placeholder="Ej: Sin cebolla, extra picante..."
+                                                    class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                ></textarea>
+                                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
+                                                    {{ orderNotes.length }}/500
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Método de pago (siempre visible si hay carrito, venta libre o orden seleccionada) -->
@@ -1315,73 +1360,74 @@ onBeforeUnmount(() => {
 
                                     <!-- Calculadora de Cambio (solo para efectivo) -->
                                     <div v-if="(cartItems.length > 0 || isFreeSale || selectedExistingSale) && (paymentMethod === 'efectivo' || paymentMethod === 'mixto')" class="mt-4">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            💵 Efectivo Recibido
+                                        <label class="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                            <span>💵 Efectivo Recibido</span>
+                                            <span class="text-gray-500 dark:text-gray-400 font-normal">(Atajo: *)</span>
                                         </label>
                                         <div class="relative">
-                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">$</span>
                                             <input
+                                                ref="cashReceivedInputRef"
                                                 v-model.number="cashReceived"
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 placeholder="0.00"
-                                                class="w-full pl-7 pr-3 py-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-lg font-semibold"
+                                                class="w-full pl-7 pr-3 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-base font-semibold"
                                                 @focus="$event.target.select()"
+                                                @keydown.enter="$event.target.blur()"
                                             />
                                         </div>
 
-                                        <!-- Cambio calculado -->
-                                        <div v-if="cashReceived > 0" class="mt-3">
-                                            <div v-if="cashReceived < (isFreeSale ? parseFloat(freeSaleTotal || 0) : total)" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                                                <p class="text-sm text-red-700 dark:text-red-300 font-medium flex items-center">
-                                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                    </svg>
-                                                    ⚠️ Efectivo insuficiente: Faltan ${{ formatPrice((isFreeSale ? parseFloat(freeSaleTotal || 0) : total) - cashReceived) }}
-                                                </p>
-                                            </div>
-
-                                            <div v-else class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                                                <div class="flex justify-between items-center mb-3">
-                                                    <span class="text-sm font-medium text-green-700 dark:text-green-300">💵 Cambio a devolver:</span>
-                                                    <span class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                                        ${{ formatPrice(changeAmount) }}
-                                                    </span>
-                                                </div>
-
-                                                <!-- Desglose de billetes y monedas -->
-                                                <div v-if="changeBillBreakdown.length > 0" class="border-t border-green-200 dark:border-green-700 pt-3">
-                                                    <p class="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Desglose sugerido:</p>
-                                                    <div class="grid grid-cols-2 gap-2">
-                                                        <div
-                                                            v-for="bill in changeBillBreakdown"
-                                                            :key="bill.value"
-                                                            class="flex items-center justify-between bg-white dark:bg-gray-700 rounded px-2 py-1 text-xs"
-                                                        >
-                                                            <span class="font-semibold text-gray-700 dark:text-gray-300">
-                                                                {{ bill.value >= 1 ? `$${bill.value}` : `${bill.value * 100}¢` }}
-                                                            </span>
-                                                            <span class="text-green-600 dark:text-green-400 font-bold">
-                                                                × {{ bill.count }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Botones de acceso rápido (solo si no hay cambio calculado) -->
-                                        <div v-if="!cashReceived || cashReceived === 0" class="mt-2 flex flex-wrap gap-2">
+                                        <!-- Botones de acceso rápido -->
+                                        <div v-if="!cashReceived || cashReceived === 0" class="mt-1.5 flex flex-wrap gap-1.5">
                                             <button
                                                 v-for="quickAmount in [50, 100, 200, 500, 1000]"
                                                 :key="quickAmount"
                                                 @click="cashReceived = quickAmount"
                                                 type="button"
-                                                class="px-3 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded transition-colors"
+                                                class="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded transition-colors"
                                             >
                                                 ${{ quickAmount }}
                                             </button>
+                                        </div>
+
+                                        <!-- Resultado del cambio (compacto) -->
+                                        <div v-if="cashReceived > 0" class="mt-2">
+                                            <!-- Insuficiente -->
+                                            <div v-if="cashReceived < finalTotal" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-2">
+                                                <p class="text-xs text-red-700 dark:text-red-300 font-medium">
+                                                    ⚠️ Falta: ${{ formatPrice(finalTotal - cashReceived) }}
+                                                </p>
+                                            </div>
+
+                                            <!-- Suficiente -->
+                                            <div v-else class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-2">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-xs font-medium text-green-700 dark:text-green-300">Cambio:</span>
+                                                    <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                                        ${{ formatPrice(changeAmount) }}
+                                                    </span>
+                                                </div>
+
+                                                <!-- Desglose compacto -->
+                                                <div v-if="changeBillBreakdown.length > 0 && changeAmount > 0" class="mt-2 pt-2 border-t border-green-200 dark:border-green-700">
+                                                    <div class="flex flex-wrap gap-1">
+                                                        <span
+                                                            v-for="bill in changeBillBreakdown"
+                                                            :key="bill.value"
+                                                            class="inline-flex items-center px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs"
+                                                        >
+                                                            <span class="font-semibold text-gray-700 dark:text-gray-300">
+                                                                {{ bill.value >= 1 ? `$${bill.value}` : `${bill.value * 100}¢` }}
+                                                            </span>
+                                                            <span class="text-green-600 dark:text-green-400 font-bold ml-1">
+                                                                ×{{ bill.count }}
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1389,7 +1435,7 @@ onBeforeUnmount(() => {
                                     <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4 space-y-2">
                                         <!-- Información de orden existente -->
                                         <div v-if="selectedExistingSale" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
-                                            <p class="text-sm text-blue-900 dark:text-blue-100">
+                                            <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">
                                                 <span v-if="cartItems.length > 0">
                                                     ℹ️ Agregando items a orden #{{ selectedExistingSale.sale_number }}
                                                 </span>
@@ -1397,9 +1443,25 @@ onBeforeUnmount(() => {
                                                     📋 Orden activa #{{ selectedExistingSale.sale_number }}
                                                 </span>
                                             </p>
-                                            <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                                                Total {{ cartItems.length > 0 ? 'anterior' : 'actual' }}: ${{ parseFloat(selectedExistingSale.total).toFixed(2) }}
-                                            </p>
+                                            <div v-if="cartItems.length > 0" class="mt-2 space-y-1">
+                                                <div class="flex justify-between text-xs text-blue-700 dark:text-blue-300">
+                                                    <span>Total anterior:</span>
+                                                    <span class="font-semibold">${{ parseFloat(selectedExistingSale.total).toFixed(2) }}</span>
+                                                </div>
+                                                <div class="flex justify-between text-xs text-blue-700 dark:text-blue-300">
+                                                    <span>Nuevos items:</span>
+                                                    <span class="font-semibold">${{ formatPrice(total) }}</span>
+                                                </div>
+                                                <div class="flex justify-between text-sm font-bold text-blue-900 dark:text-blue-100 pt-1 border-t border-blue-200 dark:border-blue-700">
+                                                    <span>Total a cobrar:</span>
+                                                    <span class="text-green-600 dark:text-green-400">${{ formatPrice(parseFloat(selectedExistingSale.total) + total) }}</span>
+                                                </div>
+                                            </div>
+                                            <div v-else class="mt-1">
+                                                <p class="text-xs text-blue-700 dark:text-blue-300">
+                                                    Total a cobrar: <span class="font-semibold">${{ parseFloat(selectedExistingSale.total).toFixed(2) }}</span>
+                                                </p>
+                                            </div>
                                         </div>
 
                                         <!-- Botón: Guardar Pendiente (solo si HAY items nuevos en carrito) -->
@@ -1437,7 +1499,7 @@ onBeforeUnmount(() => {
                                                 💵 Completar Venta Libre (${{ formatPrice(parseFloat(freeSaleTotal || 0)) }})
                                             </span>
                                             <span v-else-if="selectedExistingSale && cartItems.length > 0">
-                                                💳 Completar y Pagar (${{ formatPrice(total) }})
+                                                💳 Completar y Pagar (${{ formatPrice(parseFloat(selectedExistingSale.total) + total) }})
                                             </span>
                                             <span v-else-if="selectedExistingSale">
                                                 💳 Completar Orden (${{ parseFloat(selectedExistingSale.total).toFixed(2) }})

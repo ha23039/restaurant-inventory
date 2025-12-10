@@ -96,6 +96,16 @@
                     </h4>
                     <div class="space-y-2">
                         <ShortcutItem
+                            keys="/"
+                            description="Buscar productos"
+                            icon="search"
+                        />
+                        <ShortcutItem
+                            keys="*"
+                            description="Ingresar efectivo recibido"
+                            icon="cash"
+                        />
+                        <ShortcutItem
                             keys="F1"
                             description="Pagar con Efectivo"
                             icon="cash"
@@ -116,7 +126,7 @@
                             icon="expense"
                         />
                         <ShortcutItem
-                            keys="F12"
+                            keys="F10"
                             description="Completar y pagar venta"
                             icon="expense"
                         />
