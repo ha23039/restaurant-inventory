@@ -200,7 +200,7 @@
                                         <Link
                                             v-for="link in (sessions.links || [])"
                                             :key="link.label"
-                                            :href="link.url"
+                                            :href="link.url || '#'"
                                             :class="[
                                                 'relative inline-flex items-center px-4 py-2 text-sm font-medium',
                                                 link.active

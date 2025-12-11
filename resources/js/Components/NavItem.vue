@@ -17,37 +17,24 @@
             ></div>
 
             <!-- Label (hidden when collapsed) -->
-            <Transition
-                enter-active-class="transition-opacity duration-200"
-                leave-active-class="transition-opacity duration-200"
-                enter-from-class="opacity-0"
-                leave-to-class="opacity-0"
-            >
-                <span v-if="!collapsed" class="truncate">
-                    <slot></slot>
-                </span>
-            </Transition>
+            <span v-show="!collapsed" class="truncate transition-opacity duration-200" :class="{ 'opacity-0': collapsed }">
+                <slot></slot>
+            </span>
         </div>
 
         <!-- Badge (hidden when collapsed) -->
-        <Transition
-            enter-active-class="transition-opacity duration-200"
-            leave-active-class="transition-opacity duration-200"
-            enter-from-class="opacity-0"
-            leave-to-class="opacity-0"
+        <span
+            v-show="badge && !collapsed"
+            :class="[
+                'inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full transition-opacity duration-200',
+                badgeColor === 'red'
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+                collapsed ? 'opacity-0' : ''
+            ]"
         >
-            <span
-                v-if="badge && !collapsed"
-                :class="[
-                    'inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full',
-                    badgeColor === 'red'
-                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                ]"
-            >
-                {{ badge }}
-            </span>
-        </Transition>
+            {{ badge }}
+        </span>
 
         <!-- Badge dot (shown when collapsed and has badge) -->
         <span
