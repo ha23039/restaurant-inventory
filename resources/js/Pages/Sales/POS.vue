@@ -238,6 +238,11 @@ const total = computed(() => {
     return Math.max(0, subtotal.value - parseFloat(discount.value || 0) + parseFloat(tax.value || 0));
 });
 
+// Verifica si hay algo que vender (carrito, venta libre, u orden activa)
+const hasItemsToSell = computed(() => {
+    return cartItems.value.length > 0 || isFreeSale.value || selectedExistingSale.value !== null;
+});
+
 // Total final a cobrar (considera orden activa + nuevos items)
 const finalTotal = computed(() => {
     if (isFreeSale.value) {
@@ -245,6 +250,9 @@ const finalTotal = computed(() => {
     } else if (selectedExistingSale.value && cartItems.value.length > 0) {
         // Si hay orden activa con nuevos items, sumar ambos totales
         return parseFloat(selectedExistingSale.value.total) + total.value;
+    } else if (selectedExistingSale.value) {
+        // Si solo hay orden activa sin nuevos items
+        return parseFloat(selectedExistingSale.value.total);
     } else {
         return total.value;
     }
@@ -361,13 +369,7 @@ const clearCart = () => {
 
 // 7. GESTIÓN DE ÓRDENES PENDIENTES
 const selectExistingSale = async (sale) => {
-    // Cerrar panel de órdenes pendientes
-    showPendingSales.value = false;
-
-    // Esperar a que el DOM se actualice
-    await nextTick();
-
-    // Asignar la venta seleccionada
+    // Asignar la venta seleccionada PRIMERO
     selectedExistingSale.value = sale;
 
     // Cargar datos de la venta seleccionada
@@ -380,7 +382,13 @@ const selectExistingSale = async (sale) => {
     customerName.value = sale.customer_name || '';
     orderNotes.value = sale.notes || '';
 
-    showNotification(`Orden #${sale.sale_number} seleccionada. Agrega items o completala desde el carrito.`, 'info');
+    // Esperar a que el DOM se actualice con todos los datos
+    await nextTick();
+
+    // Cerrar panel de órdenes pendientes DESPUÉS
+    showPendingSales.value = false;
+
+    showNotification(`Orden #${sale.sale_number} lista para cobrar o agregar más items.`, 'info');
 };
 
 const completeExistingSale = async (sale) => {
@@ -1242,20 +1250,21 @@ onBeforeUnmount(() => {
                                             <span class="text-green-600 dark:text-green-400">${{ formatPrice(total) }}</span>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <!-- Resumen de Venta Libre -->
-                                    <div v-if="isFreeSale" class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                        <div class="flex justify-between text-lg font-bold dark:text-white">
-                                            <span>Total (Venta Libre):</span>
-                                            <span class="text-green-600 dark:text-green-400">${{ formatPrice(parseFloat(freeSaleTotal || 0)) }}</span>
-                                        </div>
-                                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                                            Esta venta no afectará el inventario
-                                        </p>
+                                <!-- Resumen de Venta Libre -->
+                                <div v-if="isFreeSale" class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                    <div class="flex justify-between text-lg font-bold dark:text-white">
+                                        <span>Total (Venta Libre):</span>
+                                        <span class="text-green-600 dark:text-green-400">${{ formatPrice(parseFloat(freeSaleTotal || 0)) }}</span>
                                     </div>
+                                    <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                        Esta venta no afectará el inventario
+                                    </p>
+                                </div>
 
-                                    <!-- Selección de Mesa (opcional) -->
-                                    <div v-if="cartItems.length > 0 || isFreeSale" class="mt-4">
+                                <!-- Selección de Mesa (opcional) -->
+                                <div v-if="hasItemsToSell" class="mt-4">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Mesa (opcional)
                                         </label>
@@ -1283,7 +1292,7 @@ onBeforeUnmount(() => {
                                     </div>
 
                                     <!-- Información del Cliente (colapsable) -->
-                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
+                                    <div v-show="hasItemsToSell" class="mt-4">
                                         <button
                                             @click="showCustomerInfo = !showCustomerInfo"
                                             type="button"
@@ -1343,7 +1352,7 @@ onBeforeUnmount(() => {
                                     </div>
 
                                     <!-- Método de pago (siempre visible si hay carrito, venta libre o orden seleccionada) -->
-                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4">
+                                    <div v-show="hasItemsToSell" class="mt-4">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Método de Pago
                                         </label>
@@ -1359,7 +1368,7 @@ onBeforeUnmount(() => {
                                     </div>
 
                                     <!-- Calculadora de Cambio (solo para efectivo) -->
-                                    <div v-if="(cartItems.length > 0 || isFreeSale || selectedExistingSale) && (paymentMethod === 'efectivo' || paymentMethod === 'mixto')" class="mt-4">
+                                    <div v-show="hasItemsToSell && (paymentMethod === 'efectivo' || paymentMethod === 'mixto')" class="mt-4">
                                         <label class="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                             <span>💵 Efectivo Recibido</span>
                                             <span class="text-gray-500 dark:text-gray-400 font-normal">(Atajo: *)</span>
@@ -1432,7 +1441,7 @@ onBeforeUnmount(() => {
                                     </div>
 
                                     <!-- Botones de acción -->
-                                    <div v-if="cartItems.length > 0 || isFreeSale || selectedExistingSale" class="mt-4 space-y-2">
+                                    <div v-show="hasItemsToSell" class="mt-4 space-y-2">
                                         <!-- Información de orden existente -->
                                         <div v-if="selectedExistingSale" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
                                             <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">
@@ -1509,7 +1518,6 @@ onBeforeUnmount(() => {
                                             </span>
                                         </button>
                                     </div>
-                                </div>
                             </div>
                         </div>
                     </div>
