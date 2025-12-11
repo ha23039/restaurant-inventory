@@ -24,6 +24,7 @@ class StoreSaleRequest extends FormRequest
     {
         $isFreeSale = $this->boolean('is_free_sale');
         $action = $this->input('action', 'complete');
+        $hasExistingSale = $this->has('existing_sale_id');
 
         return [
             'is_free_sale' => 'nullable|boolean',
@@ -34,7 +35,7 @@ class StoreSaleRequest extends FormRequest
             'notes' => 'nullable|string|max:500',
             'free_sale_description' => $isFreeSale ? 'required|string|min:3|max:500' : 'nullable|string|max:500',
             'free_sale_total' => $isFreeSale ? 'required|numeric|min:0.01' : 'nullable|numeric',
-            'items' => ($isFreeSale || $action === 'save_pending') ? 'nullable|array' : 'required|array|min:1',
+            'items' => ($isFreeSale || $action === 'save_pending' || $hasExistingSale) ? 'nullable|array' : 'required|array|min:1',
             'items.*.id' => 'required_unless:items.*.product_type,free|integer',
             'items.*.product_type' => 'required_with:items.*|in:menu,simple,free',
             'items.*.quantity' => 'required_with:items.*|integer|min:1',
