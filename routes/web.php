@@ -206,6 +206,23 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.'
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para KITCHEN DISPLAY (Admin + Chef + Cajero)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,chef,cajero'])->prefix('kitchen')->name('kitchen.')->group(function () {
+    // Vista principal del Kitchen Display
+    Route::get('/display', [App\Http\Controllers\KitchenDisplayController::class, 'index'])->name('display');
+
+    // API para obtener órdenes (polling)
+    Route::get('/api/orders', [App\Http\Controllers\KitchenDisplayController::class, 'getOrders'])->name('api.orders');
+
+    // Actualizar estado de orden
+    Route::patch('/api/orders/{order}/status', [App\Http\Controllers\KitchenDisplayController::class, 'updateStatus'])->name('api.update-status');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para COCINA/MENÚ (Admin + Chef)
 |--------------------------------------------------------------------------
 */

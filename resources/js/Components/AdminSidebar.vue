@@ -147,6 +147,18 @@
                 </NavItem>
             </template>
 
+            <!-- Kitchen Display (Admin + Chef + Cajero) -->
+            <template v-if="canAccess(['admin', 'chef', 'cajero'])">
+                <NavItem
+                    :href="route('kitchen.display')"
+                    :active="route().current('kitchen.*')"
+                    :collapsed="isCollapsed"
+                    icon="kitchen"
+                >
+                    Cocina
+                </NavItem>
+            </template>
+
             <!-- Admin Only -->
             <template v-if="canAccess(['admin'])">
                 <div v-if="!isCollapsed" class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">

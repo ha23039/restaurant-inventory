@@ -103,4 +103,16 @@ class Sale extends Model
     {
         return $this->total - $this->total_returned;
     }
+
+    // ==========================================
+    // 🍳 KITCHEN DISPLAY
+    // ==========================================
+
+    /**
+     * Relación con el estado de cocina
+     */
+    public function kitchenOrderState()
+    {
+        return $this->hasOne(KitchenOrderState::class);
+    }
 }

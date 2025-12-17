@@ -96,12 +96,12 @@ const releaseTable = () => {
 // Status color helper
 const getStatusColorClass = (status) => {
     const colors = {
-        disponible: 'text-green-700 bg-green-100',
-        ocupada: 'text-red-700 bg-red-100',
-        reservada: 'text-yellow-700 bg-yellow-100',
-        en_limpieza: 'text-blue-700 bg-blue-100',
+        disponible: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30',
+        ocupada: 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30',
+        reservada: 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/30',
+        en_limpieza: 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30',
     };
-    return colors[status] || 'text-gray-700 bg-gray-100';
+    return colors[status] || 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800';
 };
 </script>
 
@@ -133,7 +133,7 @@ const getStatusColorClass = (status) => {
     >
         <div
             v-if="show && table"
-            class="fixed top-0 right-0 h-full w-full md:w-2/3 lg:w-1/2 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto"
+            class="fixed top-0 right-0 h-full w-full md:max-w-2xl bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto"
         >
             <!-- Header -->
             <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">

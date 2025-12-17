@@ -95,7 +95,10 @@ class SaleService
                 $this->cashFlowService->recordSaleIncome($sale);
             }
 
-            return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table']);
+            // 🍳 Crear orden de cocina automáticamente
+            $this->createKitchenOrder($sale);
+
+            return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table', 'kitchenOrderState']);
         });
     }
 
@@ -142,6 +145,11 @@ class SaleService
             $this->cashFlowService->recordSaleIncome($sale);
         }
 
+        // 🍳 Crear orden de cocina si no existe
+        if (!$sale->kitchenOrderState) {
+            $this->createKitchenOrder($sale);
+        }
+
         Log::info('Items agregados a venta existente', [
             'sale_id' => $sale->id,
             'sale_number' => $sale->sale_number,
@@ -149,7 +157,7 @@ class SaleService
             'status' => $sale->status,
         ]);
 
-        return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table']);
+        return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table', 'kitchenOrderState']);
     }
 
     /**
@@ -397,6 +405,51 @@ class SaleService
                 'error' => $e->getMessage(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Crear orden de cocina automáticamente
+     */
+    protected function createKitchenOrder(Sale $sale): void
+    {
+        // Solo crear si la venta tiene items de menú o productos simples
+        // (no crear para ventas libres sin items reales)
+        if ($sale->saleItems()->count() === 0) {
+            return;
+        }
+
+        // Crear estado de cocina
+        \App\Models\KitchenOrderState::create([
+            'sale_id' => $sale->id,
+            'status' => 'nueva',
+            'priority' => 0, // Prioridad normal por defecto
+        ]);
+
+        Log::info('Orden de cocina creada', [
+            'sale_id' => $sale->id,
+            'sale_number' => $sale->sale_number,
+        ]);
+    }
+
+    /**
+     * Liberar mesa asignada
+     */
+    protected function releaseTable(Sale $sale): void
+    {
+        $table = \App\Models\Table::find($sale->table_id);
+
+        if ($table) {
+            $table->update([
+                'status' => 'disponible',
+                'current_sale_id' => null,
+            ]);
+
+            Log::info('Mesa liberada tras completar venta', [
+                'table_id' => $table->id,
+                'table_number' => $table->table_number,
+                'sale_id' => $sale->id,
+            ]);
         }
     }
 }
