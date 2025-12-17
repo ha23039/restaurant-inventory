@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             MenuItemSeeder::class,
             RecipeSeeder::class,
             SimpleProductSeeder::class,
+            SupplierSeeder::class,
         ]);
     }
 }

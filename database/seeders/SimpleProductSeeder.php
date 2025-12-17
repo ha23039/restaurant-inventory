@@ -15,7 +15,7 @@ class SimpleProductSeeder extends Seeder
                 'product_id' => 6, // Coca Cola
                 'name' => 'Coca Cola 355ml',
                 'description' => 'Bebida gaseosa individual',
-                'sale_price' => 1.50,
+                'sale_price' => 1,
                 'cost_per_unit' => 1,
                 'category' => 'bebida',
                 'is_available' => true,
@@ -24,7 +24,7 @@ class SimpleProductSeeder extends Seeder
                 'product_id' => 7, // Pepsi
                 'name' => 'Pepsi 355ml',
                 'description' => 'Bebida gaseosa individual',
-                'sale_price' => 1.40,
+                'sale_price' => 1,
                 'cost_per_unit' => 1,
                 'category' => 'bebida',
                 'is_available' => true,
@@ -33,7 +33,7 @@ class SimpleProductSeeder extends Seeder
                 'product_id' => 8, // Agua
                 'name' => 'Agua Embotellada',
                 'description' => 'Agua purificada 500ml',
-                'sale_price' => 0.75,
+                'sale_price' => 0.50,
                 'cost_per_unit' => 1,
                 'category' => 'bebida',
                 'is_available' => true,
