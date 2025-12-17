@@ -74,25 +74,27 @@ const sizeClasses = {
             v-if="show"
             @click="handleBackdropClick"
             :class="[
-                'fixed inset-0 bg-gray-900/50 backdrop-blur-sm',
-                nested ? 'z-[60]' : 'z-40'
+                'fixed inset-0',
+                nested
+                    ? 'z-[60] bg-gray-900/60'
+                    : 'z-40 bg-gray-900/50 backdrop-blur-sm'
             ]"
         ></div>
     </Transition>
 
     <!-- Slide-over panel -->
     <Transition
-        enter-active-class="transition-transform duration-200"
+        enter-active-class="transition-transform duration-200 ease-out"
         enter-from-class="translate-x-full"
         enter-to-class="translate-x-0"
-        leave-active-class="transition-transform duration-200"
+        leave-active-class="transition-transform duration-200 ease-in"
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
     >
         <div
             v-if="show"
             :class="[
-                'fixed top-0 right-0 h-full bg-white dark:bg-gray-900 shadow-2xl overflow-y-auto',
+                'fixed top-0 right-0 h-full bg-white dark:bg-gray-900 shadow-2xl overflow-y-auto transform-gpu',
                 nested ? 'z-[70]' : 'z-50',
                 sizeClasses[size]
             ]"

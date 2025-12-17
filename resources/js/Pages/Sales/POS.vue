@@ -706,7 +706,21 @@ const handleKeyboardShortcuts = (event) => {
 onMounted(() => {
     // Cargar carrito guardado
     loadCartFromStorage();
-    console.log('🛒 POS iniciado - Carrito persistente activado');
+    console.log('POS iniciado - Carrito persistente activado');
+
+    // Verificar si viene de la vista de mesas con table_id en URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableIdFromUrl = urlParams.get('table_id');
+
+    if (tableIdFromUrl) {
+        const tableId = parseInt(tableIdFromUrl);
+        // Verificar que la mesa existe en las disponibles
+        const tableExists = props.available_tables?.some(t => t.id === tableId);
+        if (tableExists) {
+            selectedTable.value = tableId;
+            showNotification('Mesa pre-seleccionada desde el modulo de mesas', 'info');
+        }
+    }
 
     // Auto-focus en el input de búsqueda después de un pequeño delay
     setTimeout(() => {

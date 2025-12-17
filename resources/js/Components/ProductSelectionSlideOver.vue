@@ -224,7 +224,6 @@ const totalAmount = computed(() => {
                 <div
                     v-else
                     class="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto overscroll-contain"
-                    style="will-change: scroll-position;"
                 >
                     <button
                         v-for="product in filteredProducts"
@@ -232,12 +231,12 @@ const totalAmount = computed(() => {
                         @click="handleProductClick(product)"
                         type="button"
                         :class="[
-                            'text-left p-3 border-2 rounded-lg transition-colors transform-gpu',
+                            'text-left p-3 border-2 rounded-lg',
                             selectedProduct?.id === product.id
                                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                 : isProductSelected(product.id)
                                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                : 'border-gray-200 dark:border-gray-700'
                         ]"
                     >
                         <div class="flex items-start justify-between">
