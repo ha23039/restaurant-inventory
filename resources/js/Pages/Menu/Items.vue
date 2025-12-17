@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MenuItemFormSlideOver from '@/Components/MenuItemFormSlideOver.vue';
 import ExportMenuSlideOver from '@/Components/Menu/ExportMenuSlideOver.vue';
+import VariantManagerSlideOver from '@/Components/VariantManagerSlideOver.vue';
 import { useToast } from 'vue-toastification';
 import { debounce } from 'lodash-es';
 
@@ -18,7 +19,9 @@ const toast = useToast();
 // Estado
 const showFormSlideOver = ref(false);
 const showExportSlideOver = ref(false);
+const showVariantsSlideOver = ref(false);
 const editingItem = ref(null);
+const variantsItem = ref(null);
 const searchTerm = ref(props.filters?.search || '');
 const filterAvailable = ref(props.filters?.is_available || '');
 const filterService = ref(props.filters?.is_service || '');
@@ -38,6 +41,16 @@ const openEditForm = (item) => {
 const closeForm = () => {
     showFormSlideOver.value = false;
     editingItem.value = null;
+};
+
+const openVariantsManager = (item) => {
+    variantsItem.value = item;
+    showVariantsSlideOver.value = true;
+};
+
+const closeVariantsManager = () => {
+    showVariantsSlideOver.value = false;
+    variantsItem.value = null;
 };
 
 const applyFilters = () => {
@@ -343,18 +356,26 @@ const formatPrice = (price) => {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        v-if="item.is_service"
-                                        class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                    >
-                                        Servicio
-                                    </span>
-                                    <span
-                                        v-else
-                                        class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-                                    >
-                                        Platillo
-                                    </span>
+                                    <div class="flex flex-col space-y-1">
+                                        <span
+                                            v-if="item.is_service"
+                                            class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                        >
+                                            Servicio
+                                        </span>
+                                        <span
+                                            v-else
+                                            class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                                        >
+                                            Platillo
+                                        </span>
+                                        <span
+                                            v-if="item.has_variants"
+                                            class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                        >
+                                            Con Variantes
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -381,7 +402,17 @@ const formatPrice = (price) => {
                                     </button>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end space-x-3">
+                                    <div class="flex items-center justify-end space-x-2">
+                                        <button
+                                            v-if="item.has_variants"
+                                            @click="openVariantsManager(item)"
+                                            class="p-2 text-purple-600 hover:text-purple-900 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                                            title="Gestionar Variantes"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                            </svg>
+                                        </button>
                                         <button
                                             @click="openEditForm(item)"
                                             class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -456,6 +487,13 @@ const formatPrice = (price) => {
             :show="showExportSlideOver"
             :menu-items="menuItems.data"
             @close="showExportSlideOver = false"
+        />
+
+        <!-- Variants Manager SlideOver -->
+        <VariantManagerSlideOver
+            :show="showVariantsSlideOver"
+            :menuItem="variantsItem"
+            @close="closeVariantsManager"
         />
     </AdminLayout>
 </template>

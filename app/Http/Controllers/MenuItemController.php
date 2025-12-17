@@ -172,4 +172,31 @@ class MenuItemController extends Controller
 
         return back()->with('success', 'Disponibilidad actualizada');
     }
+
+    /**
+     * Get variants for a menu item
+     */
+    public function getVariants(MenuItem $menuItem)
+    {
+        $this->authorize('view', $menuItem);
+
+        $variants = $menuItem->variants()
+            ->with(['recipes.product'])
+            ->orderBy('display_order')
+            ->orderBy('variant_name')
+            ->get()
+            ->map(function ($variant) {
+                return [
+                    'id' => $variant->id,
+                    'variant_name' => $variant->variant_name,
+                    'variant_sku' => $variant->variant_sku,
+                    'price' => $variant->price,
+                    'is_available' => $variant->is_available,
+                    'attributes' => $variant->attributes,
+                    'available_quantity' => $variant->available_quantity,
+                ];
+            });
+
+        return response()->json($variants);
+    }
 }

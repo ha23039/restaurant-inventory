@@ -249,6 +249,13 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->g
     Route::put('/items/{menuItem}', [App\Http\Controllers\MenuItemController::class, 'update'])->name('items.update');
     Route::delete('/items/{menuItem}', [App\Http\Controllers\MenuItemController::class, 'destroy'])->name('items.destroy');
     Route::patch('/items/{menuItem}/toggle-availability', [App\Http\Controllers\MenuItemController::class, 'toggleAvailability'])->name('items.toggle-availability');
+    Route::get('/items/{menuItem}/variants', [App\Http\Controllers\MenuItemController::class, 'getVariants'])->name('api.menu-items.variants');
+
+    // Menu Item Variants
+    Route::post('/items/{menuItem}/variants', [App\Http\Controllers\MenuItemVariantController::class, 'store'])->name('variants.store');
+    Route::put('/variants/{variant}', [App\Http\Controllers\MenuItemVariantController::class, 'update'])->name('variants.update');
+    Route::delete('/variants/{variant}', [App\Http\Controllers\MenuItemVariantController::class, 'destroy'])->name('variants.destroy');
+    Route::patch('/variants/{variant}/toggle-availability', [App\Http\Controllers\MenuItemVariantController::class, 'toggleAvailability'])->name('variants.toggle-availability');
 
     // Export Menu
     Route::get('/export/pdf', [App\Http\Controllers\MenuExportController::class, 'exportPdf'])->name('export.pdf');

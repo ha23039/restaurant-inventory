@@ -4,6 +4,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FreeSaleSlideOver from '@/Components/FreeSaleSlideOver.vue';
+import ProductVariantSlideOver from '@/Components/ProductVariantSlideOver.vue';
 import { useToast } from 'vue-toastification';
 
 // 2. PROPS DEL COMPONENTE
@@ -36,6 +37,10 @@ const showFreeSaleSlideOver = ref(false);
 const isFreeSale = ref(false);
 const freeSaleDescription = ref('');
 const freeSaleTotal = ref('');
+
+// VARIANTES DE PRODUCTOS
+const showVariantSlideOver = ref(false);
+const selectedMenuItemForVariants = ref(null);
 
 // ORDEN ACTIVA (Venta pendiente)
 const selectedExistingSale = ref(null);
@@ -283,15 +288,22 @@ const changeBillBreakdown = computed(() => {
 
 // 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
 const addToCart = (product) => {
+    // Si el producto tiene variantes, abrir slideover de selección
+    if (product.has_variants && product.variants && product.variants.length > 0) {
+        selectedMenuItemForVariants.value = product;
+        showVariantSlideOver.value = true;
+        return;
+    }
+
     if (!product.is_in_stock) {
         showNotification('Este producto no está disponible por falta de stock', 'warning');
         return;
     }
 
-    const existingIndex = cartItems.value.findIndex(item => 
+    const existingIndex = cartItems.value.findIndex(item =>
         item.id === product.id && item.product_type === product.product_type
     );
-    
+
     if (existingIndex >= 0) {
         if (cartItems.value[existingIndex].quantity < product.available_quantity) {
             cartItems.value[existingIndex].quantity++;
@@ -310,7 +322,41 @@ const addToCart = (product) => {
         });
         showNotification(`${product.name} agregado al carrito`, 'success');
     }
-    
+
+    // Guardar automáticamente
+    saveCartToStorage();
+};
+
+// Agregar variante al carrito desde el slideover
+const addVariantToCart = (variant) => {
+    if (variant.available_quantity <= 0) {
+        showNotification('Esta variante no está disponible por falta de stock', 'warning');
+        return;
+    }
+
+    const existingIndex = cartItems.value.findIndex(item =>
+        item.id === variant.id && item.product_type === 'variant'
+    );
+
+    if (existingIndex >= 0) {
+        if (cartItems.value[existingIndex].quantity < variant.available_quantity) {
+            cartItems.value[existingIndex].quantity++;
+            showNotification(`${variant.name} agregado al carrito`, 'success');
+        } else {
+            showNotification(`Solo hay ${variant.available_quantity} ${variant.name} disponibles`, 'warning');
+        }
+    } else {
+        cartItems.value.push({
+            id: variant.id,
+            name: variant.name,
+            price: variant.price,
+            quantity: 1,
+            available_quantity: variant.available_quantity,
+            product_type: 'variant'
+        });
+        showNotification(`${variant.name} agregado al carrito`, 'success');
+    }
+
     // Guardar automáticamente
     saveCartToStorage();
 };
@@ -1545,5 +1591,13 @@ onBeforeUnmount(() => {
         :show="showFreeSaleSlideOver"
         @close="showFreeSaleSlideOver = false"
         @add="addFreeSaleToCart"
+    />
+
+    <!-- Product Variant SlideOver -->
+    <ProductVariantSlideOver
+        :show="showVariantSlideOver"
+        :menu-item="selectedMenuItemForVariants"
+        @close="showVariantSlideOver = false"
+        @select="addVariantToCart"
     />
 </template>

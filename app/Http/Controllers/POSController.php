@@ -25,6 +25,22 @@ class POSController extends Controller
         // Obtener platillos del menú con disponibilidad calculada
         $menuItems = $this->menuItemService->getAvailableMenuItems();
 
+        // Cargar variantes para items que las tengan
+        $menuItems->load(['variants' => function ($query) {
+            $query->where('is_available', true)
+                  ->ordered()
+                  ->with(['recipes.product']);
+        }]);
+
+        // Calcular disponibilidad de variantes
+        $menuItems->each(function ($menuItem) {
+            if ($menuItem->has_variants && $menuItem->variants) {
+                foreach ($menuItem->variants as $variant) {
+                    $variant->available_quantity = $variant->available_quantity;
+                }
+            }
+        });
+
         // Obtener productos simples con disponibilidad
         $simpleProducts = $this->simpleProductRepository->getAvailableProducts();
 

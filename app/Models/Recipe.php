@@ -11,6 +11,7 @@ class Recipe extends Model
 
     protected $fillable = [
         'menu_item_id',
+        'menu_item_variant_id',
         'product_id',
         'quantity_needed',
         'unit',
@@ -23,6 +24,14 @@ class Recipe extends Model
     public function menuItem()
     {
         return $this->belongsTo(MenuItem::class);
+    }
+
+    /**
+     * Relacion con variante de menu item (si aplica)
+     */
+    public function menuItemVariant()
+    {
+        return $this->belongsTo(MenuItemVariant::class);
     }
 
     public function product()

@@ -130,6 +130,48 @@ class InventoryService
     }
 
     /**
+     * Deducir inventario para variante de menu item
+     */
+    public function deductMenuItemVariantStock(SaleItem $saleItem): void
+    {
+        $variant = \App\Models\MenuItemVariant::with('recipes.product', 'menuItem')->find($saleItem->menu_item_variant_id);
+
+        if (!$variant) {
+            return;
+        }
+
+        foreach ($variant->recipes as $recipe) {
+            $quantityNeeded = $recipe->quantity_needed * $saleItem->quantity;
+
+            // Crear movimiento de inventario
+            InventoryMovement::create([
+                'product_id' => $recipe->product_id,
+                'user_id' => $saleItem->sale->user_id,
+                'movement_type' => 'salida',
+                'quantity' => $quantityNeeded,
+                'unit_cost' => $recipe->product->unit_cost,
+                'total_cost' => $quantityNeeded * $recipe->product->unit_cost,
+                'reason' => 'venta_automatica',
+                'notes' => "Venta: {$variant->variant_name} x{$saleItem->quantity} - Ticket #{$saleItem->sale->sale_number}",
+                'movement_date' => now()->toDateString(),
+            ]);
+
+            // Deducir stock del producto
+            $this->productRepository->updateStock(
+                $recipe->product_id,
+                $recipe->product->current_stock - $quantityNeeded
+            );
+
+            Log::info('Stock deducido para variante', [
+                'product_id' => $recipe->product_id,
+                'quantity' => $quantityNeeded,
+                'variant_id' => $variant->id,
+                'sale_id' => $saleItem->sale_id,
+            ]);
+        }
+    }
+
+    /**
      * Restaurar inventario (usado en devoluciones)
      */
     public function restoreMenuItemStock(SaleItem $saleItem): void

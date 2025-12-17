@@ -252,10 +252,12 @@ class SaleService
                 $saleItemData['unit_price'] = $item['price'];
                 $saleItemData['total_price'] = $item['quantity'] * $item['price'];
                 $saleItemData['menu_item_id'] = null;
+                $saleItemData['menu_item_variant_id'] = null;
                 $saleItemData['simple_product_id'] = null;
             } else {
-                // Para productos regulares
+                // Para productos regulares (menu, variant, simple)
                 $saleItemData['menu_item_id'] = $productType === 'menu' ? $item['id'] : null;
+                $saleItemData['menu_item_variant_id'] = $productType === 'variant' ? $item['id'] : null;
                 $saleItemData['simple_product_id'] = $productType === 'simple' ? $item['id'] : null;
                 $saleItemData['unit_price'] = $item['unit_price'];
                 $saleItemData['total_price'] = $item['quantity'] * $item['unit_price'];
@@ -266,6 +268,8 @@ class SaleService
             // Deducir inventario solo para productos regulares (no para ventas libres)
             if ($productType === 'menu') {
                 $this->inventoryService->deductMenuItemStock($saleItem);
+            } elseif ($productType === 'variant') {
+                $this->inventoryService->deductMenuItemVariantStock($saleItem);
             } elseif ($productType === 'simple') {
                 $this->inventoryService->deductSimpleProductStock($saleItem);
             }

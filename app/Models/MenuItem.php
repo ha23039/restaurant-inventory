@@ -17,12 +17,14 @@ class MenuItem extends Model
         'image_path',
         'is_available',
         'is_service',
+        'has_variants',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'is_available' => 'boolean',
         'is_service' => 'boolean',
+        'has_variants' => 'boolean',
     ];
 
     public function recipes()
@@ -33,5 +35,29 @@ class MenuItem extends Model
     public function saleItems()
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    /**
+     * Variantes de este menu item
+     */
+    public function variants()
+    {
+        return $this->hasMany(MenuItemVariant::class);
+    }
+
+    /**
+     * Scope para items con variantes
+     */
+    public function scopeWithVariants($query)
+    {
+        return $query->where('has_variants', true);
+    }
+
+    /**
+     * Scope para items sin variantes
+     */
+    public function scopeWithoutVariants($query)
+    {
+        return $query->where('has_variants', false);
     }
 }
