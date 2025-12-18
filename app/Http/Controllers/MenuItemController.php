@@ -22,7 +22,7 @@ class MenuItemController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -74,6 +74,7 @@ class MenuItemController extends Controller
             'image_path' => 'nullable|string|max:255',
             'is_available' => 'boolean',
             'is_service' => 'boolean',
+            'has_variants' => 'boolean',
         ]);
 
         // Handle file upload
@@ -117,6 +118,7 @@ class MenuItemController extends Controller
             'image_path' => 'nullable|string|max:255',
             'is_available' => 'boolean',
             'is_service' => 'boolean',
+            'has_variants' => 'boolean',
         ]);
 
         // Handle file upload

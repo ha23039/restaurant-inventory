@@ -40,6 +40,22 @@ class MenuItemResource extends JsonResource
                 ];
             }),
 
+            // Variantes del producto
+            'has_variants' => (bool) $this->has_variants,
+            'variants' => $this->whenLoaded('variants', function () {
+                return $this->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'variant_name' => $variant->variant_name,
+                        'variant_sku' => $variant->variant_sku,
+                        'price' => (float) $variant->price,
+                        'is_available' => (bool) $variant->is_available,
+                        'attributes' => $variant->attributes,
+                        'available_quantity' => $variant->available_quantity,
+                    ];
+                });
+            }),
+
             'recipes' => $this->whenLoaded('recipes', function () {
                 return $this->recipes->map(function ($recipe) {
                     return [

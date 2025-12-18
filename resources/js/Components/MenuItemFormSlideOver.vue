@@ -24,6 +24,7 @@ const form = ref({
     image_path: '',
     is_available: true,
     is_service: false,
+    has_variants: false,
 });
 
 const initialFormState = ref(null);
@@ -52,6 +53,7 @@ watch(() => props.menuItem, (newItem) => {
             image_path: newItem.image_path || '',
             is_available: newItem.is_available !== undefined ? newItem.is_available : true,
             is_service: newItem.is_service !== undefined ? newItem.is_service : false,
+            has_variants: newItem.has_variants !== undefined ? newItem.has_variants : false,
         };
         // Guardar estado inicial
         initialFormState.value = JSON.parse(JSON.stringify(form.value));
@@ -84,6 +86,7 @@ const resetForm = () => {
         image_path: '',
         is_available: true,
         is_service: false,
+        has_variants: false,
     };
     initialFormState.value = null;
     hasChanges.value = false;
@@ -155,6 +158,7 @@ const handleSubmit = () => {
         data.append('price', parseFloat(form.value.price));
         data.append('is_available', form.value.is_available ? '1' : '0');
         data.append('is_service', form.value.is_service ? '1' : '0');
+        data.append('has_variants', form.value.has_variants ? '1' : '0');
         data.append('image', imageFile.value);
         if (isEditMode.value) {
             data.append('_method', 'PUT');
@@ -371,6 +375,26 @@ const handleSubmit = () => {
                         </label>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             Si está desactivado, no aparecerá en el POS
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tiene Variantes -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input
+                            v-model="form.has_variants"
+                            id="has_variants"
+                            type="checkbox"
+                            class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded dark:border-gray-600"
+                        />
+                    </div>
+                    <div class="ml-3">
+                        <label for="has_variants" class="font-medium text-gray-700 dark:text-gray-300">
+                            Tiene Variantes
+                        </label>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            Habilita opciones como tipo de masa, relleno, tamaño, etc.
                         </p>
                     </div>
                 </div>

@@ -17,7 +17,8 @@ class SaleService
         private InventoryService $inventoryService,
         private CashFlowService $cashFlowService,
         private CashRegisterService $cashRegisterService
-    ) {}
+    ) {
+    }
 
     /**
      * Procesar una nueva venta con validación de stock y deducción automática
@@ -35,7 +36,7 @@ class SaleService
             }
 
             // Para ventas libres, omitir validación de stock
-            if (! $isFreeSale) {
+            if (!$isFreeSale) {
                 // Verificar disponibilidad de stock
                 $this->verifyStockAvailability($validatedData['items']);
             }
@@ -80,7 +81,7 @@ class SaleService
 
             // Procesar items (si existen)
             // Nota: Para ventas libres completas no hay items, para ventas normales siempre hay items
-            if (! $isFreeSale && isset($validatedData['items'])) {
+            if (!$isFreeSale && isset($validatedData['items'])) {
                 // Procesar items y deducir inventario solo para items no-free
                 $this->processSaleItems($sale, $validatedData['items']);
             }
@@ -191,7 +192,10 @@ class SaleService
             if ($productType === 'menu') {
                 // Verificar ingredientes del menu item
                 $this->inventoryService->verifyMenuItemStock($item['id'], $quantity);
-            } else {
+            } elseif ($productType === 'variant') {
+                // Verificar ingredientes de la variante
+                $this->inventoryService->verifyMenuItemVariantStock($item['id'], $quantity);
+            } elseif ($productType === 'simple') {
                 // Verificar stock del producto simple
                 $this->inventoryService->verifySimpleProductStock($item['id'], $quantity);
             }
@@ -298,7 +302,7 @@ class SaleService
             $sequence = 1;
         }
 
-        return $date.str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        return $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -322,7 +326,13 @@ class SaleService
      */
     public function getPendingSales()
     {
-        return Sale::with(['saleItems.menuItem', 'saleItems.simpleProduct', 'table', 'user'])
+        return Sale::with([
+            'saleItems.menuItem',
+            'saleItems.simpleProduct',
+            'saleItems.menuItemVariant.menuItem',  // Variantes con platillo padre
+            'table',
+            'user'
+        ])
             ->where('status', 'pendiente')
             ->orderBy('created_at', 'desc')
             ->get();

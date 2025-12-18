@@ -11,7 +11,8 @@ class MenuItemService
     public function __construct(
         private MenuItemRepositoryInterface $menuItemRepository,
         private ProductRepositoryInterface $productRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Obtener menu items disponibles con stock calculado
@@ -30,9 +31,31 @@ class MenuItemService
 
     /**
      * Calcular disponibilidad de un menu item
+     * Para productos con variantes, verifica si al menos una variante tiene stock
      */
     public function calculateAvailability(MenuItem $menuItem): int
     {
+        // Si el producto tiene variantes, la disponibilidad se basa en sus variantes
+        if ($menuItem->has_variants) {
+            // Cargar variantes si no están cargadas
+            if (!$menuItem->relationLoaded('variants')) {
+                $menuItem->load([
+                    'variants' => function ($query) {
+                        $query->where('is_available', true)->with('recipes.product');
+                    }
+                ]);
+            }
+
+            // Si tiene variantes disponibles, marcar como disponible
+            $availableVariantsCount = $menuItem->variants->filter(function ($variant) {
+                return $variant->is_available && $variant->available_quantity > 0;
+            })->count();
+
+            // Retornar cantidad de variantes disponibles (999 es un placeholder para "múltiples disponibles")
+            return $availableVariantsCount > 0 ? 999 : 0;
+        }
+
+        // Para productos sin variantes, usar lógica normal basada en recetas
         return $this->menuItemRepository->calculateAvailableQuantity($menuItem->id);
     }
 

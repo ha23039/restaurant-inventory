@@ -26,7 +26,7 @@ const form = ref({
     variant_name: '',
     variant_sku: '',
     price: '',
-    masa: 'maiz',
+    attributes: [],  // Array dinámico de {key, value}
     is_available: true,
     display_order: 0
 });
@@ -37,14 +37,34 @@ const errors = ref({});
 const isEditing = computed(() => !!props.variant);
 const modalTitle = computed(() => isEditing.value ? 'Editar Variante' : 'Nueva Variante');
 
-// Watch for variant changes to populate form
+// IMPORTANTE: resetForm debe estar antes de los watchers que la usan con immediate: true
+const resetForm = () => {
+    form.value = {
+        variant_name: '',
+        variant_sku: '',
+        price: '',
+        attributes: [],  // Array dinámico de {key, value}
+        is_available: true,
+        display_order: 0
+    };
+    errors.value = {};
+};
+
 watch(() => props.variant, (newVariant) => {
     if (newVariant) {
+        // Convertir attributes object a array de {key, value}
+        const attributesArray = [];
+        if (newVariant.attributes && typeof newVariant.attributes === 'object') {
+            Object.entries(newVariant.attributes).forEach(([key, value]) => {
+                attributesArray.push({ key, value });
+            });
+        }
+        
         form.value = {
             variant_name: newVariant.variant_name || '',
             variant_sku: newVariant.variant_sku || '',
             price: newVariant.price || '',
-            masa: newVariant.attributes?.masa || 'maiz',
+            attributes: attributesArray,
             is_available: newVariant.is_available ?? true,
             display_order: newVariant.display_order || 0
         };
@@ -61,23 +81,21 @@ watch(() => props.show, (newVal) => {
     errors.value = {};
 });
 
-const resetForm = () => {
-    form.value = {
-        variant_name: '',
-        variant_sku: '',
-        price: '',
-        masa: 'maiz',
-        is_available: true,
-        display_order: 0
-    };
-    errors.value = {};
-};
+// resetForm movida arriba, antes de los watchers
 
 const handleSubmit = () => {
     if (submitting.value) return;
 
     submitting.value = true;
     errors.value = {};
+
+    // Convertir array de atributos a objeto
+    const attributesObject = {};
+    form.value.attributes.forEach(attr => {
+        if (attr.key && attr.key.trim()) {
+            attributesObject[attr.key.trim().toLowerCase()] = attr.value.trim();
+        }
+    });
 
     const url = isEditing.value
         ? route('menu.variants.update', props.variant.id)
@@ -89,7 +107,7 @@ const handleSubmit = () => {
         variant_name: form.value.variant_name,
         variant_sku: form.value.variant_sku,
         price: parseFloat(form.value.price),
-        attributes: { masa: form.value.masa },
+        attributes: attributesObject,
         is_available: form.value.is_available,
         display_order: parseInt(form.value.display_order) || 0
     }, {
@@ -106,6 +124,15 @@ const handleSubmit = () => {
             submitting.value = false;
         }
     });
+};
+
+// Funciones para manejar atributos dinámicos
+const addAttribute = () => {
+    form.value.attributes.push({ key: '', value: '' });
+};
+
+const removeAttribute = (index) => {
+    form.value.attributes.splice(index, 1);
 };
 
 const handleClose = () => {
@@ -146,23 +173,59 @@ const handleClose = () => {
                     </p>
                 </div>
 
-                <!-- Tipo de Masa -->
-                <div>
-                    <label for="masa" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Tipo de Masa <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                        id="masa"
-                        v-model="form.masa"
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                        :class="{ 'border-red-500': errors.masa }"
-                    >
-                        <option value="maiz">Masa de Maíz</option>
-                        <option value="arroz">Masa de Arroz</option>
-                    </select>
-                    <p v-if="errors.masa" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {{ errors.masa }}
+                <!-- Atributos Dinámicos -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Atributos
+                        </label>
+                        <button
+                            type="button"
+                            @click="addAttribute"
+                            class="inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                        >
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Agregar Atributo
+                        </button>
+                    </div>
+                    
+                    <!-- Lista de atributos -->
+                    <div v-if="form.attributes.length > 0" class="space-y-3">
+                        <div 
+                            v-for="(attr, index) in form.attributes" 
+                            :key="index"
+                            class="flex items-center gap-3"
+                        >
+                            <input
+                                v-model="attr.key"
+                                type="text"
+                                placeholder="Nombre (ej: Masa)"
+                                class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                            />
+                            <input
+                                v-model="attr.value"
+                                type="text"
+                                placeholder="Valor (ej: Maíz)"
+                                class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                            />
+                            <button
+                                type="button"
+                                @click="removeAttribute(index)"
+                                class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Eliminar atributo"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty state -->
+                    <p v-else class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
+                        Sin atributos. Haz clic en "Agregar Atributo" para definir características como tipo de masa, relleno, tamaño, etc.
                     </p>
                 </div>
 

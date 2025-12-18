@@ -16,7 +16,8 @@ class POSController extends Controller
         private MenuItemService $menuItemService,
         private SimpleProductRepositoryInterface $simpleProductRepository,
         private SaleService $saleService
-    ) {}
+    ) {
+    }
 
     public function index()
     {
@@ -26,11 +27,13 @@ class POSController extends Controller
         $menuItems = $this->menuItemService->getAvailableMenuItems();
 
         // Cargar variantes para items que las tengan
-        $menuItems->load(['variants' => function ($query) {
-            $query->where('is_available', true)
-                  ->ordered()
-                  ->with(['recipes.product']);
-        }]);
+        $menuItems->load([
+            'variants' => function ($query) {
+                $query->where('is_available', true)
+                    ->ordered()
+                    ->with(['recipes.product']);
+            }
+        ]);
 
         // Calcular disponibilidad de variantes
         $menuItems->each(function ($menuItem) {
@@ -84,7 +87,12 @@ class POSController extends Controller
                 ->with('success', 'Venta procesada exitosamente');
 
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            \Log::error('Error en POSController@store: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->validated(),
+            ]);
+
+            return back()->withErrors(['error' => $e->getMessage()])->with('error', $e->getMessage());
         }
     }
 

@@ -17,7 +17,8 @@ class InventoryService
         private ProductRepositoryInterface $productRepository,
         private MenuItemRepositoryInterface $menuItemRepository,
         private SimpleProductRepositoryInterface $simpleProductRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Verificar si hay stock suficiente para un menu item
@@ -46,6 +47,40 @@ class InventoryService
             throw new \Exception(
                 "Stock insuficiente para {$simpleProduct->name}. Disponible: {$available}, Requerido: {$quantity}"
             );
+        }
+    }
+
+    /**
+     * Verificar si hay stock suficiente para una variante de menu item
+     */
+    public function verifyMenuItemVariantStock(int $variantId, int $quantity): void
+    {
+        $variant = \App\Models\MenuItemVariant::with('recipes.product', 'menuItem')->find($variantId);
+
+        if (!$variant) {
+            throw new \Exception("Variante no encontrada con ID: {$variantId}");
+        }
+
+        // Si la variante no tiene recetas, se considera siempre disponible
+        if ($variant->recipes->isEmpty()) {
+            return;
+        }
+
+        // Verificar stock de cada ingrediente
+        foreach ($variant->recipes as $recipe) {
+            if (!$recipe->product) {
+                throw new \Exception("Ingrediente no encontrado para variante: {$variant->variant_name}");
+            }
+
+            $quantityNeeded = $recipe->quantity_needed * $quantity;
+            $available = $recipe->product->current_stock;
+
+            if ($available < $quantityNeeded) {
+                throw new \Exception(
+                    "Stock insuficiente de {$recipe->product->name} para {$variant->variant_name}. " .
+                    "Disponible: {$available}, Requerido: {$quantityNeeded}"
+                );
+            }
         }
     }
 

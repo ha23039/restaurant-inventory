@@ -37,7 +37,7 @@ class StoreSaleRequest extends FormRequest
             'free_sale_total' => $isFreeSale ? 'required|numeric|min:0.01' : 'nullable|numeric',
             'items' => ($isFreeSale || $action === 'save_pending' || $hasExistingSale) ? 'nullable|array' : 'required|array|min:1',
             'items.*.id' => 'required_unless:items.*.product_type,free|integer',
-            'items.*.product_type' => 'required_with:items.*|in:menu,simple,free',
+            'items.*.product_type' => 'required_with:items.*|in:menu,simple,free,variant',
             'items.*.quantity' => 'required_with:items.*|integer|min:1',
             'items.*.unit_price' => 'required_with:items.*|numeric|min:0',
             'items.*.name' => 'required_if:items.*.product_type,free|string|max:100',

@@ -15,12 +15,13 @@ class SaleController extends Controller
     {
         $this->authorize('viewAny', Sale::class);
 
-        // 🔄 ACTUALIZADO: Incluir devoluciones y mesa en la consulta
+        // 🔄 ACTUALIZADO: Incluir devoluciones, mesa y variantes en la consulta
         $query = Sale::with([
             'user',
             'table',
             'saleItems.menuItem',
             'saleItems.simpleProduct',
+            'saleItems.menuItemVariant',  // 🆕 Variantes
             'completedReturns',  // 🔄 NUEVA RELACIÓN
         ]);
 
@@ -134,6 +135,8 @@ class SaleController extends Controller
                         $recipeQuery->with('product:id,name,unit_type');
                     },
                     'simpleProduct:id,name,description,sale_price,category',
+                    'menuItemVariant:id,menu_item_id,variant_name,price,attributes',  // 🆕 Variantes
+                    'menuItemVariant.menuItem:id,name',  // 🆕 Platillo padre de la variante
                 ]);
             },
             'completedReturns.returnItems.saleItem', // 🔄 NUEVA: Cargar devoluciones completas
@@ -233,6 +236,20 @@ class SaleController extends Controller
                         'category' => $item->simpleProduct->category,
                     ];
                     $baseItem['product_name'] = $item->simpleProduct->name;
+                } elseif ($item->product_type === 'variant' && $item->menuItemVariant) {
+                    // 🆕 Variantes de platillo
+                    $baseItem['menu_item_variant'] = [
+                        'id' => $item->menuItemVariant->id,
+                        'variant_name' => $item->menuItemVariant->variant_name,
+                        'price' => floatval($item->menuItemVariant->price),
+                        'attributes' => $item->menuItemVariant->attributes,
+                        'menu_item' => $item->menuItemVariant->menuItem ? [
+                            'id' => $item->menuItemVariant->menuItem->id,
+                            'name' => $item->menuItemVariant->menuItem->name,
+                        ] : null,
+                    ];
+                    $parentName = $item->menuItemVariant->menuItem ? $item->menuItemVariant->menuItem->name : '';
+                    $baseItem['product_name'] = $parentName . ' - ' . $item->menuItemVariant->variant_name;
                 }
 
                 return $baseItem;
@@ -296,7 +313,7 @@ class SaleController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Stock actualizado']);
         } catch (\Exception $e) {
-            \Log::error('Error al actualizar stock: '.$e->getMessage());
+            \Log::error('Error al actualizar stock: ' . $e->getMessage());
 
             return response()->json(['success' => false, 'message' => 'Error al actualizar stock'], 500);
         }

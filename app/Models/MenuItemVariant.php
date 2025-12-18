@@ -59,8 +59,10 @@ class MenuItemVariant extends Model
 
         $recipes = $this->recipes()->with('product')->get();
 
+        // Si no tiene recetas, se considera siempre disponible
+        // Esto permite crear variantes sin control de inventario
         if ($recipes->isEmpty()) {
-            return 0;
+            return 999;
         }
 
         $availableQuantities = [];

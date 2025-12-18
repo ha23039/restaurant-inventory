@@ -23,7 +23,7 @@ class TicketController extends Controller
     public function printKitchenOrder(Sale $sale)
     {
         try {
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'user']);
+            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
             // Verificar que la venta existe y está completada
             if ($sale->status !== 'completada') {
                 return back()->withErrors([
@@ -80,7 +80,7 @@ class TicketController extends Controller
     public function printCustomerReceipt(Sale $sale)
     {
         try {
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'user']);
+            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
             // Verificar que la venta existe
             if ($sale->status === 'cancelada') {
                 return back()->withErrors([
@@ -285,9 +285,9 @@ class TicketController extends Controller
             $message = implode('. ', $messages);
 
             if ($allSuccess) {
-                return back()->with('success', 'Reimpresión exitosa: '.$message);
+                return back()->with('success', 'Reimpresión exitosa: ' . $message);
             } else {
-                return back()->withErrors(['message' => 'Reimpresión con errores: '.$message]);
+                return back()->withErrors(['message' => 'Reimpresión con errores: ' . $message]);
             }
 
         } catch (\Exception $e) {
@@ -297,7 +297,7 @@ class TicketController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            return back()->withErrors(['message' => 'Error en reimpresión: '.$e->getMessage()]);
+            return back()->withErrors(['message' => 'Error en reimpresión: ' . $e->getMessage()]);
         }
     }
 
@@ -325,7 +325,7 @@ class TicketController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error en test general: '.$e->getMessage(),
+                'message' => 'Error en test general: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -356,7 +356,7 @@ class TicketController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error obteniendo estadísticas: '.$e->getMessage(),
+                'message' => 'Error obteniendo estadísticas: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -384,7 +384,7 @@ class TicketController extends Controller
     {
         try {
             // 🔧 CARGAR RELACIONES NECESARIAS
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'user']);
+            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
 
             // Generar contenido de la comanda
             $content = $this->generateKitchenPreview($sale);
@@ -403,7 +403,7 @@ class TicketController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error generando vista previa: '.$e->getMessage(),
+                'message' => 'Error generando vista previa: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -415,7 +415,7 @@ class TicketController extends Controller
     {
         try {
             // 🔧 CARGAR RELACIONES NECESARIAS
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'user']);
+            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
 
             // Generar contenido del ticket
             $content = $this->generateCustomerPreview($sale);
@@ -435,7 +435,7 @@ class TicketController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error generando vista previa: '.$e->getMessage(),
+                'message' => 'Error generando vista previa: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -448,7 +448,7 @@ class TicketController extends Controller
         $content = "🍔 COMANDA DE COCINA\n";
         $content .= "================================\n";
         $content .= "COMANDA #{$sale->sale_number}\n";
-        $content .= 'Fecha: '.$sale->created_at->format('d/m/Y H:i')."\n";
+        $content .= 'Fecha: ' . $sale->created_at->format('d/m/Y H:i') . "\n";
         $content .= "Cajero: {$sale->user->name}\n";
         $content .= "Mesa: Para llevar\n";
         $content .= "--------------------------------\n";
@@ -469,8 +469,8 @@ class TicketController extends Controller
         }
 
         $content .= "--------------------------------\n";
-        $content .= '⚠️  PRIORIDAD: '.$this->calculatePriority($sale)."\n";
-        $content .= 'Hora de orden: '.now()->format('H:i')."\n";
+        $content .= '⚠️  PRIORIDAD: ' . $this->calculatePriority($sale) . "\n";
+        $content .= 'Hora de orden: ' . now()->format('H:i') . "\n";
         $content .= "================================\n";
 
         return $content;
@@ -493,7 +493,7 @@ class TicketController extends Controller
         $content .= "Tel: {$restaurantPhone}\n";
         $content .= "================================\n";
         $content .= "Ticket: #{$sale->sale_number}\n";
-        $content .= 'Fecha: '.$sale->created_at->format('d/m/Y H:i')."\n";
+        $content .= 'Fecha: ' . $sale->created_at->format('d/m/Y H:i') . "\n";
         $content .= "Cajero: {$sale->user->name}\n";
         $content .= "--------------------------------\n";
 
@@ -506,7 +506,7 @@ class TicketController extends Controller
                 substr($productName, 0, 20),
                 number_format($item->unit_price * $item->quantity, 2)
             );
-            $content .= $line."\n";
+            $content .= $line . "\n";
         }
 
         $content .= "--------------------------------\n";
@@ -538,8 +538,15 @@ class TicketController extends Controller
     {
         if ($item->product_type === 'menu' && $item->menuItem) {
             return $item->menuItem->name;
+        } elseif ($item->product_type === 'variant' && $item->menuItemVariant) {
+            // Para variantes, mostrar nombre del platillo padre + nombre de variante
+            $parentName = $item->menuItemVariant->menuItem->name ?? '';
+            $variantName = $item->menuItemVariant->variant_name;
+            return $parentName ? "{$parentName} - {$variantName}" : $variantName;
         } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
             return $item->simpleProduct->name;
+        } elseif ($item->product_type === 'free' && $item->free_sale_name) {
+            return $item->free_sale_name;
         }
 
         return "Producto #{$item->id}";

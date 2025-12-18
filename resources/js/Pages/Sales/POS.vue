@@ -286,6 +286,23 @@ const changeBillBreakdown = computed(() => {
     return breakdown;
 });
 
+// Helper: Obtener nombre de item de venta (soporta menu, simple, variant, free)
+const getSaleItemName = (item) => {
+    if (item.product_type === 'variant' && item.menu_item_variant) {
+        // Para variantes, mostrar nombre del platillo padre + nombre de variante
+        const parentName = item.menu_item_variant.menu_item?.name || '';
+        const variantName = item.menu_item_variant.variant_name;
+        return parentName ? `${parentName} - ${variantName}` : variantName;
+    } else if (item.menu_item?.name) {
+        return item.menu_item.name;
+    } else if (item.simple_product?.name) {
+        return item.simple_product.name;
+    } else if (item.free_sale_name) {
+        return item.free_sale_name;
+    }
+    return 'Producto';
+};
+
 // 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
 const addToCart = (product) => {
     // Si el producto tiene variantes, abrir slideover de selección
@@ -562,24 +579,63 @@ const processSale = (action = 'complete') => {
 
     console.log('Enviando datos de venta:', saleData);
 
-    router.post(route('sales.pos.store'), saleData, {
-        onSuccess: (page) => {
-            console.log('Venta exitosa:', page);
-
-            let message = '';
-            if (action === 'save_pending') {
-                message = selectedExistingSale.value
-                    ? '¡Orden actualizada! Los cambios se guardaron.'
-                    : '¡Orden guardada! Puedes completarla después.';
+    // Para ventas completadas, dejamos que Inertia siga el redirect automático
+    // Para ventas pendientes, nos quedamos en el POS
+    
+    // Guardar backup del carrito en caso de error
+    const cartBackup = JSON.stringify(cartItems.value);
+    const discountBackup = discount.value;
+    const taxBackup = tax.value;
+    
+    const routerOptions = action === 'complete' ? {
+        // Ventas completadas: seguir redirect a detalle
+        preserveState: false,
+        preserveScroll: false,
+        onSuccess: () => {
+            // Limpiar carrito solo después de éxito
+            // (aunque técnicamente la página ya cambió, esto limpia localStorage)
+            clearCartStorage();
+            console.log('Venta completada - carrito limpiado');
+        },
+        onError: (errors) => {
+            console.error('Error en venta:', errors);
+            // Mostrar mensaje de error
+            if (errors.error) {
+                showNotification('Error: ' + errors.error, 'error');
+            } else if (errors.message) {
+                showNotification('Error: ' + errors.message, 'error');
+            } else if (typeof errors === 'object' && Object.keys(errors).length > 0) {
+                showNotification('Error: ' + Object.values(errors).flat().join(', '), 'error');
             } else {
-                message = isFreeSale.value
-                    ? '¡Venta libre procesada exitosamente!'
-                    : '¡Venta completada exitosamente!';
+                showNotification('Error desconocido al procesar la venta', 'error');
             }
-
+            
+            // Restaurar carrito si fue limpiado
+            if (cartItems.value.length === 0 && cartBackup) {
+                try {
+                    cartItems.value = JSON.parse(cartBackup);
+                    discount.value = discountBackup;
+                    tax.value = taxBackup;
+                } catch (e) {
+                    console.error('Error restaurando carrito:', e);
+                }
+            }
+        },
+        onFinish: () => {
+            processing.value = false;
+        }
+    } : {
+        // Ventas pendientes: quedarse en POS
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: (page) => {
+            console.log('Orden guardada:', page);
+            const message = selectedExistingSale.value
+                ? '¡Orden actualizada! Los cambios se guardaron.'
+                : '¡Orden guardada! Puedes completarla después.';
             showNotification(message, 'success');
 
-            // Limpiar carrito y storage después de venta exitosa
+            // Limpiar carrito pero quedarse en POS
             cartItems.value = [];
             discount.value = 0;
             tax.value = 0;
@@ -589,17 +645,13 @@ const processSale = (action = 'complete') => {
             orderNotes.value = '';
             selectedExistingSale.value = null;
             selectedTable.value = null;
-
-            // Limpiar datos de venta libre
             isFreeSale.value = false;
             freeSaleDescription.value = '';
             freeSaleTotal.value = '';
-
             clearCartStorage();
         },
         onError: (errors) => {
             console.error('Error en venta:', errors);
-
             if (errors.message) {
                 showNotification('Error: ' + errors.message, 'error');
             } else if (typeof errors === 'object') {
@@ -611,7 +663,9 @@ const processSale = (action = 'complete') => {
         onFinish: () => {
             processing.value = false;
         }
-    });
+    };
+
+    router.post(route('sales.pos.store'), saleData, routerOptions);
 };
 
 // 8. SISTEMA DE NOTIFICACIONES (usando vue-toastification)
@@ -890,7 +944,7 @@ onBeforeUnmount(() => {
                                         :key="item.id"
                                         class="text-xs text-gray-700 dark:text-gray-300"
                                     >
-                                        • {{ item.quantity }}x {{ item.menu_item?.name || item.simple_product?.name }}
+                                        • {{ item.quantity }}x {{ getSaleItemName(item) }}
                                     </div>
                                     <p v-if="sale.sale_items.length > 3" class="text-xs text-gray-500 dark:text-gray-400">
                                         + {{ sale.sale_items.length - 3 }} más...
@@ -1146,7 +1200,7 @@ onBeforeUnmount(() => {
                                         >
                                             <div class="flex-1">
                                                 <span class="font-medium text-gray-900 dark:text-white">
-                                                    {{ item.quantity }}x {{ item.menu_item?.name || item.simple_product?.name }}
+                                                    {{ item.quantity }}x {{ getSaleItemName(item) }}
                                                 </span>
                                             </div>
                                             <span class="text-gray-600 dark:text-gray-400">

@@ -21,7 +21,12 @@ class KitchenDisplayController extends Controller
      */
     public function getOrders()
     {
-        $orders = KitchenOrderState::with(['sale.saleItems.menuItem', 'sale.saleItems.simpleProduct', 'sale.table'])
+        $orders = KitchenOrderState::with([
+            'sale.saleItems.menuItem',
+            'sale.saleItems.simpleProduct',
+            'sale.saleItems.menuItemVariant.menuItem',  // Soporte para variantes
+            'sale.table'
+        ])
             ->active() // Solo órdenes no entregadas
             ->orderByPriority() // Por prioridad y luego por fecha
             ->get()
@@ -41,9 +46,7 @@ class KitchenDisplayController extends Controller
                     'items' => $order->sale->saleItems->map(function ($item) {
                         return [
                             'quantity' => $item->quantity,
-                            'name' => $item->product_type === 'menu'
-                                ? $item->menuItem->name
-                                : $item->simpleProduct->name,
+                            'name' => $this->getItemName($item),
                         ];
                     }),
                     'created_at' => $order->created_at->format('H:i'),
@@ -51,6 +54,27 @@ class KitchenDisplayController extends Controller
             });
 
         return response()->json($orders);
+    }
+
+    /**
+     * Obtener nombre del item (soporta menu, variant, simple, free)
+     */
+    private function getItemName($item): string
+    {
+        if ($item->product_type === 'variant' && $item->menuItemVariant) {
+            // Para variantes, mostrar nombre del platillo padre + nombre de variante
+            $parentName = $item->menuItemVariant->menuItem->name ?? '';
+            $variantName = $item->menuItemVariant->variant_name;
+            return $parentName ? "{$parentName} - {$variantName}" : $variantName;
+        } elseif ($item->product_type === 'menu' && $item->menuItem) {
+            return $item->menuItem->name;
+        } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
+            return $item->simpleProduct->name;
+        } elseif ($item->product_type === 'free' && $item->free_sale_name) {
+            return $item->free_sale_name;
+        }
+
+        return 'Producto';
     }
 
     /**
