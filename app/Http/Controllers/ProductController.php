@@ -15,7 +15,8 @@ class ProductController extends Controller
 {
     public function __construct(
         private ProductRepositoryInterface $productRepository
-    ) {}
+    ) {
+    }
 
     public function index(Request $request)
     {
@@ -27,9 +28,9 @@ class ProductController extends Controller
         // Aplicar filtros usando query builder
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('description', 'like', "%{$searchTerm}%");
+                    ->orWhere('description', 'like', "%{$searchTerm}%");
             });
         }
 
@@ -47,16 +48,16 @@ class ProductController extends Controller
 
         if ($request->boolean('expiring_soon')) {
             $query->where('expiry_date', '<=', now()->addDays(7))
-                  ->where('expiry_date', '>=', now());
+                ->where('expiry_date', '>=', now());
         }
 
         // Apply pagination (15 per page)
         $products = $query->where('is_active', true)
-                          ->orderBy('name')
-                          ->paginate(15)
-                          ->withQueryString();
+            ->orderBy('name')
+            ->paginate(15)
+            ->withQueryString();
 
-        $categories = Category::all();
+        $categories = Category::withCount('products')->get();
 
         return Inertia::render('Inventory/Products', [
             'products' => $products,
@@ -69,7 +70,7 @@ class ProductController extends Controller
     {
         $this->authorize('create', Product::class);
 
-        $categories = Category::all();
+        $categories = Category::withCount('products')->get();
 
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,
@@ -100,7 +101,7 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
 
-        $categories = Category::all();
+        $categories = Category::withCount('products')->get();
 
         return Inertia::render('Inventory/ProductForm', [
             'categories' => $categories,

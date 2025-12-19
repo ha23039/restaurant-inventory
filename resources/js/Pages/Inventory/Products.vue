@@ -240,13 +240,13 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                v-if="product.current_stock <= product.min_stock"
+                                                v-if="parseFloat(product.current_stock) <= parseFloat(product.min_stock)"
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                                             >
                                                 Stock Bajo
                                             </span>
                                             <span
-                                                v-else-if="product.current_stock <= product.min_stock * 1.5"
+                                                v-else-if="parseFloat(product.current_stock) <= parseFloat(product.min_stock) * 1.5"
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
                                             >
                                                 Stock Medio

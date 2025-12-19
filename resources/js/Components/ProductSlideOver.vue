@@ -75,6 +75,15 @@ watch(() => props.product, () => {
 
 const loadProductData = () => {
     if (props.product) {
+        // Formatear fecha a YYYY-MM-DD si existe
+        let formattedExpiryDate = '';
+        if (props.product.expiry_date) {
+            const date = new Date(props.product.expiry_date);
+            if (!isNaN(date.getTime())) {
+                formattedExpiryDate = date.toISOString().split('T')[0];
+            }
+        }
+
         form.value = {
             name: props.product.name || '',
             category_id: props.product.category_id || '',
@@ -84,7 +93,7 @@ const loadProductData = () => {
             min_stock: props.product.min_stock || 0,
             max_stock: props.product.max_stock || '',
             unit_cost: props.product.unit_cost || 0,
-            expiry_date: props.product.expiry_date || '',
+            expiry_date: formattedExpiryDate,
             is_active: props.product.is_active ?? true,
         };
     }
