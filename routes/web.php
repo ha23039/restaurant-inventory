@@ -102,11 +102,11 @@ Route::middleware(['auth', 'role:admin,almacenero'])->prefix('suppliers')->name(
 
 /*
 |--------------------------------------------------------------------------
-| Rutas para GESTIÓN DE MESAS (Admin + Cajero)
+| Rutas para GESTIÓN DE MESAS (Admin + Cajero + Mesero)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin,cajero'])->prefix('tables')->name('tables.')->group(function () {
+Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('tables')->name('tables.')->group(function () {
     Route::get('/', [App\Http\Controllers\TableController::class, 'index'])->name('index');
     Route::post('/', [App\Http\Controllers\TableController::class, 'store'])->name('store');
     Route::put('/{table}', [App\Http\Controllers\TableController::class, 'update'])->name('update');
@@ -122,11 +122,11 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('tables')->name('tables
 
 /*
 |--------------------------------------------------------------------------
-| Rutas para CAJA REGISTRADORA (Admin + Cajero)
+| Rutas para CAJA REGISTRADORA (Admin + Cajero + Mesero)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin,cajero'])->prefix('cashregister')->name('cashregister.')->group(function () {
+Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('cashregister')->name('cashregister.')->group(function () {
     // Vista principal de caja
     Route::get('/', [App\Http\Controllers\CashRegisterController::class, 'index'])->name('index');
 
@@ -185,11 +185,11 @@ Route::middleware(['auth', 'role:admin,almacenero'])->prefix('inventory')->name(
 
 /*
 |--------------------------------------------------------------------------
-| Rutas para VENTAS (Admin + Cajero)
+| Rutas para VENTAS (Admin + Cajero + Mesero)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.')->group(function () {
+Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('sales')->name('sales.')->group(function () {
     // Dashboard de ventas
     Route::get('/', [App\Http\Controllers\SaleController::class, 'index'])->name('index');
 
@@ -206,11 +206,11 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('sales')->name('sales.'
 
 /*
 |--------------------------------------------------------------------------
-| Rutas para KITCHEN DISPLAY (Admin + Chef + Cajero)
+| Rutas para KITCHEN DISPLAY (Admin + Chef + Cajero + Mesero)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin,chef,cajero'])->prefix('kitchen')->name('kitchen.')->group(function () {
+Route::middleware(['auth', 'role:admin,chef,cajero,mesero'])->prefix('kitchen')->name('kitchen.')->group(function () {
     // Vista principal del Kitchen Display
     Route::get('/display', [App\Http\Controllers\KitchenDisplayController::class, 'index'])->name('display');
 
@@ -386,7 +386,7 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('returns')->name('retur
 | Rutas para impresión de tickets y comandas
 */
 
-Route::middleware(['auth', 'role:admin,cajero'])->prefix('tickets')->name('tickets.')->group(function () {
+Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('tickets')->name('tickets.')->group(function () {
 
     // Rutas existentes de impresión
     Route::post('/kitchen/{sale}', [App\Http\Controllers\TicketController::class, 'printKitchenOrder'])

@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             RecipeSeeder::class,
             SimpleProductSeeder::class,
             SupplierSeeder::class,
+            PupusaSeeder::class,
         ]);
     }
 }
