@@ -16,6 +16,10 @@ const props = defineProps({
     variant: {
         type: Object,
         default: null
+    },
+    products: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -28,7 +32,8 @@ const form = ref({
     price: '',
     attributes: [],  // Array dinámico de {key, value}
     is_available: true,
-    display_order: 0
+    display_order: 0,
+    recipes: []  // Array de ingredientes {product_id, quantity_needed, unit}
 });
 
 const submitting = ref(false);
@@ -45,7 +50,8 @@ const resetForm = () => {
         price: '',
         attributes: [],  // Array dinámico de {key, value}
         is_available: true,
-        display_order: 0
+        display_order: 0,
+        recipes: []  // Array de ingredientes
     };
     errors.value = {};
 };
@@ -59,14 +65,28 @@ watch(() => props.variant, (newVariant) => {
                 attributesArray.push({ key, value });
             });
         }
-        
+
+        // Convertir recetas existentes al formato del formulario
+        const recipesArray = [];
+        if (newVariant.recipes && Array.isArray(newVariant.recipes)) {
+            newVariant.recipes.forEach(recipe => {
+                recipesArray.push({
+                    id: recipe.id,
+                    product_id: recipe.product_id,
+                    quantity_needed: recipe.quantity_needed,
+                    unit: recipe.unit
+                });
+            });
+        }
+
         form.value = {
             variant_name: newVariant.variant_name || '',
             variant_sku: newVariant.variant_sku || '',
             price: newVariant.price || '',
             attributes: attributesArray,
             is_available: newVariant.is_available ?? true,
-            display_order: newVariant.display_order || 0
+            display_order: newVariant.display_order || 0,
+            recipes: recipesArray
         };
     } else {
         resetForm();
@@ -97,6 +117,16 @@ const handleSubmit = () => {
         }
     });
 
+    // Preparar recetas para enviar (solo las válidas)
+    const validRecipes = form.value.recipes
+        .filter(r => r.product_id && r.quantity_needed > 0 && r.unit)
+        .map(r => ({
+            id: r.id || null,
+            product_id: parseInt(r.product_id),
+            quantity_needed: parseFloat(r.quantity_needed),
+            unit: r.unit
+        }));
+
     const url = isEditing.value
         ? route('menu.variants.update', props.variant.id)
         : route('menu.variants.store', props.menuItem.id);
@@ -109,7 +139,8 @@ const handleSubmit = () => {
         price: parseFloat(form.value.price),
         attributes: attributesObject,
         is_available: form.value.is_available,
-        display_order: parseInt(form.value.display_order) || 0
+        display_order: parseInt(form.value.display_order) || 0,
+        recipes: validRecipes
     }, {
         preserveScroll: true,
         onSuccess: () => {
@@ -134,6 +165,80 @@ const addAttribute = () => {
 const removeAttribute = (index) => {
     form.value.attributes.splice(index, 1);
 };
+
+// Funciones para manejar ingredientes/recetas
+const addRecipe = () => {
+    form.value.recipes.push({
+        id: null,
+        product_id: '',
+        quantity_needed: '',
+        unit: ''
+    });
+};
+
+const removeRecipe = (index) => {
+    form.value.recipes.splice(index, 1);
+};
+
+// Auto-seleccionar unidad cuando se selecciona un producto
+const onProductSelect = (index) => {
+    const recipe = form.value.recipes[index];
+    if (recipe.product_id) {
+        const product = props.products.find(p => p.id === parseInt(recipe.product_id));
+        if (product && !recipe.unit) {
+            recipe.unit = product.unit_type;
+        }
+    }
+};
+
+// Obtener productos disponibles (excluyendo los ya agregados)
+const getAvailableProducts = (currentIndex) => {
+    const usedProductIds = form.value.recipes
+        .filter((_, idx) => idx !== currentIndex)
+        .map(r => parseInt(r.product_id))
+        .filter(id => !isNaN(id));
+
+    return props.products.filter(p => !usedProductIds.includes(p.id));
+};
+
+// Obtener producto seleccionado en una receta
+const getSelectedProduct = (productId) => {
+    return props.products.find(p => p.id === parseInt(productId));
+};
+
+// Opciones de unidades
+const unitOptions = [
+    { value: 'kg', label: 'Kilogramos (kg)' },
+    { value: 'g', label: 'Gramos (g)' },
+    { value: 'lt', label: 'Litros (L)' },
+    { value: 'ml', label: 'Mililitros (ml)' },
+    { value: 'pcs', label: 'Piezas (pzas)' },
+];
+
+// Formatear cantidad
+const formatQuantity = (quantity) => {
+    if (!quantity) return '0';
+    return parseFloat(quantity).toFixed(3).replace(/\.?0+$/, '');
+};
+
+// Calcular stock disponible basado en recetas actuales
+const calculatedStock = computed(() => {
+    if (form.value.recipes.length === 0) return 999;
+
+    let minAvailable = Infinity;
+
+    for (const recipe of form.value.recipes) {
+        if (!recipe.product_id || !recipe.quantity_needed) continue;
+
+        const product = props.products.find(p => p.id === parseInt(recipe.product_id));
+        if (!product) continue;
+
+        const availableFromThis = Math.floor(product.current_stock / parseFloat(recipe.quantity_needed));
+        minAvailable = Math.min(minAvailable, availableFromThis);
+    }
+
+    return minAvailable === Infinity ? 999 : minAvailable;
+});
 
 const handleClose = () => {
     if (!submitting.value) {
@@ -326,16 +431,147 @@ const handleClose = () => {
                     </div>
                 </div>
 
-                <!-- Info box -->
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div class="flex items-start">
-                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                        </svg>
-                        <div class="text-sm text-blue-800 dark:text-blue-300">
-                            <p class="font-semibold mb-1">Gestión de Recetas</p>
-                            <p>Después de crear la variante, podrás asignar los ingredientes en la sección de Recetas.</p>
+                <!-- Sección de Ingredientes -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Ingredientes (Receta)
+                            </label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Define los ingredientes necesarios para preparar esta variante
+                            </p>
                         </div>
+                        <button
+                            type="button"
+                            @click="addRecipe"
+                            :disabled="products.length === 0"
+                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20 rounded-lg transition-colors border border-green-300 dark:border-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Agregar Ingrediente
+                        </button>
+                    </div>
+
+                    <!-- Lista de ingredientes -->
+                    <div v-if="form.recipes.length > 0" class="space-y-3">
+                        <div
+                            v-for="(recipe, index) in form.recipes"
+                            :key="index"
+                            class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3"
+                        >
+                            <div class="grid grid-cols-12 gap-3 items-start">
+                                <!-- Producto -->
+                                <div class="col-span-5">
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                        Ingrediente
+                                    </label>
+                                    <select
+                                        v-model="recipe.product_id"
+                                        @change="onProductSelect(index)"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                                    >
+                                        <option value="">Seleccionar...</option>
+                                        <optgroup
+                                            v-for="category in [...new Set(getAvailableProducts(index).map(p => p.category?.name || 'Sin categoría'))]"
+                                            :key="category"
+                                            :label="category"
+                                        >
+                                            <option
+                                                v-for="product in getAvailableProducts(index).filter(p => (p.category?.name || 'Sin categoría') === category)"
+                                                :key="product.id"
+                                                :value="product.id"
+                                            >
+                                                {{ product.name }} ({{ formatQuantity(product.current_stock) }} {{ product.unit_type }})
+                                            </option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <!-- Cantidad -->
+                                <div class="col-span-3">
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                        Cantidad
+                                    </label>
+                                    <input
+                                        v-model="recipe.quantity_needed"
+                                        type="number"
+                                        step="0.001"
+                                        min="0.001"
+                                        placeholder="0.000"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
+
+                                <!-- Unidad -->
+                                <div class="col-span-3">
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                        Unidad
+                                    </label>
+                                    <select
+                                        v-model="recipe.unit"
+                                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                                    >
+                                        <option value="">...</option>
+                                        <option v-for="u in unitOptions" :key="u.value" :value="u.value">
+                                            {{ u.value }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Eliminar -->
+                                <div class="col-span-1 flex items-end justify-center">
+                                    <button
+                                        type="button"
+                                        @click="removeRecipe(index)"
+                                        class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        title="Eliminar ingrediente"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Info del producto seleccionado -->
+                            <div v-if="recipe.product_id && getSelectedProduct(recipe.product_id)" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Stock actual: {{ formatQuantity(getSelectedProduct(recipe.product_id).current_stock) }} {{ getSelectedProduct(recipe.product_id).unit_type }}
+                                <span v-if="recipe.quantity_needed" class="ml-2 text-green-600 dark:text-green-400">
+                                    → {{ Math.floor(getSelectedProduct(recipe.product_id).current_stock / parseFloat(recipe.quantity_needed || 1)) }} porciones posibles
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div v-else class="text-center py-6">
+                        <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <p class="text-sm text-gray-400 dark:text-gray-500 mb-2">
+                            Sin ingredientes definidos
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">
+                            Las variantes sin ingredientes mostrarán "Stock: 999" en el POS
+                        </p>
+                    </div>
+
+                    <!-- Stock calculado -->
+                    <div v-if="form.recipes.length > 0" class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-green-800 dark:text-green-300">
+                                Stock disponible calculado:
+                            </span>
+                            <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                {{ calculatedStock }} unidades
+                            </span>
+                        </div>
+                        <p class="text-xs text-green-600 dark:text-green-400 mt-1">
+                            Basado en el ingrediente con menor disponibilidad
+                        </p>
                     </div>
                 </div>
 

@@ -34,7 +34,10 @@ class ProductApiController extends Controller
                 'unit_type' => $product->unit_type,
                 'current_stock' => (float) $product->current_stock,
                 'unit_cost' => (float) $product->unit_cost,
-                'category_name' => $product->category->name ?? null,
+                'category' => $product->category ? [
+                    'id' => $product->category->id,
+                    'name' => $product->category->name,
+                ] : null,
             ];
         });
 

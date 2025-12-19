@@ -183,7 +183,7 @@ class MenuItemController extends Controller
         $this->authorize('view', $menuItem);
 
         $variants = $menuItem->variants()
-            ->with(['recipes.product'])
+            ->with(['recipes.product.category'])
             ->orderBy('display_order')
             ->orderBy('variant_name')
             ->get()
@@ -195,7 +195,26 @@ class MenuItemController extends Controller
                     'price' => $variant->price,
                     'is_available' => $variant->is_available,
                     'attributes' => $variant->attributes,
+                    'display_order' => $variant->display_order,
                     'available_quantity' => $variant->available_quantity,
+                    'recipes' => $variant->recipes->map(function ($recipe) {
+                        return [
+                            'id' => $recipe->id,
+                            'product_id' => $recipe->product_id,
+                            'quantity_needed' => $recipe->quantity_needed,
+                            'unit' => $recipe->unit,
+                            'product' => $recipe->product ? [
+                                'id' => $recipe->product->id,
+                                'name' => $recipe->product->name,
+                                'current_stock' => $recipe->product->current_stock,
+                                'unit_type' => $recipe->product->unit_type,
+                                'category' => $recipe->product->category ? [
+                                    'id' => $recipe->product->category->id,
+                                    'name' => $recipe->product->category->name,
+                                ] : null,
+                            ] : null,
+                        ];
+                    }),
                 ];
             });
 

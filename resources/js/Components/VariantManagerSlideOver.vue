@@ -20,6 +20,7 @@ const emit = defineEmits(['close']);
 const toast = useToast();
 
 const variants = ref([]);
+const products = ref([]);
 const loading = ref(false);
 const showVariantForm = ref(false);
 const editingVariant = ref(null);
@@ -41,10 +42,23 @@ const loadVariants = async () => {
     }
 };
 
-// Watch for show prop changes to load variants
+// Cargar productos disponibles para las recetas
+const loadProducts = async () => {
+    try {
+        const response = await fetch(route('api.products.index'));
+        const data = await response.json();
+        products.value = data;
+    } catch (error) {
+        console.error('Error loading products:', error);
+        // No mostrar toast porque los productos son opcionales
+    }
+};
+
+// Watch for show prop changes to load variants and products
 watch(() => props.show, (newVal) => {
     if (newVal && props.menuItem?.id) {
         loadVariants();
+        loadProducts();
     }
 });
 
@@ -258,6 +272,7 @@ const toggleAvailability = async (variant) => {
         :show="showVariantForm"
         :menuItem="menuItem"
         :variant="editingVariant"
+        :products="products"
         @close="closeVariantForm"
         @saved="handleVariantSaved"
     />

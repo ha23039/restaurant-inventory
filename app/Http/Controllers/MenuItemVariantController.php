@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use App\Models\MenuItemVariant;
+use App\Models\Recipe;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MenuItemVariantController extends Controller
 {
@@ -22,16 +24,48 @@ class MenuItemVariantController extends Controller
             'attributes' => 'nullable|array',
             'is_available' => 'boolean',
             'display_order' => 'integer|min:0',
+            'recipes' => 'nullable|array',
+            'recipes.*.product_id' => 'required_with:recipes|exists:products,id',
+            'recipes.*.quantity_needed' => 'required_with:recipes|numeric|min:0.001',
+            'recipes.*.unit' => 'required_with:recipes|string|in:kg,lt,pcs,g,ml',
         ]);
 
-        $variant = $menuItem->variants()->create($validated);
+        DB::beginTransaction();
+        try {
+            // Crear la variante
+            $variant = $menuItem->variants()->create([
+                'variant_name' => $validated['variant_name'],
+                'variant_sku' => $validated['variant_sku'] ?? null,
+                'price' => $validated['price'],
+                'attributes' => $validated['attributes'] ?? null,
+                'is_available' => $validated['is_available'] ?? true,
+                'display_order' => $validated['display_order'] ?? 0,
+            ]);
 
-        // Mark menu item as having variants
-        if (!$menuItem->has_variants) {
-            $menuItem->update(['has_variants' => true]);
+            // Crear las recetas si se proporcionaron
+            if (!empty($validated['recipes'])) {
+                foreach ($validated['recipes'] as $recipeData) {
+                    Recipe::create([
+                        'menu_item_variant_id' => $variant->id,
+                        'product_id' => $recipeData['product_id'],
+                        'quantity_needed' => $recipeData['quantity_needed'],
+                        'unit' => $recipeData['unit'],
+                    ]);
+                }
+            }
+
+            // Mark menu item as having variants
+            if (!$menuItem->has_variants) {
+                $menuItem->update(['has_variants' => true]);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Variante creada exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Error al crear la variante: ' . $e->getMessage()]);
         }
-
-        return back()->with('success', 'Variante creada exitosamente');
     }
 
     /**
@@ -48,11 +82,65 @@ class MenuItemVariantController extends Controller
             'attributes' => 'nullable|array',
             'is_available' => 'boolean',
             'display_order' => 'integer|min:0',
+            'recipes' => 'nullable|array',
+            'recipes.*.id' => 'nullable|exists:recipes,id',
+            'recipes.*.product_id' => 'required_with:recipes|exists:products,id',
+            'recipes.*.quantity_needed' => 'required_with:recipes|numeric|min:0.001',
+            'recipes.*.unit' => 'required_with:recipes|string|in:kg,lt,pcs,g,ml',
         ]);
 
-        $variant->update($validated);
+        DB::beginTransaction();
+        try {
+            // Actualizar datos de la variante
+            $variant->update([
+                'variant_name' => $validated['variant_name'],
+                'variant_sku' => $validated['variant_sku'] ?? null,
+                'price' => $validated['price'],
+                'attributes' => $validated['attributes'] ?? null,
+                'is_available' => $validated['is_available'] ?? true,
+                'display_order' => $validated['display_order'] ?? 0,
+            ]);
 
-        return back()->with('success', 'Variante actualizada exitosamente');
+            // Sincronizar recetas
+            $newRecipeIds = [];
+            if (!empty($validated['recipes'])) {
+                foreach ($validated['recipes'] as $recipeData) {
+                    if (!empty($recipeData['id'])) {
+                        // Actualizar receta existente
+                        $recipe = Recipe::find($recipeData['id']);
+                        if ($recipe && $recipe->menu_item_variant_id === $variant->id) {
+                            $recipe->update([
+                                'product_id' => $recipeData['product_id'],
+                                'quantity_needed' => $recipeData['quantity_needed'],
+                                'unit' => $recipeData['unit'],
+                            ]);
+                            $newRecipeIds[] = $recipe->id;
+                        }
+                    } else {
+                        // Crear nueva receta
+                        $recipe = Recipe::create([
+                            'menu_item_variant_id' => $variant->id,
+                            'product_id' => $recipeData['product_id'],
+                            'quantity_needed' => $recipeData['quantity_needed'],
+                            'unit' => $recipeData['unit'],
+                        ]);
+                        $newRecipeIds[] = $recipe->id;
+                    }
+                }
+            }
+
+            // Eliminar recetas que ya no están en la lista
+            $variant->recipes()
+                ->whereNotIn('id', $newRecipeIds)
+                ->delete();
+
+            DB::commit();
+            return back()->with('success', 'Variante actualizada exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Error al actualizar la variante: ' . $e->getMessage()]);
+        }
     }
 
     /**
