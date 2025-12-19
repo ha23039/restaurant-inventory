@@ -133,15 +133,45 @@ const loadExpenseData = () => {
             return match ? parseInt(match[1]) : null;
         };
 
+        // Extraer payment_method de las notas si existe
+        const extractPaymentMethod = (notes) => {
+            if (!notes) return 'efectivo';
+            const match = notes.match(/Método de pago: (\w+)/i);
+            if (match) {
+                const method = match[1].toLowerCase();
+                return ['efectivo', 'tarjeta', 'transferencia', 'cheque'].includes(method) ? method : 'efectivo';
+            }
+            return 'efectivo';
+        };
+
+        // Formatear fecha a YYYY-MM-DD para el input date
+        let formattedDate = new Date().toISOString().split('T')[0];
+        if (props.expense.flow_date) {
+            const date = new Date(props.expense.flow_date);
+            if (!isNaN(date.getTime())) {
+                formattedDate = date.toISOString().split('T')[0];
+            }
+        }
+
+        // Limpiar notas removiendo metadata
+        const cleanNotes = (notes) => {
+            if (!notes) return '';
+            return notes
+                .replace(/Proveedor ID: \d+\n?/g, '')
+                .replace(/Método de pago: \w+\n?/gi, '')
+                .replace(/Productos comprados: \d+ items\n?/g, '')
+                .trim();
+        };
+
         form.value = {
-            expense_date: props.expense.flow_date || new Date().toISOString().split('T')[0],
+            expense_date: formattedDate,
             category: props.expense.category || '',
             description: props.expense.description || '',
             amount: props.expense.amount || '',
-            payment_method: props.expense.payment_method || 'efectivo',
+            payment_method: extractPaymentMethod(props.expense.notes),
             supplier_id: extractSupplierId(props.expense.notes),
-            notes: props.expense.notes ? props.expense.notes.replace(/Proveedor ID: \d+\n?/, '').trim() : '',
-            products: []
+            notes: cleanNotes(props.expense.notes),
+            products: [] // Los productos no se pueden recuperar, ya fueron procesados
         };
     }
 };
@@ -177,12 +207,14 @@ const handleSubmit = () => {
         return;
     }
 
-    if (isProductCategory.value) {
+    if (isProductCategory.value && !isEditMode.value) {
+        // Solo requerir productos en modo creación
         if (form.value.products.length === 0) {
             alert('Agrega al menos un producto');
             return;
         }
-    } else {
+    } else if (!isProductCategory.value) {
+        // Para otros tipos de gastos, requerir monto
         if (!form.value.amount || parseFloat(form.value.amount) <= 0) {
             alert('Ingresa un monto válido');
             return;
@@ -261,7 +293,7 @@ const handleSubmit = () => {
             </div>
 
             <!-- Mensaje si es compra de productos -->
-            <div v-if="isProductCategory" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div v-if="isProductCategory && !isEditMode" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div class="flex items-start space-x-3">
                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
@@ -276,9 +308,26 @@ const handleSubmit = () => {
                     </div>
                 </div>
             </div>
+            
+            <!-- Advertencia en modo edición para gastos de productos -->
+            <div v-if="isProductCategory && isEditMode" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                            Los productos ya fueron procesados
+                        </p>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                            Los productos de esta compra ya se agregaron al inventario. Puedes editar el monto, descripción y otros datos, pero no los productos.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Productos (si es compra de productos) -->
-            <div v-if="isProductCategory" class="space-y-3">
+            <!-- Productos (si es compra de productos y NO estamos editando) -->
+            <div v-if="isProductCategory && !isEditMode" class="space-y-3">
                 <div class="flex items-center justify-between">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Productos/Insumos <span class="text-red-500">*</span>
@@ -330,8 +379,8 @@ const handleSubmit = () => {
                 </div>
             </div>
 
-            <!-- Monto (si NO es compra de productos) -->
-            <div v-if="!isProductCategory">
+            <!-- Monto (si NO es compra de productos O si estamos editando) -->
+            <div v-if="!isProductCategory || isEditMode">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Monto <span class="text-red-500">*</span>
                 </label>
