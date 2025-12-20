@@ -77,7 +77,7 @@ const sizeClasses = {
                 'fixed inset-0',
                 nested
                     ? 'z-[60] bg-gray-900/60'
-                    : 'z-40 bg-gray-900/50 backdrop-blur-sm'
+                    : 'z-40 bg-gray-900/50 backdrop-blur-sm lg:backdrop-blur-none lg:bg-gray-900/70'
             ]"
         ></div>
     </Transition>

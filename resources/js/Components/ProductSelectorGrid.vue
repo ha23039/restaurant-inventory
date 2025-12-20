@@ -27,8 +27,11 @@ const categories = computed(() => {
     return cats.sort();
 });
 
-// Filter products
-const filteredProducts = computed(() => {
+// Límite de productos para mejor rendimiento
+const PRODUCT_LIMIT = 30;
+
+// Filter products (sin límite para conteo)
+const allFilteredProducts = computed(() => {
     let result = props.products;
 
     // Filter by search
@@ -48,6 +51,20 @@ const filteredProducts = computed(() => {
     }
 
     return result;
+});
+
+// Productos limitados para renderizar
+const filteredProducts = computed(() => {
+    return allFilteredProducts.value.slice(0, PRODUCT_LIMIT);
+});
+
+// Hay más productos?
+const hasMoreProducts = computed(() => {
+    return allFilteredProducts.value.length > PRODUCT_LIMIT;
+});
+
+const totalFilteredCount = computed(() => {
+    return allFilteredProducts.value.length;
 });
 
 const selectProduct = (product) => {
@@ -120,7 +137,12 @@ const clearSearch = () => {
 
         <!-- Results Count -->
         <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-            <span>{{ filteredProducts.length }} productos encontrados</span>
+            <div class="flex items-center gap-2">
+                <span>{{ totalFilteredCount }} productos</span>
+                <span v-if="hasMoreProducts" class="text-xs text-blue-600 dark:text-blue-400">
+                    (mostrando {{ filteredProducts.length }} - usa el buscador)
+                </span>
+            </div>
             <button
                 v-if="searchQuery || selectedCategory"
                 @click="clearSearch"
