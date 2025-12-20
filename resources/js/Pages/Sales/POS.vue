@@ -5,6 +5,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FreeSaleSlideOver from '@/Components/FreeSaleSlideOver.vue';
 import ProductVariantSlideOver from '@/Components/ProductVariantSlideOver.vue';
+import CartSlideOver from '@/Components/CartSlideOver.vue';
 import { useToast } from 'vue-toastification';
 
 // 2. PROPS DEL COMPONENTE
@@ -48,6 +49,9 @@ const showPendingSales = ref(false);
 
 // SELECCIÓN DE MESA
 const selectedTable = ref(null);
+
+// CARRITO MÓVIL
+const showMobileCart = ref(false);
 
 // 4. FUNCIONES DE PERSISTENCIA DEL CARRITO
 const saveCartToStorage = () => {
@@ -1021,30 +1025,31 @@ onBeforeUnmount(() => {
                                         </div>
                                     </div>
 
-                                    <!-- Header y Filtros -->
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Catálogo de Productos</h3>
-                                        <div class="flex items-center space-x-3">
+                                    <!-- Header y Filtros (Responsive) -->
+                                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                        <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Catálogo de Productos</h3>
+                                        <div class="flex items-center gap-2 md:gap-3">
                                             <button
                                                 @click="showFreeSaleSlideOver = true"
-                                                class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all shadow-sm hover:shadow-md"
+                                                class="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all shadow-sm hover:shadow-md"
                                             >
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                                 </svg>
-                                                <span>Venta Libre</span>
+                                                <span class="hidden sm:inline">Venta Libre</span>
+                                                <span class="sm:hidden">Libre</span>
                                             </button>
                                             <select
                                                 v-model="selectedCategory"
-                                                class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                class="text-xs md:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm flex-1 md:flex-none"
                                             >
-                                                <option value="">Todas las categorías</option>
+                                                <option value="">Todas</option>
                                                 <option
                                                     v-for="category in availableCategories"
                                                     :key="category"
                                                     :value="category"
                                                 >
-                                                    {{ category === 'menu' ? 'Platillos del Menú' : getCategoryTitle(category) }}
+                                                    {{ category === 'menu' ? 'Menú' : getCategoryTitle(category) }}
                                                 </option>
                                             </select>
                                         </div>
@@ -1061,9 +1066,9 @@ onBeforeUnmount(() => {
                                     </p>
                                 </div>
 
-                                <!-- Tabs de categorías -->
-                                <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
-                                    <nav class="-mb-px flex space-x-8">
+                                <!-- Tabs de categorías (scrollable en móvil) -->
+                                <div class="border-b border-gray-200 dark:border-gray-700 mb-6 -mx-4 px-4">
+                                    <nav class="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto scrollbar-hide pb-px">
                                         <button
                                             v-for="(group, key) in groupedProducts"
                                             :key="key"
@@ -1072,7 +1077,7 @@ onBeforeUnmount(() => {
                                                 activeTab === key
                                                     ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
-                                                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                                                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex-shrink-0'
                                             ]"
                                         >
                                             {{ group.title }} ({{ group.items.length }})
@@ -1166,8 +1171,8 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <!-- Panel del Carrito -->
-                    <div class="lg:col-span-1">
+                    <!-- Panel del Carrito (Solo visible en desktop) -->
+                    <div class="hidden lg:block lg:col-span-1">
                         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg sticky top-6">
                             <div class="p-6">
                                 <div class="flex items-center justify-between mb-6">
@@ -1505,7 +1510,7 @@ onBeforeUnmount(() => {
                                         <!-- Botones de acceso rápido -->
                                         <div v-if="!cashReceived || cashReceived === 0" class="mt-1.5 flex flex-wrap gap-1.5">
                                             <button
-                                                v-for="quickAmount in [50, 100, 200, 500, 1000]"
+                                                v-for="quickAmount in [5, 10, 15, 20, 50, 100]"
                                                 :key="quickAmount"
                                                 @click="cashReceived = quickAmount"
                                                 type="button"
@@ -1638,7 +1643,59 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Botón flotante del carrito (Solo visible en móvil) -->
+        <button
+            v-if="cartItems.length > 0 || selectedExistingSale || isFreeSale"
+            @click="showMobileCart = true"
+            class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-3 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-xl hover:shadow-2xl transition-all"
+        >
+            <span class="relative">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span class="absolute -top-2 -right-2 bg-red-500 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {{ cartItems.length + (selectedExistingSale?.sale_items?.length || 0) }}
+                </span>
+            </span>
+            <span class="font-bold text-lg">${{ formatPrice(finalTotal) }}</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            </svg>
+        </button>
     </AdminLayout>
+
+    <!-- Cart SlideOver (Solo para móvil) -->
+    <CartSlideOver
+        :show="showMobileCart"
+        :cart-items="cartItems"
+        :selected-existing-sale="selectedExistingSale"
+        :discount="discount"
+        :tax="tax"
+        :payment-method="paymentMethod"
+        :cash-received="cashReceived"
+        :selected-table="selectedTable"
+        :available-tables="available_tables"
+        :customer-name="customerName"
+        :order-notes="orderNotes"
+        :is-free-sale="isFreeSale"
+        :free-sale-description="freeSaleDescription"
+        :free-sale-total="freeSaleTotal"
+        :processing="processing"
+        @close="showMobileCart = false"
+        @update:discount="discount = $event"
+        @update:tax="tax = $event"
+        @update:paymentMethod="paymentMethod = $event"
+        @update:cashReceived="cashReceived = $event"
+        @update:selectedTable="selectedTable = $event"
+        @update:customerName="customerName = $event"
+        @update:orderNotes="orderNotes = $event"
+        @increment="incrementQuantity"
+        @decrement="decrementQuantity"
+        @remove="removeFromCart"
+        @clear="clearCart"
+        @process-sale="processSale"
+    />
 
     <!-- Free Sale SlideOver -->
     <FreeSaleSlideOver

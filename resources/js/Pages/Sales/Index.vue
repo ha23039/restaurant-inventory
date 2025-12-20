@@ -30,7 +30,7 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-full mx-auto sm:px-6 lg:px-8">
                 <!-- Métricas del día -->
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -187,9 +187,8 @@
                 </div>
 
                 <!-- Tabla de ventas -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
+                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
+                    <div class="p-6 overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
@@ -333,7 +332,6 @@
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
 
                         <!-- Mensaje si no hay ventas -->
                         <div v-if="sales.data.length === 0" class="text-center py-12 text-gray-500 dark:text-gray-400">
