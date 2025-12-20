@@ -417,6 +417,62 @@ class SaleController extends Controller
     }
 
     /**
+     * Eliminar o cancelar una venta (solo admin)
+     */
+    public function destroy(Sale $sale)
+    {
+        $this->authorize('delete', $sale);
+
+        // Verificar si tiene devoluciones
+        if ($sale->completedReturns()->count() > 0) {
+            return back()->with('error', 'No se puede eliminar una venta que tiene devoluciones asociadas');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Si la venta está pendiente, eliminar físicamente
+            if ($sale->status === 'pendiente') {
+                // Eliminar items de la venta
+                $sale->saleItems()->delete();
+                // Eliminar la venta
+                $sale->delete();
+
+                DB::commit();
+                return redirect()->route('sales.index')
+                    ->with('success', 'Venta eliminada exitosamente');
+            }
+
+            // Si la venta está completada, marcar como cancelada y revertir flujo de caja
+            if ($sale->status === 'completada') {
+                // Buscar y eliminar el registro de flujo de caja asociado
+                \App\Models\CashFlow::where('sale_id', $sale->id)
+                    ->where('category', 'ventas')
+                    ->delete();
+
+                // Cambiar status a cancelada
+                $sale->update(['status' => 'cancelada']);
+
+                DB::commit();
+                return redirect()->route('sales.index')
+                    ->with('success', 'Venta cancelada exitosamente. El flujo de caja ha sido ajustado.');
+            }
+
+            // Si ya está cancelada
+            if ($sale->status === 'cancelada') {
+                return back()->with('error', 'Esta venta ya está cancelada');
+            }
+
+            DB::commit();
+            return back()->with('error', 'No se puede procesar esta venta');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error al eliminar/cancelar venta: ' . $e->getMessage());
+            return back()->with('error', 'Error al procesar la solicitud: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * 🔄 MEJORADO: Obtener ventas que pueden tener devoluciones
      */
     public function getReturnableSales(Request $request)

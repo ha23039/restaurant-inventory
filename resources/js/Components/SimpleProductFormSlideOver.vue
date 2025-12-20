@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import SlideOver from './SlideOver.vue';
+import ProductSelectorGrid from './ProductSelectorGrid.vue';
 
 const props = defineProps({
     show: {
@@ -28,6 +29,7 @@ const form = ref({
     sale_price: '',
     cost_per_unit: '',
     category: '',
+    is_available: true,
 });
 
 const initialFormState = ref(null);
@@ -52,6 +54,7 @@ watch(() => props.product, (newProduct) => {
             sale_price: newProduct.sale_price || '',
             cost_per_unit: newProduct.cost_per_unit || '',
             category: newProduct.category || '',
+            is_available: newProduct.is_available !== undefined ? newProduct.is_available : true,
         };
         selectedProduct.value = props.products.find(p => p.id === newProduct.product_id);
         // Guardar estado inicial
@@ -108,6 +111,7 @@ const resetForm = () => {
         sale_price: '',
         cost_per_unit: '',
         category: '',
+        is_available: true,
     };
     selectedProduct.value = null;
     initialFormState.value = null;
@@ -165,6 +169,7 @@ const handleSubmit = () => {
         sale_price: parseFloat(form.value.sale_price),
         cost_per_unit: parseFloat(form.value.cost_per_unit),
         category: form.value.category?.trim() || null,
+        is_available: form.value.is_available,
     };
 
     router[method](url, data, {
@@ -197,74 +202,57 @@ const formatQuantity = (quantity) => {
         @backdrop-click="handleBackdropClick"
         :title="isEditMode ? 'Editar Producto Simple' : 'Nuevo Producto Simple'"
         :subtitle="isEditMode ? 'Modifica los detalles del producto vendible' : 'Crea un producto vendible vinculado al inventario'"
-        size="md"
+        size="lg"
     >
         <div class="space-y-6">
-            <!-- Selección de Producto Base (solo en modo crear) -->
-            <div v-if="!isEditMode">
+            <!-- Toggle Disponibilidad -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="form.is_available ? 'bg-green-100 dark:bg-green-900' : 'bg-gray-200 dark:bg-gray-700'">
+                        <svg v-if="form.is_available" class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                            Disponible en POS
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ form.is_available ? 'Este producto aparece en el punto de venta' : 'Este producto está oculto del POS' }}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    @click="form.is_available = !form.is_available"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    :class="form.is_available ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'"
+                >
+                    <span
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        :class="form.is_available ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                </button>
+            </div>
+
+            <!-- Selección de Producto Base -->
+            <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Producto del Inventario <span class="text-red-500">*</span>
+                    <span v-if="isEditMode" class="text-xs font-normal text-gray-500 ml-2">(puedes cambiarlo)</span>
                 </label>
-                <select
+                <ProductSelectorGrid
+                    :products="products"
                     v-model="form.product_id"
-                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                    required
-                >
-                    <option value="">Selecciona un producto...</option>
-                    <optgroup
-                        v-for="category in [...new Set(products.map(p => p.category?.name || 'Sin categoría'))]"
-                        :key="category"
-                        :label="category"
-                    >
-                        <option
-                            v-for="product in products.filter(p => (p.category?.name || 'Sin categoría') === category)"
-                            :key="product.id"
-                            :value="product.id"
-                        >
-                            {{ product.name }} ({{ formatQuantity(product.current_stock) }} {{ product.unit_type }})
-                        </option>
-                    </optgroup>
-                </select>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    :selected-product="selectedProduct"
+                    @select="(p) => selectedProduct = p"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     Este es el producto de inventario que se deducirá al vender
                 </p>
-            </div>
-
-            <!-- Info del producto seleccionado (modo crear) -->
-            <div v-if="selectedProduct && !isEditMode" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <div class="flex items-start space-x-3">
-                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-blue-600 dark:text-blue-400 text-lg">📦</span>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            {{ selectedProduct.name }}
-                        </p>
-                        <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                            Stock actual: {{ formatQuantity(selectedProduct.current_stock) }} {{ selectedProduct.unit_type }}
-                        </p>
-                        <p v-if="selectedProduct.category" class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                            Categoría: {{ selectedProduct.category.name }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Info del producto en modo edición -->
-            <div v-if="isEditMode && product" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                <div class="flex items-start space-x-3">
-                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-purple-600 dark:text-purple-400 text-lg">📦</span>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-purple-900 dark:text-purple-100">
-                            {{ product.product?.name }}
-                        </p>
-                        <p class="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                            Stock actual: {{ formatQuantity(product.product?.current_stock || 0) }} {{ product.product?.unit_type }}
-                        </p>
-                    </div>
-                </div>
             </div>
 
             <!-- Nombre del Producto Vendible -->

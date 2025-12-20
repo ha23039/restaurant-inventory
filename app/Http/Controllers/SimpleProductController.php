@@ -57,7 +57,7 @@ class SimpleProductController extends Controller
         $products = Product::with('category')
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'category_id', 'unit_type', 'current_stock']);
+            ->get(['id', 'name', 'category_id', 'unit_type', 'current_stock', 'unit_cost']);
 
         return Inertia::render('SimpleProducts/Index', [
             'simpleProducts' => $simpleProducts,
@@ -80,6 +80,7 @@ class SimpleProductController extends Controller
             'sale_price' => 'required|numeric|min:0.01',
             'cost_per_unit' => 'required|numeric|min:0.001',
             'category' => 'nullable|string|max:100',
+            'is_available' => 'boolean',
         ]);
 
         SimpleProduct::create($validated);
@@ -102,6 +103,7 @@ class SimpleProductController extends Controller
             'sale_price' => 'required|numeric|min:0.01',
             'cost_per_unit' => 'required|numeric|min:0.001',
             'category' => 'nullable|string|max:100',
+            'is_available' => 'boolean',
         ]);
 
         $simpleProduct->update($validated);

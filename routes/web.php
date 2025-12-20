@@ -202,6 +202,9 @@ Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('sales')->name('
 
     // Ver venta específica
     Route::get('/{sale}', [App\Http\Controllers\SaleController::class, 'show'])->name('show');
+
+    // Eliminar/Cancelar venta (solo admin - validado por policy)
+    Route::delete('/{sale}', [App\Http\Controllers\SaleController::class, 'destroy'])->name('destroy');
 });
 
 /*

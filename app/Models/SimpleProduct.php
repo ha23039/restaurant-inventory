@@ -31,6 +31,12 @@ class SimpleProduct extends Model
         return $this->belongsTo(Product::class);
     }
 
+    // Relación con items de venta
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
+
     // Calcular disponibilidad basada en inventario - CORREGIDO
     public function getAvailableQuantityAttribute()
     {

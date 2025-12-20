@@ -327,6 +327,15 @@
                                                 <span v-else-if="sale.status !== 'completada'" class="text-gray-400 text-xs">
                                                     Solo ventas completadas
                                                 </span>
+                                                <!-- Botón eliminar/cancelar (solo admin) -->
+                                                <button
+                                                    v-if="isAdmin && sale.status !== 'cancelada' && !sale.has_returns"
+                                                    @click="deleteSale(sale)"
+                                                    class="text-red-600 hover:text-red-900 inline-flex items-center"
+                                                >
+                                                    <component :is="icons.trash" class="w-4 h-4 mr-1" />
+                                                    {{ sale.status === 'pendiente' ? 'Eliminar' : 'Cancelar' }}
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -443,9 +452,13 @@
 
 <script setup>
 import { reactive, computed } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useIcons } from '@/composables/useIcons';
+
+// Auth user
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 
 // Props
 const props = defineProps({
@@ -536,6 +549,20 @@ const formatTime = (date) => {
 
 const getTotalQuantity = (saleItems) => {
     return saleItems.reduce((total, item) => total + item.quantity, 0);
+};
+
+// Eliminar/Cancelar venta (solo admin)
+const deleteSale = (sale) => {
+    const action = sale.status === 'pendiente' ? 'eliminar' : 'cancelar';
+    const message = sale.status === 'pendiente'
+        ? `¿Estás seguro de eliminar la venta #${sale.sale_number}? Esta acción no se puede deshacer.`
+        : `¿Estás seguro de cancelar la venta #${sale.sale_number}? Se revertirá el flujo de caja.`;
+
+    if (confirm(message)) {
+        router.delete(route('sales.destroy', sale.id), {
+            preserveScroll: true,
+        });
+    }
 };
 
 const getReturnFilterText = (filterValue) => {

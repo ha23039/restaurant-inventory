@@ -103,7 +103,6 @@ const toggleAvailability = (item) => {
 const deleteItem = (item) => {
     if (confirm(`¿Estás seguro de eliminar "${item.name}"?`)) {
         router.delete(route('menu.items.destroy', item.id), {
-            preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Platillo eliminado');
