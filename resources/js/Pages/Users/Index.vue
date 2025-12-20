@@ -4,6 +4,8 @@ import { router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import UserFormModal from './UserFormModal.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     users: Object,
@@ -11,6 +13,8 @@ const props = defineProps({
     statistics: Object,
     roles: Array,
 });
+
+const { confirm } = useConfirmDialog();
 
 // Local filters
 const localFilters = ref({
@@ -58,8 +62,16 @@ const closeModal = () => {
 };
 
 // Toggle user status
-const toggleUserStatus = (user) => {
-    if (confirm(`¿Estás seguro de ${user.is_active ? 'desactivar' : 'activar'} este usuario?`)) {
+const toggleUserStatus = async (user) => {
+    const action = user.is_active ? 'desactivar' : 'activar';
+    const confirmed = await confirm({
+        title: `¿${user.is_active ? 'Desactivar' : 'Activar'} usuario?`,
+        message: `¿Estás seguro de ${action} a ${user.name}?`,
+        confirmText: user.is_active ? 'Desactivar' : 'Activar',
+        type: user.is_active ? 'warning' : 'info'
+    });
+
+    if (confirmed) {
         router.post(route('users.toggle-status', user.id), {}, {
             preserveScroll: true,
         });
@@ -450,5 +462,6 @@ const hasActiveFilters = computed(() => {
                 </div>
             </div>
         </div>
+
     </AdminLayout>
 </template>

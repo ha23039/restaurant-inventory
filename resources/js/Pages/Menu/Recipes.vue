@@ -3,7 +3,9 @@ import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import RecipeFormSlideOver from '@/Components/RecipeFormSlideOver.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     menuItems: Object,
@@ -12,6 +14,7 @@ const props = defineProps({
 });
 
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 // Estado
 const expandedItems = ref(new Set());
@@ -71,8 +74,15 @@ const clearFilters = () => {
     router.get(route('menu.recipes'));
 };
 
-const deleteRecipe = (recipe, menuItemName) => {
-    if (confirm(`¿Eliminar "${recipe.product.name}" de la receta de "${menuItemName}"?`)) {
+const deleteRecipe = async (recipe, menuItemName) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar ingrediente?',
+        message: `¿Eliminar "${recipe.product.name}" de la receta de "${menuItemName}"?`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (confirmed) {
         router.delete(route('menu.recipes.destroy', recipe.id), {
             preserveState: true,
             preserveScroll: true,
@@ -374,5 +384,6 @@ const formatQuantity = (quantity) => {
             :products="products"
             @close="closeForm"
         />
+
     </AdminLayout>
 </template>

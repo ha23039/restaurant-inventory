@@ -4,18 +4,25 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import BaseButton from '@/Components/Base/BaseButton.vue';
-import { useToast } from '@/composables';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useToast, useConfirmDialog } from '@/composables';
 
 const props = defineProps({
     expense: Object,
 });
 
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
-const deleteExpense = () => {
-    if (!confirm('¿Estás seguro de eliminar este gasto? Esta acción no se puede deshacer.')) {
-        return;
-    }
+const deleteExpense = async () => {
+    const confirmed = await confirm({
+        title: '¿Eliminar gasto?',
+        message: 'Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
 
     router.delete(route('expenses.destroy', props.expense.id), {
         onSuccess: () => {
@@ -242,5 +249,6 @@ const extractPaymentMethod = (notes) => {
                 </BaseCard>
             </div>
         </div>
+
     </AdminLayout>
 </template>

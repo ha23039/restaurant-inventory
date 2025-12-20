@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 import SlideOver from './SlideOver.vue';
+import ConfirmDialog from './ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     show: {
@@ -10,6 +12,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'add']);
+const { confirm } = useConfirmDialog();
 
 // Form data
 const form = ref({
@@ -42,9 +45,15 @@ const categories = [
     { value: 'otro', label: 'Otro' }
 ];
 
-const handleClose = () => {
+const handleClose = async () => {
     if (hasChanges.value) {
-        if (confirm('¿Deseas descartar los cambios?')) {
+        const confirmed = await confirm({
+            title: '¿Descartar cambios?',
+            message: 'Tienes cambios sin guardar. Si sales ahora, se perderán.',
+            confirmText: 'Descartar',
+            type: 'warning'
+        });
+        if (confirmed) {
             emit('close');
         }
     } else {
@@ -225,4 +234,5 @@ const handleAdd = () => {
             </div>
         </template>
     </SlideOver>
+
 </template>

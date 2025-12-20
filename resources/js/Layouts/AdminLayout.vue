@@ -55,6 +55,9 @@
             :show="shortcutsModalOpen"
             @close="closeShortcutsModal"
         />
+
+        <!-- Global Confirm Dialog (único en toda la app) -->
+        <ConfirmDialog />
     </div>
 </template>
 
@@ -67,6 +70,7 @@ import AdminHeader from '@/Components/AdminHeader.vue';
 import GlobalSearch from '@/Components/GlobalSearch.vue';
 import ExpenseSlideOver from '@/Components/ExpenseSlideOver.vue';
 import KeyboardShortcutsModal from '@/Components/KeyboardShortcutsModal.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 
 const props = defineProps({
     breadcrumbs: {

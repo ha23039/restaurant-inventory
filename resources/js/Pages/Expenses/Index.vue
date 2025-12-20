@@ -9,7 +9,8 @@ import BaseButton from '@/Components/Base/BaseButton.vue';
 import BaseCard from '@/Components/Base/BaseCard.vue';
 import BaseBadge from '@/Components/Base/BaseBadge.vue';
 import ExpenseSlideOver from '@/Components/ExpenseSlideOver.vue';
-import { useToast } from '@/composables';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useToast, useConfirmDialog } from '@/composables';
 
 const props = defineProps({
     expenses: Object,
@@ -20,6 +21,7 @@ const props = defineProps({
 });
 
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 const showExpenseSlideOver = ref(false);
 const editingExpense = ref(null);
 
@@ -98,10 +100,15 @@ const closeExpenseSlideOver = () => {
     }, 300);
 };
 
-const deleteExpense = (expense) => {
-    if (!confirm(`¿Estás seguro de eliminar el gasto "${expense.description}"?`)) {
-        return;
-    }
+const deleteExpense = async (expense) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar gasto?',
+        message: `¿Estás seguro de eliminar el gasto "${expense.description}"?`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
 
     router.delete(route('expenses.destroy', expense.id), {
         onSuccess: () => {
@@ -384,5 +391,6 @@ const getCategoryVariant = (category) => {
             :suppliers="suppliers"
             @close="closeExpenseSlideOver"
         />
+
     </AdminLayout>
 </template>

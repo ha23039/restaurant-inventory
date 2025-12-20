@@ -5,7 +5,9 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MenuItemFormSlideOver from '@/Components/MenuItemFormSlideOver.vue';
 import ExportMenuSlideOver from '@/Components/Menu/ExportMenuSlideOver.vue';
 import VariantManagerSlideOver from '@/Components/VariantManagerSlideOver.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { debounce } from 'lodash-es';
 
 const props = defineProps({
@@ -15,6 +17,7 @@ const props = defineProps({
 });
 
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 // Estado
 const showFormSlideOver = ref(false);
@@ -100,18 +103,25 @@ const toggleAvailability = (item) => {
     });
 };
 
-const deleteItem = (item) => {
-    if (confirm(`¿Estás seguro de eliminar "${item.name}"?`)) {
-        router.delete(route('menu.items.destroy', item.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Platillo eliminado');
-            },
-            onError: (errors) => {
-                toast.error(errors.error || 'Error al eliminar platillo');
-            },
-        });
-    }
+const deleteItem = async (item) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar platillo?',
+        message: `Se eliminará "${item.name}". Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
+
+    router.delete(route('menu.items.destroy', item.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Platillo eliminado');
+        },
+        onError: (errors) => {
+            toast.error(errors.error || 'Error al eliminar platillo');
+        },
+    });
 };
 
 const formatPrice = (price) => {
@@ -612,5 +622,7 @@ const formatPrice = (price) => {
             :menuItem="variantsItem"
             @close="closeVariantsManager"
         />
+
+        <!-- Confirm Dialog -->
     </AdminLayout>
 </template>

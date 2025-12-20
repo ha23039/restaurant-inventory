@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import SlideOver from './SlideOver.vue';
 import VariantFormModal from './VariantFormModal.vue';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     show: {
@@ -18,6 +19,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 const variants = ref([]);
 const products = ref([]);
@@ -88,9 +90,14 @@ const handleVariantSaved = () => {
 };
 
 const deleteVariant = async (variant) => {
-    if (!confirm(`¿Estás seguro de eliminar la variante "${variant.variant_name}"?`)) {
-        return;
-    }
+    const confirmed = await confirm({
+        title: '¿Eliminar variante?',
+        message: `Se eliminará la variante "${variant.variant_name}". Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
 
     deletingVariantId.value = variant.id;
 

@@ -3,7 +3,8 @@ import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import SlideOver from './SlideOver.vue';
 import ProductSelectionSlideOver from './ProductSelectionSlideOver.vue';
-import { useToast } from '@/composables';
+import ConfirmDialog from './ConfirmDialog.vue';
+import { useToast, useConfirmDialog } from '@/composables';
 
 const props = defineProps({
     show: {
@@ -27,6 +28,7 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 // Form data
 const form = ref({
@@ -96,9 +98,15 @@ const paymentMethods = [
     { value: 'cheque', label: 'Cheque' },
 ];
 
-const handleClose = () => {
+const handleClose = async () => {
     if (hasChanges.value && !isSubmitting.value) {
-        if (confirm('Aún no has guardado los cambios que realizaste, ¿Estás seguro que deseas salir?')) {
+        const confirmed = await confirm({
+            title: '¿Descartar cambios?',
+            message: 'Tienes cambios sin guardar. Si sales ahora, se perderán.',
+            confirmText: 'Descartar',
+            type: 'warning'
+        });
+        if (confirmed) {
             emit('close');
         }
     } else {
@@ -506,4 +514,5 @@ const handleSubmit = () => {
         @close="showProductSelection = false"
         @save="handleProductsSelected"
     />
+
 </template>

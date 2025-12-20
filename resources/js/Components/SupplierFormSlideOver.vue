@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import SlideOver from './SlideOver.vue';
+import ConfirmDialog from './ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     show: {
@@ -15,6 +17,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+const { confirm } = useConfirmDialog();
 
 const form = ref({
     name: '',
@@ -88,9 +91,15 @@ const resetForm = () => {
     isSubmitting.value = false;
 };
 
-const handleClose = () => {
+const handleClose = async () => {
     if (hasChanges.value && !isSubmitting.value) {
-        if (confirm('Aún no has guardado los cambios que realizaste, ¿Estás seguro que deseas salir?')) {
+        const confirmed = await confirm({
+            title: '¿Descartar cambios?',
+            message: 'Tienes cambios sin guardar. Si sales ahora, se perderán.',
+            confirmText: 'Descartar',
+            type: 'warning'
+        });
+        if (confirmed) {
             emit('close');
         }
     } else {
@@ -249,4 +258,5 @@ const handleSubmit = () => {
             </div>
         </template>
     </SlideOver>
+
 </template>

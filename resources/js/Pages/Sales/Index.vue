@@ -447,6 +447,7 @@
                 </div>
             </div>
         </div>
+
     </AdminLayout>
 </template>
 
@@ -455,10 +456,13 @@ import { reactive, computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useIcons } from '@/composables/useIcons';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 // Auth user
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
+const { confirm } = useConfirmDialog();
 
 // Props
 const props = defineProps({
@@ -552,13 +556,20 @@ const getTotalQuantity = (saleItems) => {
 };
 
 // Eliminar/Cancelar venta (solo admin)
-const deleteSale = (sale) => {
+const deleteSale = async (sale) => {
     const action = sale.status === 'pendiente' ? 'eliminar' : 'cancelar';
     const message = sale.status === 'pendiente'
         ? `¿Estás seguro de eliminar la venta #${sale.sale_number}? Esta acción no se puede deshacer.`
         : `¿Estás seguro de cancelar la venta #${sale.sale_number}? Se revertirá el flujo de caja.`;
 
-    if (confirm(message)) {
+    const confirmed = await confirm({
+        title: `¿${action.charAt(0).toUpperCase() + action.slice(1)} venta?`,
+        message: message,
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        type: 'danger'
+    });
+
+    if (confirmed) {
         router.delete(route('sales.destroy', sale.id), {
             preserveScroll: true,
         });

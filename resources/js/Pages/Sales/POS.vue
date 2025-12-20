@@ -6,7 +6,9 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FreeSaleSlideOver from '@/Components/FreeSaleSlideOver.vue';
 import ProductVariantSlideOver from '@/Components/ProductVariantSlideOver.vue';
 import CartSlideOver from '@/Components/CartSlideOver.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 // 2. PROPS DEL COMPONENTE
 const props = defineProps({
@@ -32,6 +34,7 @@ const orderNotes = ref('');
 const showCustomerInfo = ref(false);
 const processing = ref(false);
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 // VENTA LIBRE
 const showFreeSaleSlideOver = ref(false);
@@ -423,8 +426,15 @@ const removeFromCart = (index) => {
     saveCartToStorage();
 };
 
-const clearCart = () => {
-    if (confirm('¿Estás seguro de limpiar el carrito?')) {
+const clearCart = async () => {
+    const confirmed = await confirm({
+        title: '¿Limpiar carrito?',
+        message: 'Se eliminarán todos los productos del carrito.',
+        confirmText: 'Limpiar',
+        type: 'warning'
+    });
+
+    if (confirmed) {
         cartItems.value = [];
         discount.value = 0;
         tax.value = 0;
@@ -461,7 +471,12 @@ const selectExistingSale = async (sale) => {
 const completeExistingSale = async (sale) => {
     if (processing.value) return;
 
-    const confirmed = confirm(`¿Completar orden #${sale.sale_number} por $${parseFloat(sale.total).toFixed(2)}?`);
+    const confirmed = await confirm({
+        title: '¿Completar orden?',
+        message: `Se completará la orden #${sale.sale_number} por $${parseFloat(sale.total).toFixed(2)}.`,
+        confirmText: 'Completar',
+        type: 'info'
+    });
     if (!confirmed) return;
 
     processing.value = true;
@@ -1711,4 +1726,6 @@ onBeforeUnmount(() => {
         @close="showVariantSlideOver = false"
         @select="addVariantToCart"
     />
+
+    <!-- Confirm Dialog -->
 </template>

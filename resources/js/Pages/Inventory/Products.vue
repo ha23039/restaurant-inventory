@@ -386,6 +386,7 @@
             :categories="categories"
             @close="closeProductSlideOver"
         />
+
     </AdminLayout>
 </template>
 
@@ -394,6 +395,8 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ProductSlideOver from '@/Components/ProductSlideOver.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { debounce } from 'lodash-es';
 
 // Props
@@ -402,6 +405,8 @@ const props = defineProps({
     categories: Array,
     filters: Object
 });
+
+const { confirm } = useConfirmDialog();
 
 // State
 const searching = ref(false);
@@ -471,11 +476,17 @@ const closeProductSlideOver = () => {
 };
 
 // Eliminar producto
-const deleteProduct = (product) => {
-    if (confirm(`¿Estás seguro de eliminar "${product.name}"?`)) {
+const deleteProduct = async (product) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar producto?',
+        message: `¿Estás seguro de eliminar "${product.name}"?`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (confirmed) {
         router.delete(route('inventory.products.destroy', product.id));
     }
-    closeDropdown();
 };
 
 // Formatear números - eliminar decimales innecesarios

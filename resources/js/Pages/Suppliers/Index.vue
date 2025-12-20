@@ -4,11 +4,15 @@ import { router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import SupplierFormSlideOver from '@/Components/SupplierFormSlideOver.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     suppliers: Object,
     filters: Object,
 });
+
+const { confirm } = useConfirmDialog();
 
 const searchQuery = ref(props.filters?.search || '');
 const statusFilter = ref(props.filters?.status ?? '');
@@ -41,16 +45,31 @@ const openEditForm = (supplier) => {
     showFormSlideOver.value = true;
 };
 
-const toggleStatus = (supplier) => {
-    if (confirm(`¿Estás seguro de ${supplier.is_active ? 'desactivar' : 'activar'} este proveedor?`)) {
+const toggleStatus = async (supplier) => {
+    const action = supplier.is_active ? 'desactivar' : 'activar';
+    const confirmed = await confirm({
+        title: `¿${supplier.is_active ? 'Desactivar' : 'Activar'} proveedor?`,
+        message: `Se va a ${action} el proveedor "${supplier.name}".`,
+        confirmText: supplier.is_active ? 'Desactivar' : 'Activar',
+        type: supplier.is_active ? 'warning' : 'info'
+    });
+
+    if (confirmed) {
         router.post(route('suppliers.toggle-status', supplier.id), {}, {
             preserveScroll: true,
         });
     }
 };
 
-const deleteSupplier = (supplier) => {
-    if (confirm(`¿Estás seguro de eliminar el proveedor "${supplier.name}"? Esta acción no se puede deshacer.`)) {
+const deleteSupplier = async (supplier) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar proveedor?',
+        message: `Se eliminará el proveedor "${supplier.name}". Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (confirmed) {
         router.delete(route('suppliers.destroy', supplier.id), {
             preserveScroll: true,
         });
@@ -326,5 +345,7 @@ const hasActiveFilters = computed(() => {
             :supplier="selectedSupplier"
             @close="showFormSlideOver = false"
         />
+
+        <!-- Confirm Dialog -->
     </AdminLayout>
 </template>

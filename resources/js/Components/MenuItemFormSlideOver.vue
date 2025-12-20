@@ -2,6 +2,8 @@
 import { ref, watch, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import SlideOver from './SlideOver.vue';
+import ConfirmDialog from './ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     show: {
@@ -15,6 +17,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+const { confirm } = useConfirmDialog();
 
 // Form state
 const form = ref({
@@ -113,9 +116,15 @@ const removeImage = () => {
     form.value.image_path = '';
 };
 
-const handleClose = () => {
+const handleClose = async () => {
     if (hasChanges.value) {
-        if (confirm('¿Deseas descartar los cambios?')) {
+        const confirmed = await confirm({
+            title: '¿Descartar cambios?',
+            message: 'Tienes cambios sin guardar. Si sales ahora, se perderán.',
+            confirmText: 'Descartar',
+            type: 'warning'
+        });
+        if (confirmed) {
             emit('close');
         }
     } else {
@@ -446,4 +455,5 @@ const handleSubmit = () => {
             </div>
         </template>
     </SlideOver>
+
 </template>

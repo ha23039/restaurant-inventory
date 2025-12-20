@@ -190,6 +190,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Confirm Dialog -->
     </AdminLayout>
 </template>
 
@@ -198,11 +200,17 @@ import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useToast } from 'vue-toastification';
 
 // Props
 defineProps({
     categories: Array
 });
+
+const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 // State
 const showModal = ref(false);
@@ -250,14 +258,22 @@ const submitForm = () => {
     }
 };
 
-const deleteCategory = (category) => {
+const deleteCategory = async (category) => {
     if (category.products_count > 0) {
-        alert(`No se puede eliminar "${category.name}" porque tiene ${category.products_count} productos asignados.`);
+        toast.warning(`No se puede eliminar "${category.name}" porque tiene ${category.products_count} productos asignados.`);
         return;
     }
 
-    if (confirm(`¿Estás seguro de eliminar la categoría "${category.name}"?`)) {
+    const confirmed = await confirm({
+        title: '¿Eliminar categoría?',
+        message: `Se eliminará la categoría "${category.name}". Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (confirmed) {
         router.delete(route('inventory.categories.destroy', category.id));
     }
 };
 </script>
+

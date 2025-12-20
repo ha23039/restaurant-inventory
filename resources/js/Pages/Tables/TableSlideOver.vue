@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     show: {
@@ -14,6 +16,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'updated']);
+const { confirm } = useConfirmDialog();
 
 // State
 const currentSale = ref(null);
@@ -104,10 +107,17 @@ const updateStatus = async (newStatus) => {
     });
 };
 
-const releaseTable = () => {
+const releaseTable = async () => {
     if (!props.table) return;
 
-    if (!confirm('¿Estás seguro de liberar esta mesa?')) return;
+    const confirmed = await confirm({
+        title: '¿Liberar mesa?',
+        message: `¿Estás seguro de liberar la mesa ${props.table.table_number}?`,
+        confirmText: 'Liberar',
+        type: 'warning'
+    });
+
+    if (!confirmed) return;
 
     isProcessing.value = true;
 
@@ -380,5 +390,6 @@ const getStatusLabel = (status) => {
                 </div>
             </div>
         </div>
+
     </Transition>
 </template>

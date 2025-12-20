@@ -3,7 +3,9 @@ import { ref, computed } from 'vue';
 import { router, Head } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import SimpleProductFormSlideOver from '@/Components/SimpleProductFormSlideOver.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     simpleProducts: Object,
@@ -12,6 +14,7 @@ const props = defineProps({
 });
 
 const toast = useToast();
+const { confirm } = useConfirmDialog();
 
 // SlideOver state
 const showFormSlideOver = ref(false);
@@ -61,10 +64,15 @@ const clearFilters = () => {
     });
 };
 
-const deleteProduct = (product) => {
-    if (!confirm(`¿Eliminar "${product.name}"?\n\nEsta acción no se puede deshacer.`)) {
-        return;
-    }
+const deleteProduct = async (product) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar producto?',
+        message: `¿Eliminar "${product.name}"? Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
 
     router.delete(route('simple-products.destroy', product.id), {
         preserveState: true,
@@ -398,5 +406,6 @@ const getStockBadgeClass = (product) => {
             :products="products"
             @close="closeForm"
         />
+
     </AdminLayout>
 </template>
