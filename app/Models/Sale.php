@@ -10,6 +10,19 @@ class Sale extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Boot method para manejar eventos del modelo
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Cuando se elimine la venta (soft o hard), eliminar registros de cocina
+        static::deleting(function ($sale) {
+            $sale->kitchenOrderState()->delete();
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'cash_register_session_id',

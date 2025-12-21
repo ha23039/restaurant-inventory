@@ -45,15 +45,13 @@ class SaleController extends Controller
             } elseif ($request->has_returns === 'without_returns') {
                 $query->whereDoesntHave('completedReturns');
             } elseif ($request->has_returns === 'partial_returns') {
-                $query->whereHas('completedReturns', function ($q) {
-                    $q->selectRaw('SUM(total_returned) as total_ret')
-                        ->havingRaw('total_ret < (SELECT total FROM sales WHERE sales.id = sale_returns.sale_id)');
-                });
+                // Ventas con devoluciones parciales (devuelto < total)
+                $query->whereHas('completedReturns')
+                    ->whereRaw('(SELECT COALESCE(SUM(total_returned), 0) FROM sale_returns WHERE sale_returns.sale_id = sales.id AND sale_returns.status = "completed") < sales.total');
             } elseif ($request->has_returns === 'full_returns') {
-                $query->whereHas('completedReturns', function ($q) {
-                    $q->selectRaw('SUM(total_returned) as total_ret')
-                        ->havingRaw('total_ret >= (SELECT total FROM sales WHERE sales.id = sale_returns.sale_id)');
-                });
+                // Ventas con devoluciones totales (devuelto >= total)
+                $query->whereHas('completedReturns')
+                    ->whereRaw('(SELECT COALESCE(SUM(total_returned), 0) FROM sale_returns WHERE sale_returns.sale_id = sales.id AND sale_returns.status = "completed") >= sales.total');
             }
         }
 

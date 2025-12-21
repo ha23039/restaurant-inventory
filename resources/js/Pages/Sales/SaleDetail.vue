@@ -14,6 +14,28 @@
                     <Link :href="route('sales.index')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                         ← Volver
                     </Link>
+                    <!-- Botón para cobrar/continuar órdenes pendientes -->
+                    <Link 
+                        v-if="sale?.status === 'pendiente'"
+                        :href="route('sales.pos', { load_sale: sale.id })" 
+                        class="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Cobrar / Continuar
+                    </Link>
+                    <!-- Botón para eliminar órdenes pendientes -->
+                    <button
+                        v-if="sale?.status === 'pendiente'"
+                        @click="deletePendingSale"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Eliminar
+                    </button>
                     <Link 
                         v-if="sale?.can_return"
                         :href="route('returns.create', { sale_id: sale.id })" 
@@ -185,41 +207,6 @@
                             Sistema de Tickets e Impresión
                         </h3>
                         
-                        <!-- Estado de impresión -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h4 class="font-medium text-orange-900">Comanda de Cocina</h4>
-                                        <p class="text-sm text-orange-700">Para preparación de platillos</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h4 class="font-medium text-blue-900">Ticket de Cliente</h4>
-                                        <p class="text-sm text-blue-700">Comprobante de compra</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Botones de impresión MEJORADOS -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <!-- Comanda de Cocina -->
@@ -694,9 +681,11 @@ import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useIcons } from '@/composables/useIcons';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
-// Icons
+// Icons & Dialogs
 const { icons } = useIcons();
+const { confirm } = useConfirmDialog();
 
 // Props
 const props = defineProps({
@@ -718,7 +707,28 @@ const loadingPreview = ref(false);
 const kitchenPreviewContent = ref('');
 const customerPreviewContent = ref('');
 
-// 🚀 MÉTODOS PROFESIONALES CON INERTIA (EXISTENTES - SIN CAMBIOS)
+// Función para eliminar orden pendiente
+const deletePendingSale = async () => {
+    if (!props.sale || props.sale.status !== 'pendiente') return;
+
+    const confirmed = await confirm({
+        title: '¿Eliminar orden pendiente?',
+        message: `Se eliminará permanentemente la orden #${props.sale.sale_number}. Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (confirmed) {
+        router.delete(route('sales.destroy', props.sale.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Redirigir a la lista de ventas después de eliminar
+            }
+        });
+    }
+};
+
+//  MÉTODOS PROFESIONALES CON INERTIA (EXISTENTES - SIN CAMBIOS)
 const printKitchenTicket = () => {
     if (!props.sale) return;
     

@@ -508,6 +508,32 @@ const completeExistingSale = async (sale) => {
     }
 };
 
+// Eliminar orden pendiente desde el POS
+const deletePendingOrder = async (sale) => {
+    const confirmed = await confirm({
+        title: '¿Eliminar orden pendiente?',
+        message: `Se eliminará la orden #${sale.sale_number} por $${parseFloat(sale.total).toFixed(2)}. Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
+
+    router.delete(route('sales.destroy', sale.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showNotification(`Orden #${sale.sale_number} eliminada`, 'success');
+            // Limpiar si era la orden seleccionada
+            if (selectedExistingSale.value?.id === sale.id) {
+                clearSelectedSale();
+            }
+        },
+        onError: (errors) => {
+            showNotification(errors.message || 'Error al eliminar la orden', 'error');
+        }
+    });
+};
+
 const clearSelectedSale = () => {
     selectedExistingSale.value = null;
     cartItems.value = [];
@@ -841,6 +867,19 @@ onMounted(() => {
         }
     }
 
+    // Verificar si viene con load_sale para cargar una orden pendiente
+    const loadSaleId = urlParams.get('load_sale');
+    if (loadSaleId && props.pending_sales) {
+        const saleToLoad = props.pending_sales.find(s => s.id == loadSaleId);
+        if (saleToLoad) {
+            // Usar nextTick para asegurar que el DOM está listo
+            nextTick(() => {
+                selectExistingSale(saleToLoad);
+                showNotification(`Orden #${saleToLoad.sale_number} cargada. Lista para cobrar o modificar.`, 'success');
+            });
+        }
+    }
+
     // Auto-focus en el input de búsqueda después de un pequeño delay
     setTimeout(() => {
         searchInputRef.value?.focus();
@@ -941,9 +980,21 @@ onBeforeUnmount(() => {
                                         {{ new Date(sale.created_at).toLocaleString('es-ES') }}
                                     </p>
                                 </div>
-                                <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-semibold rounded-full">
-                                    Pendiente
-                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-semibold rounded-full">
+                                        Pendiente
+                                    </span>
+                                    <!-- Botón eliminar -->
+                                    <button
+                                        @click.stop="deletePendingOrder(sale)"
+                                        class="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                        title="Eliminar orden"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <div v-if="sale.table" class="mb-2 flex items-center">

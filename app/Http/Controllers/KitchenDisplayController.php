@@ -27,9 +27,11 @@ class KitchenDisplayController extends Controller
             'sale.saleItems.menuItemVariant.menuItem',  // Soporte para variantes
             'sale.table'
         ])
+            ->whereHas('sale') // Solo órdenes con venta válida (no eliminada)
             ->active() // Solo órdenes no entregadas
             ->orderByPriority() // Por prioridad y luego por fecha
             ->get()
+            ->filter(fn($order) => $order->sale !== null) // Doble verificación
             ->map(function ($order) {
                 return [
                     'id' => $order->id,
@@ -51,7 +53,7 @@ class KitchenDisplayController extends Controller
                     }),
                     'created_at' => $order->created_at->format('H:i'),
                 ];
-            });
+            })->values();
 
         return response()->json($orders);
     }

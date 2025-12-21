@@ -44,6 +44,7 @@ class SaleRepository extends BaseRepository implements SaleRepositoryInterface
     public function getLastSaleOfDay(string $date): ?Sale
     {
         return $this->model
+            ->withTrashed() // Incluir ventas eliminadas para evitar duplicados de sale_number
             ->where('sale_number', 'like', "{$date}%")
             ->orderBy('sale_number', 'desc')
             ->first();
@@ -78,11 +79,11 @@ class SaleRepository extends BaseRepository implements SaleRepositoryInterface
         return $this->model
             ->with('saleItems')
             ->get()
-            ->flatMap(fn ($sale) => $sale->saleItems)
+            ->flatMap(fn($sale) => $sale->saleItems)
             ->groupBy(function ($item) {
                 return $item->product_type === 'menu'
-                    ? 'menu_'.$item->menu_item_id
-                    : 'simple_'.$item->simple_product_id;
+                    ? 'menu_' . $item->menu_item_id
+                    : 'simple_' . $item->simple_product_id;
             })
             ->map(function ($items) {
                 return [
