@@ -33,6 +33,22 @@ class SettingsController extends Controller
             'currency' => 'required|string|max:10',
             'timezone' => 'required|string|max:50',
             'social_media' => 'nullable|array',
+
+            // Digital Menu Fields
+            'digital_menu_enabled' => 'boolean',
+            'whatsapp_number' => 'nullable|string|max:20',
+            'digital_menu_welcome_message' => 'nullable|string|max:1000',
+            'digital_menu_closed_message' => 'nullable|string|max:500',
+            'min_order_amount' => 'nullable|numeric|min:0',
+            'estimated_prep_time' => 'nullable|integer|min:1|max:300',
+            'require_phone_verification' => 'boolean',
+            'allow_pickup' => 'boolean',
+            'allow_delivery' => 'boolean',
+            'allow_dine_in' => 'boolean',
+            'delivery_fee' => 'nullable|numeric|min:0',
+            'delivery_min_amount' => 'nullable|numeric|min:0',
+            'digital_menu_schedule' => 'nullable|array',
+            'digital_menu_custom_css' => 'nullable|string|max:5000',
         ]);
 
         $settings = BusinessSettings::get();

@@ -27,6 +27,7 @@ class Sale extends Model
         'user_id',
         'cash_register_session_id',
         'table_id',
+        'restaurant_id',
         'sale_number',
         'customer_name',
         'notes',
@@ -38,6 +39,13 @@ class Sale extends Model
         'status',
         'is_free_sale',
         'free_sale_description',
+        'source',
+        'digital_customer_id',
+        'delivery_method',
+        'customer_phone',
+        'customer_address',
+        'customer_notes',
+        'estimated_ready_at',
     ];
 
     protected $casts = [
@@ -46,6 +54,7 @@ class Sale extends Model
         'discount' => 'decimal:2',
         'total' => 'decimal:2',
         'is_free_sale' => 'boolean',
+        'estimated_ready_at' => 'datetime',
     ];
 
     public function user()
@@ -127,5 +136,33 @@ class Sale extends Model
     public function kitchenOrderState()
     {
         return $this->hasOne(KitchenOrderState::class);
+    }
+
+    // ==========================================
+    // 📱 DIGITAL MENU
+    // ==========================================
+
+    /**
+     * Relación con el cliente digital
+     */
+    public function digitalCustomer()
+    {
+        return $this->belongsTo(DigitalCustomer::class);
+    }
+
+    /**
+     * Scope para ventas del menu digital
+     */
+    public function scopeFromDigitalMenu($query)
+    {
+        return $query->where('source', 'digital_menu');
+    }
+
+    /**
+     * Verificar si es una orden digital
+     */
+    public function getIsDigitalOrderAttribute(): bool
+    {
+        return $this->source === 'digital_menu';
     }
 }

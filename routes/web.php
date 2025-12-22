@@ -362,7 +362,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('financial')->name('financial.
 
 /*
 |--------------------------------------------------------------------------
-| 🔄 Rutas para DEVOLUCIONES (Admin + Cajero)
+|  Rutas para DEVOLUCIONES (Admin + Cajero)
 |--------------------------------------------------------------------------
 */
 
@@ -384,7 +384,7 @@ Route::middleware(['auth', 'role:admin,cajero'])->prefix('returns')->name('retur
 
 /*
 |--------------------------------------------------------------------------
-| 🧾 RUTAS PARA SISTEMA DE TICKETS TÉRMICOS
+|  RUTAS PARA SISTEMA DE TICKETS TÉRMICOS
 |--------------------------------------------------------------------------
 | Rutas para impresión de tickets y comandas
 */
@@ -401,7 +401,7 @@ Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('tickets')->name
     Route::post('/return/{return}', [App\Http\Controllers\TicketController::class, 'printReturnReceipt'])
         ->name('return');
 
-    // 🆕 NUEVAS RUTAS DE VISTA PREVIA (AGREGAR ESTAS)
+    // NUEVAS RUTAS DE VISTA PREVIA (AGREGAR ESTAS)
     Route::get('/preview/kitchen/{sale}', [App\Http\Controllers\TicketController::class, 'previewKitchenOrder'])
         ->name('preview.kitchen');
 
@@ -423,7 +423,7 @@ Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('tickets')->name
 
 /*
 |--------------------------------------------------------------------------
-| 🧪 RUTAS DE DESARROLLO Y TESTING
+|  RUTAS DE DESARROLLO Y TESTING
 |--------------------------------------------------------------------------
 | Solo disponibles en entorno de desarrollo
 */
@@ -480,7 +480,7 @@ if (app()->environment(['local', 'development'])) {
 
 /*
 |--------------------------------------------------------------------------
-| 📊 RUTAS PARA REPORTES CONSOLIDADOS (Admin solamente)
+|  RUTAS PARA REPORTES CONSOLIDADOS (Admin solamente)
 |--------------------------------------------------------------------------
 | Rutas para exportar reportes consolidados en diferentes formatos
 */
@@ -490,6 +490,32 @@ Route::middleware(['auth', 'role:admin'])->prefix('consolidated-reports')->name(
     Route::post('/financial/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportFinancialReport'])->name('financial.export');
     Route::post('/profitability/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportProfitabilityReport'])->name('profitability.export');
     Route::post('/inventory/export', [App\Http\Controllers\ConsolidatedReportController::class, 'exportInventoryReport'])->name('inventory.export');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rutas del Menu Digital (Publicas)
+|--------------------------------------------------------------------------
+| Estas rutas permiten a los clientes ver el menu, registrarse,
+| verificarse y realizar pedidos desde sus dispositivos moviles
+*/
+
+Route::prefix('menu')->name('digital-menu.')->group(function () {
+    // Vista principal del menu (publica)
+    Route::get('/', [App\Http\Controllers\DigitalMenu\MenuController::class, 'index'])->name('index');
+
+    // Autenticacion de clientes
+    Route::post('/auth/request-code', [App\Http\Controllers\DigitalMenu\AuthController::class, 'requestCode'])->name('auth.request');
+    Route::post('/auth/verify', [App\Http\Controllers\DigitalMenu\AuthController::class, 'verifyCode'])->name('auth.verify');
+    Route::post('/auth/logout', [App\Http\Controllers\DigitalMenu\AuthController::class, 'logout'])->name('auth.logout');
+    Route::get('/auth/me', [App\Http\Controllers\DigitalMenu\AuthController::class, 'me'])->name('auth.me');
+
+    // Crear orden
+    Route::post('/order', [App\Http\Controllers\DigitalMenu\OrderController::class, 'store'])->name('order.store');
+
+    // Tracking de orden
+    Route::get('/order/{saleNumber}', [App\Http\Controllers\DigitalMenu\OrderTrackingController::class, 'show'])->name('order.show');
+    Route::get('/order/{saleNumber}/status', [App\Http\Controllers\DigitalMenu\OrderTrackingController::class, 'getStatus'])->name('order.status');
 });
 
 require __DIR__.'/auth.php';

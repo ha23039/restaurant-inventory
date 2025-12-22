@@ -10,12 +10,15 @@ class Table extends Model
     use HasFactory;
 
     protected $fillable = [
+        'restaurant_id',
         'table_number',
         'name',
+        'qr_code',
         'capacity',
         'status',
         'current_sale_id',
         'last_occupied_at',
+        'location_description',
         'notes',
         'is_active',
     ];
