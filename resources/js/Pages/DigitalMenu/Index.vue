@@ -5,6 +5,7 @@ import DigitalMenuLayout from '@/Layouts/DigitalMenuLayout.vue';
 import ProductCard from './Components/ProductCard.vue';
 import CartSlideOver from './Components/CartSlideOver.vue';
 import VariantSlideOver from './Components/VariantSlideOver.vue';
+import CheckoutSlideOver from './Components/CheckoutSlideOver.vue';
 
 const props = defineProps({
     menuItems: Array,
@@ -18,6 +19,7 @@ const activeTab = ref('menu');
 const cart = ref([]);
 const showCart = ref(false);
 const showVariantModal = ref(false);
+const showCheckout = ref(false);
 const selectedProduct = ref(null);
 
 // ===== PERSISTENCIA DEL CARRITO =====
@@ -197,7 +199,11 @@ const clearCart = () => {
 };
 
 const proceedToCheckout = () => {
-    // Generar mensaje de WhatsApp con el pedido
+    showCart.value = false;
+    showCheckout.value = true;
+};
+
+const sendToWhatsApp = (customerData) => {
     const restaurantName = props.settings.restaurant_name || 'Restaurant';
     const whatsappNumber = props.settings.whatsapp_number || '';
     
@@ -206,17 +212,31 @@ const proceedToCheckout = () => {
         return;
     }
     
+    // Método de entrega
+    const deliveryLabels = {
+        'pickup': '🛍️ Para llevar',
+        'dine_in': '🍽️ Comer aquí',
+        'delivery': '🛵 Delivery'
+    };
+    
     // Construir mensaje
     let message = `🍽️ *Nuevo Pedido - ${restaurantName}*\n\n`;
+    message += `👤 *Cliente:* ${customerData.customerName}\n`;
+    message += `📞 *Teléfono:* ${customerData.customerPhone}\n`;
+    message += `📍 *Entrega:* ${deliveryLabels[customerData.deliveryMethod] || customerData.deliveryMethod}\n\n`;
     message += `📋 *Detalle del pedido:*\n`;
     
     cart.value.forEach((item, index) => {
         message += `${index + 1}. ${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
     });
     
-    message += `\n💰 *Total: $${cartTotal.value.toFixed(2)}*\n`;
-    message += `\n---\n`;
-    message += `📱 Enviado desde el Menú Digital`;
+    message += `\n💰 *Total: $${cartTotal.value.toFixed(2)}*`;
+    
+    if (customerData.customerNotes) {
+        message += `\n\n📝 *Notas:* ${customerData.customerNotes}`;
+    }
+    
+    message += `\n\n---\n📱 Enviado desde el Menú Digital`;
     
     // Limpiar número de WhatsApp
     const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '');
@@ -225,8 +245,9 @@ const proceedToCheckout = () => {
     const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     
-    // Cerrar carrito
-    showCart.value = false;
+    // Limpiar carrito y cerrar
+    clearCart();
+    showCheckout.value = false;
 };
 </script>
 
@@ -365,6 +386,16 @@ const proceedToCheckout = () => {
             @remove-item="removeFromCart"
             @clear-cart="clearCart"
             @proceed-checkout="proceedToCheckout"
+        />
+
+        <!-- Checkout SlideOver -->
+        <CheckoutSlideOver
+            :show="showCheckout"
+            :cart="cart"
+            :cart-total="cartTotal"
+            :settings="settings"
+            @close="showCheckout = false"
+            @confirm="sendToWhatsApp"
         />
     </DigitalMenuLayout>
 </template>
