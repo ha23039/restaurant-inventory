@@ -315,7 +315,7 @@ const getStockBadgeClass = (product) => {
                                             getStockBadgeClass(product)
                                         ]">
                                             <span v-if="product.allows_variants">
-                                                🔀 Por variante
+                                                Por variante
                                             </span>
                                             <span v-else-if="product.is_in_stock">
                                                 ✓ En Stock

@@ -1158,7 +1158,7 @@ onBeforeUnmount(() => {
                                         :key="`${item.product_type}-${item.id}`"
                                         class="border rounded-lg p-4 transition-all duration-200 cursor-pointer relative"
                                         :class="[
-                                            item.is_in_stock
+                                            (item.is_in_stock || item.has_variants || item.allows_variants)
                                                 ? 'hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
                                                 : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed opacity-60'
                                         ]"
@@ -1166,12 +1166,21 @@ onBeforeUnmount(() => {
                                     >
                                         <!-- Badge de disponibilidad -->
                                         <div class="absolute top-2 right-2">
+                                            <!-- Productos con variantes -->
                                             <span
-                                                v-if="item.is_in_stock"
+                                                v-if="item.has_variants || item.allows_variants"
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
+                                            >
+                                                Variantes
+                                            </span>
+                                            <!-- Productos normales con stock -->
+                                            <span
+                                                v-else-if="item.is_in_stock"
                                                 class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
                                             >
                                                 Stock: {{ item.available_quantity }}
                                             </span>
+                                            <!-- Productos agotados -->
                                             <span
                                                 v-else
                                                 class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
@@ -1211,13 +1220,23 @@ onBeforeUnmount(() => {
                                                 <span class="text-2xl font-bold text-green-600 dark:text-green-400">
                                                     ${{ formatPrice(item.price) }}
                                                 </span>
+                                                <!-- Productos con variantes -->
                                                 <button
-                                                    v-if="item.is_in_stock"
+                                                    v-if="item.has_variants || item.allows_variants"
+                                                    @click.stop="addToCart(item)"
+                                                    class="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                                                >
+                                                    Ver variantes
+                                                </button>
+                                                <!-- Productos normales con stock -->
+                                                <button
+                                                    v-else-if="item.is_in_stock"
                                                     @click.stop="addToCart(item)"
                                                     class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
                                                 >
                                                     Agregar
                                                 </button>
+                                                <!-- Productos agotados -->
                                                 <span v-else class="text-sm text-red-500 dark:text-red-400 font-medium">
                                                     Agotado
                                                 </span>
