@@ -49,7 +49,24 @@ class POSController extends Controller
 
         // Calcular disponibilidad para cada producto simple
         $simpleProducts->each(function ($item) {
-            if ($item->product) {
+            if ($item->allows_variants) {
+                // Para productos con variantes, verificar si tiene variantes disponibles
+                $hasAvailableVariants = false;
+                $totalVariantStock = 0;
+
+                foreach ($item->variants as $variant) {
+                    if ($variant->is_available) {
+                        $hasAvailableVariants = true;
+                        $variantStock = $variant->available_quantity;
+                        $totalVariantStock += $variantStock;
+                    }
+                }
+
+                // Un producto con variantes está "en stock" si tiene variantes disponibles
+                $item->available_quantity = $totalVariantStock;
+                $item->is_in_stock = $hasAvailableVariants;
+            } elseif ($item->product) {
+                // Para productos simples sin variantes
                 $currentStock = floatval($item->product->current_stock);
                 $costPerUnit = floatval($item->cost_per_unit);
                 $available = $costPerUnit > 0 ? floor($currentStock / $costPerUnit) : 0;

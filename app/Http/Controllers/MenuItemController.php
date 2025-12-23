@@ -85,7 +85,7 @@ class MenuItemController extends Controller
 
         $menuItem = MenuItem::create($validated);
 
-        return redirect()->route('menu.items')
+        return redirect()->route('carta.items')
             ->with('success', 'Platillo creado exitosamente');
     }
 
@@ -134,7 +134,7 @@ class MenuItemController extends Controller
 
         $menuItem->update($validated);
 
-        return redirect()->route('menu.items')
+        return redirect()->route('carta.items')
             ->with('success', 'Platillo actualizado exitosamente');
     }
 
@@ -157,7 +157,7 @@ class MenuItemController extends Controller
 
         $menuItem->delete();
 
-        return redirect()->route('menu.items')
+        return redirect()->route('carta.items')
             ->with('success', 'Platillo eliminado exitosamente');
     }
 

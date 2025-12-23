@@ -41,6 +41,10 @@ const hasChanges = ref(false);
 const processing = ref(false);
 const selectedProduct = ref(null);
 
+// Híbrido de categorías
+const categorySelection = ref('');
+const customCategory = ref('');
+
 // Watch for changes - comparar con estado inicial
 watch(() => form.value, () => {
     if (initialFormState.value) {
@@ -62,6 +66,22 @@ watch(() => props.product, (newProduct) => {
             allows_variants: newProduct.allows_variants !== undefined ? newProduct.allows_variants : false,
         };
         selectedProduct.value = props.products.find(p => p.id === newProduct.product_id);
+        
+        // Inicializar híbrido de categorías en modo edición
+        const existingCategory = newProduct.category || '';
+        const inventoryCats = props.products.map(p => p.category?.name).filter(Boolean);
+        if (inventoryCats.includes(existingCategory)) {
+            categorySelection.value = existingCategory;
+            customCategory.value = '';
+        } else if (existingCategory) {
+            // Es una categoría personalizada
+            categorySelection.value = '__custom__';
+            customCategory.value = existingCategory;
+        } else {
+            categorySelection.value = '';
+            customCategory.value = '';
+        }
+        
         // Guardar estado inicial
         initialFormState.value = JSON.parse(JSON.stringify(form.value));
         hasChanges.value = false;
@@ -77,7 +97,31 @@ watch(() => form.value.product_id, (newProductId) => {
 
     // Auto-set category based on product
     if (selectedProduct.value && !props.product) {
-        form.value.category = selectedProduct.value.category?.name || '';
+        const categoryName = selectedProduct.value.category?.name || '';
+        form.value.category = categoryName;
+        // Sincronizar con el híbrido
+        categorySelection.value = categoryName;
+        customCategory.value = '';
+    }
+});
+
+// Sincronizar categorySelection con form.category
+watch(categorySelection, (newVal) => {
+    if (newVal === '__custom__') {
+        // Esperar a que se escriba la categoría personalizada
+        form.value.category = '';
+    } else if (newVal) {
+        form.value.category = newVal;
+        customCategory.value = '';
+    } else {
+        form.value.category = '';
+    }
+});
+
+// Sincronizar customCategory con form.category
+watch(customCategory, (newVal) => {
+    if (categorySelection.value === '__custom__' && newVal) {
+        form.value.category = newVal;
     }
 });
 
@@ -108,6 +152,17 @@ const calculatedAvailability = computed(() => {
     return costPerUnit > 0 ? Math.floor(currentStock / costPerUnit) : 0;
 });
 
+// Obtener categorías únicas de los productos de inventario
+const inventoryCategories = computed(() => {
+    const categories = new Set();
+    props.products.forEach(p => {
+        if (p.category?.name) {
+            categories.add(p.category.name);
+        }
+    });
+    return Array.from(categories).sort();
+});
+
 const resetForm = () => {
     form.value = {
         product_id: '',
@@ -122,6 +177,9 @@ const resetForm = () => {
     selectedProduct.value = null;
     initialFormState.value = null;
     hasChanges.value = false;
+    // Reset híbrido de categorías
+    categorySelection.value = '';
+    customCategory.value = '';
 };
 
 const handleClose = async () => {
@@ -148,6 +206,12 @@ const handleSubmit = () => {
     // Validación del nombre (siempre requerido)
     if (!form.value.name || form.value.name.trim() === '') {
         alert('Ingresa el nombre del producto vendible');
+        return;
+    }
+
+    // Validación de categoría (siempre requerida)
+    if (!form.value.category) {
+        alert('Selecciona una categoría');
         return;
     }
 
@@ -180,7 +244,7 @@ const handleSubmit = () => {
     const data = {
         name: form.value.name.trim(),
         description: form.value.description?.trim() || null,
-        category: form.value.category?.trim() || null,
+        category: form.value.category,
         is_available: form.value.is_available,
         allows_variants: form.value.allows_variants,
         // Solo enviar estos campos si el producto NO tiene variantes
@@ -422,14 +486,42 @@ const formatQuantity = (quantity) => {
             <!-- Categoría -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Categoría (opcional)
+                    Categoría <span class="text-red-500">*</span>
                 </label>
-                <input
-                    v-model="form.category"
-                    type="text"
+                <select
+                    v-model="categorySelection"
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                    placeholder="Ej: Bebidas, Snacks"
-                />
+                >
+                    <option value="">Seleccionar categoría...</option>
+                    <option 
+                        v-for="cat in inventoryCategories" 
+                        :key="cat" 
+                        :value="cat"
+                    >
+                        {{ cat }}
+                    </option>
+                    <option value="__custom__">📝 Otra categoría...</option>
+                </select>
+                
+                <!-- Input para categoría personalizada -->
+                <div v-if="categorySelection === '__custom__'" class="mt-2">
+                    <input
+                        v-model="customCategory"
+                        type="text"
+                        placeholder="Ej: Promociones, Combos, Especiales..."
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        required
+                    />
+                </div>
+                
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <template v-if="form.allows_variants">
+                        Selecciona o crea una categoría para agrupar este producto en el POS
+                    </template>
+                    <template v-else>
+                        Se auto-completa según el producto de inventario seleccionado
+                    </template>
+                </p>
             </div>
 
             <!-- Preview de disponibilidad (solo si NO tiene variantes y hay suficientes datos) -->

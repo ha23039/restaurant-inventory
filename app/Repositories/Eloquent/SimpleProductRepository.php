@@ -17,7 +17,7 @@ class SimpleProductRepository extends BaseRepository implements SimpleProductRep
     {
         return $this->model
             ->where('is_available', true)
-            ->with('product')
+            ->with(['product', 'variants.recipes.product'])
             ->get();
     }
 

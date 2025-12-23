@@ -22,6 +22,8 @@ class SimpleProductResource extends JsonResource
             'sale_price' => (float) $this->sale_price,
             'profit_margin' => (float) $this->profit_margin,
             'is_available' => (bool) $this->is_available,
+            'allows_variants' => (bool) $this->allows_variants,
+            'has_variants' => (bool) $this->allows_variants && $this->relationLoaded('variants') && $this->variants->count() > 0,
             'category' => $this->category, // Campo de texto simple
 
             // Computed attributes
@@ -43,6 +45,20 @@ class SimpleProductResource extends JsonResource
                     'current_stock' => (float) $this->product->current_stock,
                     'unit_type' => $this->product->unit_type,
                 ];
+            }),
+
+            // Variantes con stock calculado
+            'variants' => $this->whenLoaded('variants', function () {
+                return $this->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'variant_name' => $variant->variant_name,
+                        'price' => (float) $variant->price,
+                        'is_available' => (bool) $variant->is_available,
+                        'available_quantity' => $variant->available_quantity,
+                        'attributes' => $variant->attributes,
+                    ];
+                });
             }),
 
             // Timestamps

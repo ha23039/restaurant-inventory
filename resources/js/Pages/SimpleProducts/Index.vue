@@ -118,6 +118,10 @@ const formatQuantity = (quantity) => {
 };
 
 const getStockBadgeClass = (product) => {
+    // Productos con variantes tienen estado especial
+    if (product.allows_variants) {
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+    }
     if (!product.is_in_stock) {
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
     }
@@ -296,7 +300,10 @@ const getStockBadgeClass = (product) => {
 
                                     <!-- Available Quantity -->
                                     <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        <div v-if="product.allows_variants" class="text-sm text-purple-600 dark:text-purple-400 font-medium">
+                                            Por variante
+                                        </div>
+                                        <div v-else class="text-sm font-medium text-gray-900 dark:text-white">
                                             {{ product.available_quantity }} unidades
                                         </div>
                                     </td>
@@ -307,7 +314,10 @@ const getStockBadgeClass = (product) => {
                                             'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                                             getStockBadgeClass(product)
                                         ]">
-                                            <span v-if="product.is_in_stock">
+                                            <span v-if="product.allows_variants">
+                                                🔀 Por variante
+                                            </span>
+                                            <span v-else-if="product.is_in_stock">
                                                 ✓ En Stock
                                             </span>
                                             <span v-else>

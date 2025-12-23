@@ -16,13 +16,13 @@ class SimpleProductController extends Controller
     {
         $this->authorize('viewAny', SimpleProduct::class);
 
-        $query = SimpleProduct::with(['product.category']);
+        $query = SimpleProduct::with(['product.category', 'variants.recipes.product']);
 
         // Búsqueda
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -39,7 +39,27 @@ class SimpleProductController extends Controller
 
         // Calcular disponibilidad para cada producto
         $simpleProducts->getCollection()->transform(function ($item) {
-            if ($item->product) {
+            if ($item->allows_variants) {
+                // Para productos con variantes, calcular stock basado en variantes
+                $totalVariantStock = 0;
+                $hasAnyVariantInStock = false;
+
+                if ($item->relationLoaded('variants')) {
+                    foreach ($item->variants as $variant) {
+                        if ($variant->is_available) {
+                            $variantStock = $variant->available_quantity;
+                            $totalVariantStock += $variantStock;
+                            if ($variantStock > 0) {
+                                $hasAnyVariantInStock = true;
+                            }
+                        }
+                    }
+                }
+
+                $item->available_quantity = $totalVariantStock;
+                $item->is_in_stock = $hasAnyVariantInStock;
+            } elseif ($item->product) {
+                // Para productos simples sin variantes
                 $currentStock = floatval($item->product->current_stock);
                 $costPerUnit = floatval($item->cost_per_unit);
                 $available = $costPerUnit > 0 ? floor($currentStock / $costPerUnit) : 0;
@@ -112,7 +132,7 @@ class SimpleProductController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'category' => 'nullable|string|max:100',
+            'category' => 'required|string|max:100',
             'is_available' => 'boolean',
             'allows_variants' => 'boolean',
         ];
@@ -150,7 +170,7 @@ class SimpleProductController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'category' => 'nullable|string|max:100',
+            'category' => 'required|string|max:100',
             'is_available' => 'boolean',
             'allows_variants' => 'boolean',
         ];

@@ -57,7 +57,10 @@ class SimpleProductVariant extends Model
             return 0;
         }
 
-        $recipes = $this->recipes()->with('product')->get();
+        // Usar recetas pre-cargadas si están disponibles, sino hacer query
+        $recipes = $this->relationLoaded('recipes')
+            ? $this->recipes
+            : $this->recipes()->with('product')->get();
 
         // Si no tiene recetas, se considera siempre disponible
         if ($recipes->isEmpty()) {
@@ -67,11 +70,16 @@ class SimpleProductVariant extends Model
         $availableQuantities = [];
 
         foreach ($recipes as $recipe) {
-            if (!$recipe->product) {
+            // Cargar producto si no está cargado
+            $product = $recipe->relationLoaded('product')
+                ? $recipe->product
+                : $recipe->product;
+
+            if (!$product) {
                 return 0;
             }
 
-            $currentStock = $recipe->product->current_stock;
+            $currentStock = $product->current_stock;
             $neededPerUnit = $recipe->quantity_needed;
 
             if ($neededPerUnit <= 0) {
