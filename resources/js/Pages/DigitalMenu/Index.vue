@@ -197,8 +197,36 @@ const clearCart = () => {
 };
 
 const proceedToCheckout = () => {
+    // Generar mensaje de WhatsApp con el pedido
+    const restaurantName = props.settings.restaurant_name || 'Restaurant';
+    const whatsappNumber = props.settings.whatsapp_number || '';
+    
+    if (!whatsappNumber) {
+        alert('Lo sentimos, el pedido por WhatsApp no está disponible en este momento.');
+        return;
+    }
+    
+    // Construir mensaje
+    let message = `🍽️ *Nuevo Pedido - ${restaurantName}*\n\n`;
+    message += `📋 *Detalle del pedido:*\n`;
+    
+    cart.value.forEach((item, index) => {
+        message += `${index + 1}. ${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
+    });
+    
+    message += `\n💰 *Total: $${cartTotal.value.toFixed(2)}*\n`;
+    message += `\n---\n`;
+    message += `📱 Enviado desde el Menú Digital`;
+    
+    // Limpiar número de WhatsApp
+    const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '');
+    
+    // Abrir WhatsApp
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    // Cerrar carrito
     showCart.value = false;
-    // TODO: Navigate to checkout
 };
 </script>
 

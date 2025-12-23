@@ -38,6 +38,7 @@ class MenuController extends Controller
                         'price' => $variant->price,
                         'available_quantity' => $variant->available_quantity,
                         'description' => $variant->description,
+                        'attributes' => $variant->attributes ?? [],
                     ];
                 });
 
