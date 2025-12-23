@@ -60,4 +60,50 @@ class MenuItem extends Model
     {
         return $query->where('has_variants', false);
     }
+
+    /**
+     * Calcular stock disponible basado en ingredientes
+     */
+    public function getAvailableQuantityAttribute()
+    {
+        if (!$this->is_available) {
+            return 0;
+        }
+
+        // Si tiene variantes, considerar disponible si al menos una variante tiene stock
+        if ($this->has_variants) {
+            $variants = $this->relationLoaded('variants') ? $this->variants : $this->variants()->get();
+            if ($variants->isEmpty()) {
+                return 999; // Sin variantes configuradas = siempre disponible
+            }
+            // Retornar el máximo de las variantes disponibles
+            return $variants->max(fn($v) => $v->available_quantity) ?? 0;
+        }
+
+        // Para items sin variantes, calcular basado en recetas
+        $recipes = $this->relationLoaded('recipes') ? $this->recipes : $this->recipes()->with('product')->get();
+
+        if ($recipes->isEmpty()) {
+            return 999; // Sin recetas = siempre disponible
+        }
+
+        $availableQuantities = [];
+
+        foreach ($recipes as $recipe) {
+            if (!$recipe->product) {
+                return 0;
+            }
+
+            $currentStock = $recipe->product->current_stock;
+            $neededPerUnit = $recipe->quantity_needed;
+
+            if ($neededPerUnit <= 0) {
+                continue;
+            }
+
+            $availableQuantities[] = floor($currentStock / $neededPerUnit);
+        }
+
+        return empty($availableQuantities) ? 0 : min($availableQuantities);
+    }
 }

@@ -27,7 +27,7 @@ class MenuController extends Controller
         // Get available menu items with stock
         $menuItems = MenuItem::where('is_available', true)
             ->where('is_service', false)
-            ->with(['category', 'recipes.product', 'variants.recipes.product'])
+            ->with(['recipes.product', 'variants.recipes.product'])
             ->get()
             ->filter(fn($item) => $item->available_quantity > 0)
             ->map(function ($item) {
@@ -47,8 +47,6 @@ class MenuController extends Controller
                     'description' => $item->description,
                     'price' => $item->price,
                     'image_path' => $item->image_path,
-                    'category_id' => $item->category_id,
-                    'category_name' => $item->category->name ?? null,
                     'available_quantity' => $item->available_quantity,
                     'has_variants' => $variants->isNotEmpty(),
                     'variants' => $variants->values(),
