@@ -33,7 +33,7 @@ const loadVariants = async () => {
 
     loading.value = true;
     try {
-        const response = await fetch(route('menu.api.menu-items.variants', props.menuItem.id));
+        const response = await fetch(route('carta.api.menu-items.variants', props.menuItem.id));
         const data = await response.json();
         variants.value = data;
     } catch (error) {
@@ -101,7 +101,7 @@ const deleteVariant = async (variant) => {
 
     deletingVariantId.value = variant.id;
 
-    router.delete(route('menu.variants.destroy', variant.id), {
+    router.delete(route('carta.variants.destroy', variant.id), {
         preserveScroll: true,
         onSuccess: () => {
             toast.success('Variante eliminada');
@@ -117,7 +117,7 @@ const deleteVariant = async (variant) => {
 };
 
 const toggleAvailability = async (variant) => {
-    router.patch(route('menu.variants.toggle-availability', variant.id), {}, {
+    router.patch(route('carta.variants.toggle-availability', variant.id), {}, {
         preserveScroll: true,
         onSuccess: () => {
             loadVariants();

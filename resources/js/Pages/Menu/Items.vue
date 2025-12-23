@@ -58,7 +58,7 @@ const closeVariantsManager = () => {
 
 const applyFilters = () => {
     searching.value = true;
-    router.get(route('menu.items'), {
+    router.get(route('carta.items'), {
         search: searchTerm.value,
         is_available: filterAvailable.value,
         is_service: filterService.value,
@@ -90,11 +90,11 @@ const clearFilters = () => {
     searchTerm.value = '';
     filterAvailable.value = '';
     filterService.value = '';
-    router.get(route('menu.items'));
+    router.get(route('carta.items'));
 };
 
 const toggleAvailability = (item) => {
-    router.patch(route('menu.items.toggle-availability', item.id), {}, {
+    router.patch(route('carta.items.toggle-availability', item.id), {}, {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -113,7 +113,7 @@ const deleteItem = async (item) => {
 
     if (!confirmed) return;
 
-    router.delete(route('menu.items.destroy', item.id), {
+    router.delete(route('carta.items.destroy', item.id), {
         preserveScroll: true,
         onSuccess: () => {
             toast.success('Platillo eliminado');

@@ -106,7 +106,7 @@ const handleExport = () => {
     }
 
     // Abrir en nueva ventana
-    window.open(route('menu.export.pdf') + '?' + params.toString(), '_blank');
+    window.open(route('carta.export.pdf') + '?' + params.toString(), '_blank');
 
     emit('close');
 };

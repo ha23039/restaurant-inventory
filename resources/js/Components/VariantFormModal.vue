@@ -128,8 +128,8 @@ const handleSubmit = () => {
         }));
 
     const url = isEditing.value
-        ? route('menu.variants.update', props.variant.id)
-        : route('menu.variants.store', props.menuItem.id);
+        ? route('carta.variants.update', props.variant.id)
+        : route('carta.variants.store', props.menuItem.id);
 
     const method = isEditing.value ? 'put' : 'post';
 

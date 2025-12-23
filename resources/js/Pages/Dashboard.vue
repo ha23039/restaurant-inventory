@@ -176,7 +176,7 @@ const formatCurrency = (amount) => {
                             </div>
 
                             <div v-if="canAccess(['admin', 'chef'])" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <Link :href="route('menu.index')" class="block">
+                                <Link :href="route('carta.index')" class="block">
                                     <div class="flex items-center">
                                         <component :is="icons.menu" class="w-5 h-5 text-purple-600 mr-2" />
                                         <h4 class="font-medium text-purple-600">Gestionar Recetas</h4>

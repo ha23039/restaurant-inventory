@@ -142,8 +142,8 @@ const handleSubmit = () => {
     processing.value = true;
 
     const url = isEditMode.value
-        ? route('menu.recipes.update', props.recipe.id)
-        : route('menu.recipes.store');
+        ? route('carta.recipes.update', props.recipe.id)
+        : route('carta.recipes.store');
 
     const method = isEditMode.value ? 'put' : 'post';
 

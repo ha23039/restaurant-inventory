@@ -18,6 +18,14 @@ class SettingsController extends Controller
 
     public function update(Request $request)
     {
+        // Decode digital_menu_schedule if it's a JSON string
+        if ($request->has('digital_menu_schedule') && is_string($request->digital_menu_schedule)) {
+            $decoded = json_decode($request->digital_menu_schedule, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $request->merge(['digital_menu_schedule' => $decoded]);
+            }
+        }
+
         $validated = $request->validate([
             'restaurant_name' => 'required|string|max:255',
             'restaurant_address' => 'nullable|string|max:500',

@@ -21,7 +21,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Platillos del Menú -->
                     <Link
-                        :href="route('menu.items')"
+                        :href="route('carta.items')"
                         class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/30 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 hover:shadow-lg dark:hover:shadow-blue-900/20 transition-all transform hover:-translate-y-1"
                     >
                         <div class="flex items-center mb-4">
@@ -44,7 +44,7 @@
 
                     <!-- Recetas -->
                     <Link
-                        :href="route('menu.recipes')"
+                        :href="route('carta.recipes')"
                         class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/30 border-2 border-purple-200 dark:border-purple-700 rounded-lg p-6 hover:shadow-lg dark:hover:shadow-purple-900/20 transition-all transform hover:-translate-y-1"
                     >
                         <div class="flex items-center mb-4">

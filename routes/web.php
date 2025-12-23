@@ -230,7 +230,7 @@ Route::middleware(['auth', 'role:admin,chef,cajero,mesero'])->prefix('kitchen')-
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin,chef'])->prefix('menu')->name('menu.')->group(function () {
+Route::middleware(['auth', 'role:admin,chef'])->prefix('carta')->name('carta.')->group(function () {
     Route::get('/', function () {
         $stats = [
             'total_items' => \App\Models\MenuItem::count(),

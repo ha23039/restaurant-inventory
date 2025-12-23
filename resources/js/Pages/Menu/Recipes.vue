@@ -57,7 +57,7 @@ const closeForm = () => {
 };
 
 const applyFilters = () => {
-    router.get(route('menu.recipes'), {
+    router.get(route('carta.recipes'), {
         search: searchTerm.value,
         only_dishes: filterOnlyDishes.value || undefined,
         has_recipes: filterHasRecipes.value,
@@ -71,7 +71,7 @@ const clearFilters = () => {
     searchTerm.value = '';
     filterOnlyDishes.value = false;
     filterHasRecipes.value = '';
-    router.get(route('menu.recipes'));
+    router.get(route('carta.recipes'));
 };
 
 const deleteRecipe = async (recipe, menuItemName) => {
@@ -83,7 +83,7 @@ const deleteRecipe = async (recipe, menuItemName) => {
     });
 
     if (confirmed) {
-        router.delete(route('menu.recipes.destroy', recipe.id), {
+        router.delete(route('carta.recipes.destroy', recipe.id), {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {

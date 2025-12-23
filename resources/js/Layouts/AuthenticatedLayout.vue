@@ -48,10 +48,10 @@
                                 </NavLink>
 
                                 <!-- Enlaces para Admin y Chef -->
-                                <NavLink 
+                                <NavLink
                                     v-if="canAccess(['admin', 'chef'])"
-                                    :href="route('menu.index')" 
-                                    :active="route().current('menu.*')"
+                                    :href="route('carta.index')"
+                                    :active="route().current('carta.*')"
                                 >
                                     Menú
                                 </NavLink>
@@ -181,10 +181,10 @@
                             Ventas
                         </ResponsiveNavLink>
 
-                        <ResponsiveNavLink 
+                        <ResponsiveNavLink
                             v-if="canAccess(['admin', 'chef'])"
-                            :href="route('menu.index')" 
-                            :active="route().current('menu.*')"
+                            :href="route('carta.index')"
+                            :active="route().current('carta.*')"
                         >
                             Menú
                         </ResponsiveNavLink>
