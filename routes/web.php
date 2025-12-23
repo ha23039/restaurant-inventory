@@ -279,9 +279,16 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('carta')->name('carta.')-
 
 Route::middleware(['auth', 'role:admin,almacenero'])->prefix('simple-products')->name('simple-products.')->group(function () {
     Route::get('/', [App\Http\Controllers\SimpleProductController::class, 'index'])->name('index');
+    Route::get('/{simpleProduct}', [App\Http\Controllers\SimpleProductController::class, 'show'])->name('show');
     Route::post('/', [App\Http\Controllers\SimpleProductController::class, 'store'])->name('store');
     Route::put('/{simpleProduct}', [App\Http\Controllers\SimpleProductController::class, 'update'])->name('update');
     Route::delete('/{simpleProduct}', [App\Http\Controllers\SimpleProductController::class, 'destroy'])->name('destroy');
+
+    // Simple Product Variants
+    Route::post('/{simpleProduct}/variants', [App\Http\Controllers\SimpleProductVariantController::class, 'store'])->name('variants.store');
+    Route::put('/variants/{variant}', [App\Http\Controllers\SimpleProductVariantController::class, 'update'])->name('variants.update');
+    Route::delete('/variants/{variant}', [App\Http\Controllers\SimpleProductVariantController::class, 'destroy'])->name('variants.destroy');
+    Route::patch('/variants/{variant}/toggle-availability', [App\Http\Controllers\SimpleProductVariantController::class, 'toggleAvailability'])->name('variants.toggle-availability');
 });
 
 /*

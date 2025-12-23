@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { router, Head } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import SimpleProductFormSlideOver from '@/Components/SimpleProductFormSlideOver.vue';
+import SimpleProductVariantManagerSlideOver from '@/Components/SimpleProduct/SimpleProductVariantManagerSlideOver.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useToast } from 'vue-toastification';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -19,6 +20,10 @@ const { confirm } = useConfirmDialog();
 // SlideOver state
 const showFormSlideOver = ref(false);
 const editingProduct = ref(null);
+
+// Variant Manager state
+const showVariantManager = ref(false);
+const managingProductVariants = ref(null);
 
 // Search and filters
 const search = ref(props.filters.search || '');
@@ -43,6 +48,21 @@ const openEditForm = (product) => {
 const closeForm = () => {
     showFormSlideOver.value = false;
     editingProduct.value = null;
+};
+
+const openVariantManager = (product) => {
+    managingProductVariants.value = product;
+    showVariantManager.value = true;
+};
+
+const closeVariantManager = () => {
+    showVariantManager.value = false;
+    managingProductVariants.value = null;
+};
+
+const handleVariantsUpdated = () => {
+    // Reload the page data to reflect variant changes
+    router.reload({ only: ['simpleProducts'] });
 };
 
 const handleSearch = () => {
@@ -263,10 +283,13 @@ const getStockBadgeClass = (product) => {
 
                                     <!-- Cost Per Unit (Consumption) -->
                                     <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 dark:text-white">
+                                        <div v-if="product.allows_variants" class="text-sm text-gray-500 dark:text-gray-400 italic">
+                                            Por variante
+                                        </div>
+                                        <div v-else class="text-sm text-gray-900 dark:text-white">
                                             {{ formatQuantity(product.cost_per_unit) }} {{ product.product?.unit_type }}
                                         </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        <div v-if="!product.allows_variants" class="text-xs text-gray-500 dark:text-gray-400">
                                             por unidad vendida
                                         </div>
                                     </td>
@@ -296,6 +319,16 @@ const getStockBadgeClass = (product) => {
                                     <!-- Actions -->
                                     <td class="px-6 py-4 text-right text-sm font-medium">
                                         <div class="flex items-center justify-end space-x-2">
+                                            <button
+                                                v-if="product.allows_variants"
+                                                @click="openVariantManager(product)"
+                                                class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                                                title="Gestionar Variantes"
+                                            >
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                                </svg>
+                                            </button>
                                             <button
                                                 @click="openEditForm(product)"
                                                 class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -405,6 +438,14 @@ const getStockBadgeClass = (product) => {
             :product="editingProduct"
             :products="products"
             @close="closeForm"
+        />
+
+        <!-- Variant Manager SlideOver -->
+        <SimpleProductVariantManagerSlideOver
+            :show="showVariantManager"
+            :simple-product="managingProductVariants"
+            @close="closeVariantManager"
+            @updated="handleVariantsUpdated"
         />
 
     </AdminLayout>

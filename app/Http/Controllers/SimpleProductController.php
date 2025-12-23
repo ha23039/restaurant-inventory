@@ -67,21 +67,69 @@ class SimpleProductController extends Controller
     }
 
     /**
+     * Display the specified resource (API endpoint for variants)
+     */
+    public function show(SimpleProduct $simpleProduct)
+    {
+        $simpleProduct->load(['variants.recipes.product']);
+
+        return response()->json([
+            'id' => $simpleProduct->id,
+            'name' => $simpleProduct->name,
+            'variants' => $simpleProduct->variants->map(function ($variant) {
+                return [
+                    'id' => $variant->id,
+                    'variant_name' => $variant->variant_name,
+                    'description' => $variant->description,
+                    'price' => $variant->price,
+                    'attributes' => $variant->attributes,
+                    'is_available' => $variant->is_available,
+                    'available_quantity' => $variant->available_quantity,
+                    'recipes' => $variant->recipes->map(function ($recipe) {
+                        return [
+                            'id' => $recipe->id,
+                            'product_id' => $recipe->product_id,
+                            'product_name' => $recipe->product->name ?? null,
+                            'quantity_needed' => $recipe->quantity_needed,
+                            'unit' => $recipe->unit,
+                        ];
+                    }),
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
         $this->authorize('create', SimpleProduct::class);
 
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
+        // Si allows_variants es true, product_id y cost_per_unit son opcionales
+        $allowsVariants = $request->boolean('allows_variants', false);
+
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'sale_price' => 'required|numeric|min:0.01',
-            'cost_per_unit' => 'required|numeric|min:0.001',
             'category' => 'nullable|string|max:100',
             'is_available' => 'boolean',
-        ]);
+            'allows_variants' => 'boolean',
+        ];
+
+        if ($allowsVariants) {
+            // Si tiene variantes, estos campos son opcionales
+            $rules['product_id'] = 'nullable|exists:products,id';
+            $rules['sale_price'] = 'nullable|numeric|min:0.01';
+            $rules['cost_per_unit'] = 'nullable|numeric|min:0.001';
+        } else {
+            // Si NO tiene variantes, estos campos son obligatorios
+            $rules['product_id'] = 'required|exists:products,id';
+            $rules['sale_price'] = 'required|numeric|min:0.01';
+            $rules['cost_per_unit'] = 'required|numeric|min:0.001';
+        }
+
+        $validated = $request->validate($rules);
 
         SimpleProduct::create($validated);
 
@@ -96,15 +144,30 @@ class SimpleProductController extends Controller
     {
         $this->authorize('update', $simpleProduct);
 
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
+        // Si allows_variants es true, product_id y cost_per_unit son opcionales
+        $allowsVariants = $request->boolean('allows_variants', false);
+
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'sale_price' => 'required|numeric|min:0.01',
-            'cost_per_unit' => 'required|numeric|min:0.001',
             'category' => 'nullable|string|max:100',
             'is_available' => 'boolean',
-        ]);
+            'allows_variants' => 'boolean',
+        ];
+
+        if ($allowsVariants) {
+            // Si tiene variantes, estos campos son opcionales
+            $rules['product_id'] = 'nullable|exists:products,id';
+            $rules['sale_price'] = 'nullable|numeric|min:0.01';
+            $rules['cost_per_unit'] = 'nullable|numeric|min:0.001';
+        } else {
+            // Si NO tiene variantes, estos campos son obligatorios
+            $rules['product_id'] = 'required|exists:products,id';
+            $rules['sale_price'] = 'required|numeric|min:0.01';
+            $rules['cost_per_unit'] = 'required|numeric|min:0.001';
+        }
+
+        $validated = $request->validate($rules);
 
         $simpleProduct->update($validated);
 

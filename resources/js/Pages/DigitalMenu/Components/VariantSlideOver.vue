@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     show: Boolean,
@@ -9,8 +9,14 @@ const props = defineProps({
 const emit = defineEmits(['close', 'select']);
 
 const selectedId = ref(null);
+const slideOverRef = ref(null);
 
-// Detectar atributo de agrupación principal (como hace el POS)
+// Touch gesture state
+const touchStart = ref({ y: 0, x: 0 });
+const touchDelta = ref(0);
+const isDragging = ref(false);
+
+// Detect grouping attribute
 const groupingAttribute = computed(() => {
     if (!props.menuItem?.variants?.length) return null;
     
@@ -19,44 +25,34 @@ const groupingAttribute = computed(() => {
     
     const attributeKeys = Object.keys(firstVariant.attributes);
     
-    // Buscar atributos con múltiples valores distintos
     for (const key of attributeKeys) {
         const uniqueValues = new Set(
-            props.menuItem.variants
-                .map(v => v.attributes?.[key])
-                .filter(Boolean)
+            props.menuItem.variants.map(v => v.attributes?.[key]).filter(Boolean)
         );
-        if (uniqueValues.size > 1) {
-            return key;
-        }
+        if (uniqueValues.size > 1) return key;
     }
     
     return null;
 });
 
-// Agrupar variantes por atributo
+// Group variants by attribute
 const groupedVariants = computed(() => {
     if (!props.menuItem?.variants?.length) return {};
     
     const groupKey = groupingAttribute.value;
     
-    if (!groupKey) {
-        return { default: props.menuItem.variants };
-    }
+    if (!groupKey) return { default: props.menuItem.variants };
     
     const groups = {};
     props.menuItem.variants.forEach(variant => {
         const attrValue = variant.attributes?.[groupKey] || 'otros';
-        if (!groups[attrValue]) {
-            groups[attrValue] = [];
-        }
+        if (!groups[attrValue]) groups[attrValue] = [];
         groups[attrValue].push(variant);
     });
     
     return groups;
 });
 
-// Nombres amigables para grupos
 const getGroupDisplayName = (groupKey) => {
     const names = {
         'maiz': '🌽 Masa de Maíz',
@@ -64,12 +60,7 @@ const getGroupDisplayName = (groupKey) => {
         'default': null,
         'otros': 'Otros'
     };
-    
-    if (names[groupKey] !== undefined) {
-        return names[groupKey];
-    }
-    
-    return groupKey.charAt(0).toUpperCase() + groupKey.slice(1);
+    return names[groupKey] !== undefined ? names[groupKey] : groupKey.charAt(0).toUpperCase() + groupKey.slice(1);
 };
 
 const handleSelectVariant = (variant) => {
@@ -94,6 +85,51 @@ const handleSelectVariant = (variant) => {
         emit('close');
     }, 250);
 };
+
+// Touch handlers for swipe-to-close
+const handleTouchStart = (e) => {
+    touchStart.value = { y: e.touches[0].clientY, x: e.touches[0].clientX };
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+const handleTouchMove = (e) => {
+    const deltaY = e.touches[0].clientY - touchStart.value.y;
+    
+    // Start dragging with minimal threshold for natural feel
+    if (deltaY > 5) {
+        isDragging.value = true;
+        // Apply resistance (0.8) for rubber-band effect
+        touchDelta.value = Math.min(deltaY * 0.8, 250);
+    }
+};
+
+const handleTouchEnd = () => {
+    // Close if dragged more than 80px (easier to trigger)
+    if (isDragging.value && touchDelta.value > 80) {
+        emit('close');
+    }
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+// Prevent pull-to-refresh when touching the slideover
+const preventPullToRefresh = (e) => {
+    if (props.show) {
+        const scrollTop = slideOverRef.value?.scrollTop || 0;
+        if (scrollTop <= 0) {
+            // At top, might trigger pull-to-refresh
+        }
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
+});
+
+onUnmounted(() => {
+    document.removeEventListener('touchmove', preventPullToRefresh);
+});
 </script>
 
 <template>
@@ -124,10 +160,18 @@ const handleSelectVariant = (variant) => {
     >
         <div
             v-if="show"
+            ref="slideOverRef"
+            @touchstart="handleTouchStart"
+            @touchmove.passive="handleTouchMove"
+            @touchend="handleTouchEnd"
             class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl flex flex-col"
+            :style="{ 
+                transform: isDragging ? `translateY(${touchDelta}px)` : '', 
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out' 
+            }"
         >
-            <!-- Handle Bar -->
-            <div class="flex justify-center pt-3 pb-2">
+            <!-- Handle Bar (draggable indicator) -->
+            <div class="flex justify-center pt-3 pb-2 cursor-grab">
                 <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
             </div>
 
@@ -169,9 +213,8 @@ const handleSelectVariant = (variant) => {
             </div>
 
             <!-- Variants List (Grouped) -->
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto p-4 overscroll-contain">
                 <template v-for="(variants, groupKey) in groupedVariants" :key="groupKey">
-                    <!-- Group Header -->
                     <h3 
                         v-if="getGroupDisplayName(groupKey)"
                         class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-3 first:mt-0"
@@ -179,7 +222,6 @@ const handleSelectVariant = (variant) => {
                         {{ getGroupDisplayName(groupKey) }}
                     </h3>
                     
-                    <!-- Variants Grid -->
                     <div class="grid grid-cols-2 gap-2 mb-3">
                         <button
                             v-for="variant in variants"
@@ -222,6 +264,11 @@ const handleSelectVariant = (variant) => {
                         </button>
                     </div>
                 </template>
+            </div>
+
+            <!-- Swipe hint -->
+            <div v-if="isDragging" class="absolute inset-x-0 top-8 text-center">
+                <span class="text-xs text-gray-400">Suelta para cerrar</span>
             </div>
         </div>
     </Transition>

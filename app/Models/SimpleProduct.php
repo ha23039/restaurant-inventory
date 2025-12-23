@@ -16,6 +16,7 @@ class SimpleProduct extends Model
         'sale_price',
         'cost_per_unit',
         'is_available',
+        'allows_variants',
         'category',
     ];
 
@@ -23,12 +24,19 @@ class SimpleProduct extends Model
         'sale_price' => 'decimal:2',
         'cost_per_unit' => 'decimal:3',
         'is_available' => 'boolean',
+        'allows_variants' => 'boolean',
     ];
 
     // Relación con producto del inventario
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    // Relación con variantes
+    public function variants()
+    {
+        return $this->hasMany(SimpleProductVariant::class);
     }
 
     // Relación con items de venta

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     show: Boolean,
@@ -15,6 +15,35 @@ const cartItemsCount = computed(() => props.cart.reduce((sum, item) => sum + ite
 const minOrderAmount = computed(() => parseFloat(props.settings?.min_order_amount || 0));
 const canProceed = computed(() => props.cart.length > 0 && cartTotal.value >= minOrderAmount.value);
 const remaining = computed(() => Math.max(0, minOrderAmount.value - cartTotal.value));
+
+// Touch gesture state for horizontal swipe
+const touchStart = ref({ x: 0 });
+const touchDelta = ref(0);
+const isDragging = ref(false);
+
+const handleTouchStart = (e) => {
+    touchStart.value.x = e.touches[0].clientX;
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+const handleTouchMove = (e) => {
+    const deltaX = e.touches[0].clientX - touchStart.value.x;
+    
+    // Only allow dragging right (positive delta)
+    if (deltaX > 20) {
+        isDragging.value = true;
+        touchDelta.value = Math.min(deltaX, 300);
+    }
+};
+
+const handleTouchEnd = () => {
+    if (isDragging.value && touchDelta.value > 100) {
+        emit('close');
+    }
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
 
 const incrementQuantity = (index) => {
     const item = props.cart[index];
@@ -59,7 +88,11 @@ const decrementQuantity = (index) => {
     >
         <div
             v-if="show"
+            @touchstart="handleTouchStart"
+            @touchmove.passive="handleTouchMove"
+            @touchend="handleTouchEnd"
             class="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col"
+            :style="isDragging ? { transform: `translateX(${touchDelta}px)`, transition: 'none' } : {}"
         >
             <!-- Header -->
             <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-orange-500 to-red-500">

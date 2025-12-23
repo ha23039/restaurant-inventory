@@ -33,6 +33,7 @@ const form = ref({
     cost_per_unit: '',
     category: '',
     is_available: true,
+    allows_variants: false,
 });
 
 const initialFormState = ref(null);
@@ -58,6 +59,7 @@ watch(() => props.product, (newProduct) => {
             cost_per_unit: newProduct.cost_per_unit || '',
             category: newProduct.category || '',
             is_available: newProduct.is_available !== undefined ? newProduct.is_available : true,
+            allows_variants: newProduct.allows_variants !== undefined ? newProduct.allows_variants : false,
         };
         selectedProduct.value = props.products.find(p => p.id === newProduct.product_id);
         // Guardar estado inicial
@@ -115,6 +117,7 @@ const resetForm = () => {
         cost_per_unit: '',
         category: '',
         is_available: true,
+        allows_variants: false,
     };
     selectedProduct.value = null;
     initialFormState.value = null;
@@ -142,25 +145,28 @@ const handleBackdropClick = () => {
 };
 
 const handleSubmit = () => {
-    // Validación básica
-    if (!form.value.product_id) {
-        alert('Selecciona un producto del inventario');
-        return;
-    }
-
+    // Validación del nombre (siempre requerido)
     if (!form.value.name || form.value.name.trim() === '') {
         alert('Ingresa el nombre del producto vendible');
         return;
     }
 
-    if (!form.value.sale_price || parseFloat(form.value.sale_price) <= 0) {
-        alert('El precio de venta debe ser mayor a 0');
-        return;
-    }
+    // Validaciones solo si NO tiene variantes
+    if (!form.value.allows_variants) {
+        if (!form.value.product_id) {
+            alert('Selecciona un producto del inventario');
+            return;
+        }
 
-    if (!form.value.cost_per_unit || parseFloat(form.value.cost_per_unit) <= 0) {
-        alert('El costo por unidad debe ser mayor a 0');
-        return;
+        if (!form.value.sale_price || parseFloat(form.value.sale_price) <= 0) {
+            alert('El precio de venta debe ser mayor a 0');
+            return;
+        }
+
+        if (!form.value.cost_per_unit || parseFloat(form.value.cost_per_unit) <= 0) {
+            alert('El costo por unidad debe ser mayor a 0');
+            return;
+        }
     }
 
     processing.value = true;
@@ -172,13 +178,15 @@ const handleSubmit = () => {
     const method = isEditMode.value ? 'put' : 'post';
 
     const data = {
-        product_id: parseInt(form.value.product_id),
         name: form.value.name.trim(),
         description: form.value.description?.trim() || null,
-        sale_price: parseFloat(form.value.sale_price),
-        cost_per_unit: parseFloat(form.value.cost_per_unit),
         category: form.value.category?.trim() || null,
         is_available: form.value.is_available,
+        allows_variants: form.value.allows_variants,
+        // Solo enviar estos campos si el producto NO tiene variantes
+        product_id: form.value.allows_variants ? null : parseInt(form.value.product_id),
+        sale_price: form.value.sale_price ? parseFloat(form.value.sale_price) : null,
+        cost_per_unit: form.value.allows_variants ? null : parseFloat(form.value.cost_per_unit),
     };
 
     router[method](url, data, {
@@ -247,8 +255,58 @@ const formatQuantity = (quantity) => {
                 </button>
             </div>
 
-            <!-- Selección de Producto Base -->
-            <div>
+            <!-- Toggle Permite Variantes -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="form.allows_variants ? 'bg-purple-100 dark:bg-purple-900' : 'bg-gray-200 dark:bg-gray-700'">
+                        <svg v-if="form.allows_variants" class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        <svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                            Permite Variantes
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ form.allows_variants ? 'Puedes crear variantes (sabores, tamaños, etc.)' : 'Este producto no admite variantes' }}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    @click="form.allows_variants = !form.allows_variants"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                    :class="form.allows_variants ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'"
+                >
+                    <span
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        :class="form.allows_variants ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                </button>
+            </div>
+
+            <!-- Info: Producto con Variantes -->
+            <div v-if="form.allows_variants" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-purple-900 dark:text-purple-100">
+                            Producto contenedor de variantes
+                        </p>
+                        <p class="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                            Este producto solo sirve como contenedor. Después de crearlo, podrás agregar variantes individuales (sabores, tamaños, etc.) que tendrán sus propios precios e ingredientes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selección de Producto Base (solo si NO tiene variantes) -->
+            <div v-if="!form.allows_variants">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Producto del Inventario <span class="text-red-500">*</span>
                     <span v-if="isEditMode" class="text-xs font-normal text-gray-500 ml-2">(puedes cambiarlo)</span>
@@ -294,8 +352,8 @@ const formatQuantity = (quantity) => {
                 ></textarea>
             </div>
 
-            <!-- Precio de Venta -->
-            <div>
+            <!-- Precio de Venta (opcional si tiene variantes) -->
+            <div v-if="!form.allows_variants">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Precio de Venta <span class="text-red-500">*</span>
                 </label>
@@ -308,7 +366,7 @@ const formatQuantity = (quantity) => {
                         min="0.01"
                         class="w-full pl-8 pr-4 py-2 text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                         placeholder="0.00"
-                        required
+                        :required="!form.allows_variants"
                     />
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -316,8 +374,29 @@ const formatQuantity = (quantity) => {
                 </p>
             </div>
 
-            <!-- Costo por Unidad (Consumo) -->
-            <div>
+            <!-- Precio Base (solo para productos con variantes) -->
+            <div v-if="form.allows_variants">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Precio Base (Opcional)
+                </label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                    <input
+                        v-model="form.sale_price"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        class="w-full pl-8 pr-4 py-2 text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        placeholder="0.00"
+                    />
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Precio de referencia (cada variante tendrá su propio precio)
+                </p>
+            </div>
+
+            <!-- Costo por Unidad (Consumo) - Solo si NO tiene variantes -->
+            <div v-if="!form.allows_variants">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Consumo de Inventario por Unidad <span class="text-red-500">*</span>
                 </label>
@@ -329,7 +408,7 @@ const formatQuantity = (quantity) => {
                         min="0.001"
                         class="flex-1 px-4 py-2 text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                         placeholder="0.000"
-                        required
+                        :required="!form.allows_variants"
                     />
                     <span class="text-sm text-gray-600 dark:text-gray-400 font-medium min-w-[50px]">
                         {{ selectedProduct?.unit_type || product?.product?.unit_type || 'unidad' }}
@@ -353,8 +432,8 @@ const formatQuantity = (quantity) => {
                 />
             </div>
 
-            <!-- Preview de disponibilidad (si hay suficientes datos) -->
-            <div v-if="calculatedAvailability > 0" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <!-- Preview de disponibilidad (solo si NO tiene variantes y hay suficientes datos) -->
+            <div v-if="!form.allows_variants && calculatedAvailability > 0" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <div class="flex items-start space-x-3">
                     <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -375,8 +454,8 @@ const formatQuantity = (quantity) => {
                 </div>
             </div>
 
-            <!-- Info Box -->
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <!-- Info Box (solo si NO tiene variantes) -->
+            <div v-if="!form.allows_variants" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div class="flex items-start space-x-3">
                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />

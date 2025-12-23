@@ -15,6 +15,11 @@ const customerPhone = ref('');
 const customerNotes = ref('');
 const deliveryMethod = ref('pickup');
 
+// Touch gesture state
+const touchStart = ref({ y: 0 });
+const touchDelta = ref(0);
+const isDragging = ref(false);
+
 const isFormValid = computed(() => {
     return customerName.value.trim().length >= 2 && customerPhone.value.trim().length >= 8;
 });
@@ -38,11 +43,31 @@ const handleConfirm = () => {
     });
 };
 
-const resetForm = () => {
-    customerName.value = '';
-    customerPhone.value = '';
-    customerNotes.value = '';
-    deliveryMethod.value = 'pickup';
+// Touch handlers for swipe-to-close
+const handleTouchStart = (e) => {
+    touchStart.value.y = e.touches[0].clientY;
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+const handleTouchMove = (e) => {
+    const deltaY = e.touches[0].clientY - touchStart.value.y;
+    
+    // Start dragging with minimal threshold for natural feel
+    if (deltaY > 5) {
+        isDragging.value = true;
+        // Apply resistance for rubber-band effect
+        touchDelta.value = Math.min(deltaY * 0.8, 250);
+    }
+};
+
+const handleTouchEnd = () => {
+    // Close if dragged more than 80px (easier to trigger)
+    if (isDragging.value && touchDelta.value > 80) {
+        emit('close');
+    }
+    touchDelta.value = 0;
+    isDragging.value = false;
 };
 </script>
 
@@ -74,10 +99,17 @@ const resetForm = () => {
     >
         <div
             v-if="show"
+            @touchstart="handleTouchStart"
+            @touchmove.passive="handleTouchMove"
+            @touchend="handleTouchEnd"
             class="fixed inset-x-0 bottom-0 z-50 max-h-[90vh] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl flex flex-col"
+            :style="{ 
+                transform: isDragging ? `translateY(${touchDelta}px)` : '', 
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out' 
+            }"
         >
-            <!-- Handle Bar -->
-            <div class="flex justify-center pt-3 pb-2">
+            <!-- Handle Bar (draggable) -->
+            <div class="flex justify-center pt-3 pb-2 cursor-grab">
                 <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
             </div>
 
