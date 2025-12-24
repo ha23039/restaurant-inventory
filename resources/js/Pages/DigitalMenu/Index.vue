@@ -371,7 +371,8 @@ const sendToWhatsApp = (customerData) => {
         <!-- Variant SlideOver -->
         <VariantSlideOver
             :show="showVariantModal"
-            :menu-item="selectedProduct"
+            :menu-item="selectedProduct?.product_type === 'menu' ? selectedProduct : null"
+            :product="selectedProduct"
             @close="showVariantModal = false"
             @select="addVariantToCart"
         />

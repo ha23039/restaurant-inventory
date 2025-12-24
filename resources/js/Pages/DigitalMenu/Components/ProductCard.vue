@@ -16,9 +16,20 @@ const emit = defineEmits(['add-to-cart', 'select-variant']);
 
 const price = computed(() => props.product.price || props.product.sale_price);
 const hasImage = computed(() => props.product.image_path && props.product.image_path !== '');
-const isAvailable = computed(() => props.product.available_quantity > 0);
+
+// Verificar disponibilidad - productos con variantes están disponibles si tienen variantes
+const hasVariants = computed(() => {
+    return (props.product.has_variants && props.product.variants?.length > 0) ||
+           (props.product.allows_variants && props.product.variants?.length > 0);
+});
+
+const isAvailable = computed(() => {
+    if (hasVariants.value) return true; // Productos con variantes siempre están disponibles para ver
+    return props.product.available_quantity > 0;
+});
 
 const stockStatus = computed(() => {
+    if (hasVariants.value) return null; // No mostrar stock para productos con variantes
     if (!isAvailable.value) return { text: 'Agotado', color: 'red' };
     if (props.product.available_quantity <= 5) return { text: 'Pocas unidades', color: 'yellow' };
     return null;
@@ -27,7 +38,7 @@ const stockStatus = computed(() => {
 const handleClick = () => {
     if (!isAvailable.value) return;
 
-    if (props.product.has_variants && props.product.variants?.length > 0) {
+    if (hasVariants.value) {
         emit('select-variant', props.product);
     } else {
         emit('add-to-cart', {
@@ -84,8 +95,8 @@ const handleClick = () => {
             </div>
 
             <!-- Variants Badge -->
-            <div v-if="product.has_variants && product.variants?.length > 0" class="absolute top-2 left-2">
-                <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-blue-500 text-white">
+            <div v-if="hasVariants" class="absolute top-2 left-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-purple-500 text-white">
                     {{ product.variants.length }} opciones
                 </span>
             </div>
@@ -112,7 +123,7 @@ const handleClick = () => {
                     v-if="isAvailable"
                     class="text-xs font-medium text-white bg-orange-500 px-3 py-1.5 rounded-lg"
                 >
-                    {{ product.has_variants ? 'Ver opciones' : '+ Agregar' }}
+                    {{ hasVariants ? 'Ver opciones' : '+ Agregar' }}
                 </span>
             </div>
         </div>

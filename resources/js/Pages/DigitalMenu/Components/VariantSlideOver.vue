@@ -3,10 +3,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     show: Boolean,
-    menuItem: Object,
+    menuItem: Object, // Para platillos (compatibilidad)
+    product: Object, // Para productos genéricos (nuevo)
 });
 
 const emit = defineEmits(['close', 'select']);
+
+// Usar menuItem o product
+const activeProduct = computed(() => props.product || props.menuItem);
 
 const selectedId = ref(null);
 const slideOverRef = ref(null);
@@ -18,16 +22,16 @@ const isDragging = ref(false);
 
 // Detect grouping attribute
 const groupingAttribute = computed(() => {
-    if (!props.menuItem?.variants?.length) return null;
+    if (!activeProduct.value?.variants?.length) return null;
     
-    const firstVariant = props.menuItem.variants[0];
+    const firstVariant = activeProduct.value.variants[0];
     if (!firstVariant?.attributes) return null;
     
     const attributeKeys = Object.keys(firstVariant.attributes);
     
     for (const key of attributeKeys) {
         const uniqueValues = new Set(
-            props.menuItem.variants.map(v => v.attributes?.[key]).filter(Boolean)
+            activeProduct.value.variants.map(v => v.attributes?.[key]).filter(Boolean)
         );
         if (uniqueValues.size > 1) return key;
     }
@@ -37,14 +41,14 @@ const groupingAttribute = computed(() => {
 
 // Group variants by attribute
 const groupedVariants = computed(() => {
-    if (!props.menuItem?.variants?.length) return {};
+    if (!activeProduct.value?.variants?.length) return {};
     
     const groupKey = groupingAttribute.value;
     
-    if (!groupKey) return { default: props.menuItem.variants };
+    if (!groupKey) return { default: activeProduct.value.variants };
     
     const groups = {};
-    props.menuItem.variants.forEach(variant => {
+    activeProduct.value.variants.forEach(variant => {
         const attrValue = variant.attributes?.[groupKey] || 'otros';
         if (!groups[attrValue]) groups[attrValue] = [];
         groups[attrValue].push(variant);
@@ -55,35 +59,42 @@ const groupedVariants = computed(() => {
 
 const getGroupDisplayName = (groupKey) => {
     const names = {
-        'maiz': '🌽 Masa de Maíz',
-        'arroz': '🍚 Masa de Arroz',
+        'maiz': 'Masa de Maíz',
+        'arroz': 'Masa de Arroz',
         'default': null,
         'otros': 'Otros'
     };
     return names[groupKey] !== undefined ? names[groupKey] : groupKey.charAt(0).toUpperCase() + groupKey.slice(1);
 };
 
+// Determinar el tipo de producto
+const getProductType = computed(() => {
+    return activeProduct.value?.product_type || (props.menuItem ? 'menu' : 'simple');
+});
+
 const handleSelectVariant = (variant) => {
-    if (variant.available_quantity <= 0) return;
+    // Para productos simples, available_quantity puede ser 999 (sin límite) o mayor a 0
+    if (variant.available_quantity <= 0 && variant.available_quantity !== 999) return;
     
     selectedId.value = variant.id;
     
     emit('select', {
         type: 'variant',
-        product_type: 'variant',
+        product_type: getProductType.value === 'menu' ? 'variant' : 'simple_variant',
         id: variant.id,
-        name: `${props.menuItem.name} - ${variant.variant_name}`,
+        name: `${activeProduct.value.name} - ${variant.variant_name}`,
         price: parseFloat(variant.price),
         quantity: 1,
         variant_id: variant.id,
-        image_path: props.menuItem.image_path,
+        image_path: activeProduct.value.image_path,
         available_quantity: variant.available_quantity,
     });
     
+    // Esperar más tiempo para que el usuario vea el checkmark verde
     setTimeout(() => {
         selectedId.value = null;
         emit('close');
-    }, 250);
+    }, 600);
 };
 
 // Touch handlers for swipe-to-close
@@ -180,9 +191,9 @@ onUnmounted(() => {
                 <div class="flex items-start gap-4">
                     <div class="w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
                         <img
-                            v-if="menuItem?.image_path"
-                            :src="menuItem.image_path"
-                            :alt="menuItem?.name"
+                            v-if="activeProduct?.image_path"
+                            :src="activeProduct.image_path"
+                            :alt="activeProduct?.name"
                             class="w-full h-full object-cover"
                         >
                         <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600">
@@ -194,7 +205,7 @@ onUnmounted(() => {
                     
                     <div class="flex-1 min-w-0">
                         <h2 class="text-lg font-bold text-gray-900 dark:text-white">
-                            {{ menuItem?.name }}
+                            {{ activeProduct?.name }}
                         </h2>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             Selecciona una opción
@@ -227,12 +238,12 @@ onUnmounted(() => {
                             v-for="variant in variants"
                             :key="variant.id"
                             @click="handleSelectVariant(variant)"
-                            :disabled="variant.available_quantity <= 0"
+                            :disabled="variant.available_quantity <= 0 && variant.available_quantity !== 999"
                             class="p-3 rounded-xl border-2 text-left transition-all duration-150"
                             :class="[
                                 selectedId === variant.id
                                     ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
-                                    : variant.available_quantity > 0
+                                    : (variant.available_quantity > 0 || variant.available_quantity === 999)
                                         ? 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 hover:border-orange-500 dark:hover:border-orange-400 active:scale-95'
                                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
                             ]"
@@ -254,7 +265,7 @@ onUnmounted(() => {
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
                                     <span 
-                                        v-else-if="variant.available_quantity <= 0"
+                                        v-else-if="variant.available_quantity <= 0 && variant.available_quantity !== 999"
                                         class="text-xs text-red-500"
                                     >
                                         Agotado

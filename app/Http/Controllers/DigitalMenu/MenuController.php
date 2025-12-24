@@ -56,19 +56,47 @@ class MenuController extends Controller
 
         // Get available simple products with stock
         $simpleProducts = SimpleProduct::where('is_available', true)
-            ->with(['product', 'product.category'])
+            ->with(['product', 'product.category', 'variants.recipes.product'])
             ->get()
-            ->filter(fn($product) => $product->available_quantity > 0)
+            ->filter(function ($product) {
+                // Productos con variantes están disponibles si tienen variantes
+                if ($product->allows_variants && $product->variants->isNotEmpty()) {
+                    return true;
+                }
+                // Productos sin variantes necesitan stock
+                return $product->available_quantity > 0;
+            })
             ->map(function ($product) {
+                // Mapear variantes si existen
+                $variants = collect();
+                if ($product->allows_variants && $product->variants) {
+                    $variants = $product->variants
+                        ->filter(fn($v) => $v->is_available)
+                        ->map(function ($variant) {
+                            return [
+                                'id' => $variant->id,
+                                'variant_name' => $variant->variant_name,
+                                'price' => $variant->price,
+                                'available_quantity' => $variant->available_quantity,
+                                'description' => $variant->description ?? null,
+                                'attributes' => $variant->attributes ?? [],
+                            ];
+                        });
+                }
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
                     'description' => $product->description,
                     'sale_price' => $product->sale_price,
                     'image_path' => $product->image_path,
+                    'category' => $product->category,
                     'category_id' => $product->product->category_id ?? null,
-                    'category_name' => $product->product->category->name ?? null,
+                    'category_name' => $product->category ?? ($product->product->category->name ?? null),
                     'available_quantity' => $product->available_quantity,
+                    'allows_variants' => $product->allows_variants,
+                    'has_variants' => $variants->isNotEmpty(),
+                    'variants' => $variants->values(),
                 ];
             });
 
