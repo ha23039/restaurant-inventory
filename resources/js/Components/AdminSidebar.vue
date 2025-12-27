@@ -202,6 +202,15 @@
                 </NavItem>
 
                 <NavItem
+                    :href="route('customers.index')"
+                    :active="route().current('customers.*')"
+                    :collapsed="isCollapsed"
+                    icon="users"
+                >
+                    Clientes
+                </NavItem>
+
+                <NavItem
                     :href="route('settings.business')"
                     :active="route().current('settings.*')"
                     :collapsed="isCollapsed"

@@ -85,6 +85,24 @@ Route::middleware(['auth', 'role:admin'])->prefix('users')->name('users.')->grou
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para GESTIÓN DE CLIENTES (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('customers')->name('customers.')->group(function () {
+    Route::get('/', [App\Http\Controllers\CustomerController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\CustomerController::class, 'store'])->name('store');
+    Route::get('/{customer}', [App\Http\Controllers\CustomerController::class, 'show'])->name('show');
+    Route::put('/{customer}', [App\Http\Controllers\CustomerController::class, 'update'])->name('update');
+    Route::delete('/{customer}', [App\Http\Controllers\CustomerController::class, 'destroy'])->name('destroy');
+
+    // Special actions
+    Route::post('/{customer}/toggle-status', [App\Http\Controllers\CustomerController::class, 'toggleStatus'])->name('toggle-status');
+    Route::post('/{customer}/toggle-verified', [App\Http\Controllers\CustomerController::class, 'toggleVerified'])->name('toggle-verified');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para GESTIÓN DE PROVEEDORES (Admin + Almacenero)
 |--------------------------------------------------------------------------
 */

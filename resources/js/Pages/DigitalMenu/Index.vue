@@ -203,51 +203,12 @@ const proceedToCheckout = () => {
     showCheckout.value = true;
 };
 
-const sendToWhatsApp = (customerData) => {
-    const restaurantName = props.settings.restaurant_name || 'Restaurant';
-    const whatsappNumber = props.settings.whatsapp_number || '';
-    
-    if (!whatsappNumber) {
-        alert('Lo sentimos, el pedido por WhatsApp no está disponible en este momento.');
-        return;
-    }
-    
-    // Método de entrega
-    const deliveryLabels = {
-        'pickup': '🛍️ Para llevar',
-        'dine_in': '🍽️ Comer aquí',
-        'delivery': '🛵 Delivery'
-    };
-    
-    // Construir mensaje
-    let message = `🍽️ *Nuevo Pedido - ${restaurantName}*\n\n`;
-    message += `👤 *Cliente:* ${customerData.customerName}\n`;
-    message += `📞 *Teléfono:* ${customerData.customerPhone}\n`;
-    message += `📍 *Entrega:* ${deliveryLabels[customerData.deliveryMethod] || customerData.deliveryMethod}\n\n`;
-    message += `📋 *Detalle del pedido:*\n`;
-    
-    cart.value.forEach((item, index) => {
-        message += `${index + 1}. ${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
-    });
-    
-    message += `\n💰 *Total: $${cartTotal.value.toFixed(2)}*`;
-    
-    if (customerData.customerNotes) {
-        message += `\n\n📝 *Notas:* ${customerData.customerNotes}`;
-    }
-    
-    message += `\n\n---\n📱 Enviado desde el Menú Digital`;
-    
-    // Limpiar número de WhatsApp
-    const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '');
-    
-    // Abrir WhatsApp
-    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    
-    // Limpiar carrito y cerrar
+const handleOrderCreated = (sale) => {
+    // Mostrar mensaje de éxito
+    alert(`¡Pedido #${sale.sale_number} creado exitosamente!\n\nEstado: ${sale.status}\nTotal: $${sale.total.toFixed(2)}`);
+
+    // Limpiar carrito
     clearCart();
-    showCheckout.value = false;
 };
 </script>
 
@@ -396,7 +357,7 @@ const sendToWhatsApp = (customerData) => {
             :cart-total="cartTotal"
             :settings="settings"
             @close="showCheckout = false"
-            @confirm="sendToWhatsApp"
+            @order-created="handleOrderCreated"
         />
     </DigitalMenuLayout>
 </template>
