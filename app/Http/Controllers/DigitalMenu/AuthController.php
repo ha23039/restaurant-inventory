@@ -21,24 +21,30 @@ class AuthController extends Controller
         ]);
 
         $customer = DigitalCustomer::firstOrCreate(
-            ['phone' => $validated['phone']],
+            ['phone' => $validated['phone'], 'country_code' => $validated['country_code']],
             [
                 'country_code' => $validated['country_code'],
                 'restaurant_id' => 1,
             ]
         );
 
+        $isNewCustomer = !$customer->name;
         $code = $customer->generateVerificationCode();
 
         $settings = BusinessSettings::get();
         $whatsappNumber = $settings->whatsapp_number;
-        $message = urlencode("Mi codigo de verificacion es: {$code}");
-        $whatsappUrl = "https://wa.me/{$whatsappNumber}?text={$message}";
+        $customerFullPhone = $validated['country_code'] . $validated['phone'];
+
+        // URL para enviar el código al cliente por WhatsApp
+        $message = urlencode("🔐 Tu código de verificación es: *{$code}*\n\nVálido por 10 minutos.\n\n- {$settings->restaurant_name}");
+        $whatsappUrlToCustomer = "https://wa.me/{$customerFullPhone}?text={$message}";
 
         return response()->json([
             'success' => true,
-            'whatsapp_url' => $whatsappUrl,
             'customer_id' => $customer->id,
+            'is_new_customer' => $isNewCustomer,
+            'verification_code' => $code, // Para mostrar en pantalla
+            'whatsapp_url' => $whatsappUrlToCustomer, // Para enviar opcional
         ]);
     }
 

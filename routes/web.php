@@ -543,4 +543,20 @@ Route::prefix('menu')->name('digital-menu.')->group(function () {
     Route::get('/order/{saleNumber}/status', [App\Http\Controllers\DigitalMenu\OrderTrackingController::class, 'getStatus'])->name('order.status');
 });
 
+/*
+|--------------------------------------------------------------------------
+| API Routes para Menú Digital (para frontend Vue)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('api/digital-menu')->name('api.digital-menu.')->group(function () {
+    // Autenticación
+    Route::post('/auth/send-code', [App\Http\Controllers\DigitalMenu\AuthController::class, 'requestCode'])->name('auth.send-code');
+    Route::post('/auth/verify-code', [App\Http\Controllers\DigitalMenu\AuthController::class, 'verifyCode'])->name('auth.verify-code');
+    Route::get('/auth/me', [App\Http\Controllers\DigitalMenu\AuthController::class, 'me'])->name('auth.me');
+
+    // Órdenes
+    Route::post('/orders', [App\Http\Controllers\DigitalMenu\OrderController::class, 'store'])->name('orders.store');
+});
+
 require __DIR__.'/auth.php';

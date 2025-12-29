@@ -7,6 +7,7 @@ use App\Models\BusinessSettings;
 use App\Models\Category;
 use App\Models\MenuItem;
 use App\Models\SimpleProduct;
+use App\Models\Table;
 use Inertia\Inertia;
 
 class MenuController extends Controller
@@ -102,10 +103,23 @@ class MenuController extends Controller
 
         $categories = Category::orderBy('name')->get();
 
+        // Get available tables for dine-in
+        $availableTables = Table::where('status', 'disponible')
+            ->orderBy('table_number')
+            ->get()
+            ->map(function ($table) {
+                return [
+                    'id' => $table->id,
+                    'table_number' => $table->table_number,
+                    'capacity' => $table->capacity,
+                ];
+            });
+
         return Inertia::render('DigitalMenu/Index', [
             'menuItems' => $menuItems->values(),
             'simpleProducts' => $simpleProducts->values(),
             'categories' => $categories,
+            'availableTables' => $availableTables,
             'settings' => [
                 'is_open' => $settings->isDigitalMenuOpen(),
                 'closed_message' => $settings->digital_menu_closed_message,

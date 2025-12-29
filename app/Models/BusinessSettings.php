@@ -47,6 +47,7 @@ class BusinessSettings extends Model
         'min_order_amount' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
         'delivery_min_amount' => 'decimal:2',
+        'estimated_prep_time' => 'integer',
         'digital_menu_schedule' => 'array',
     ];
 

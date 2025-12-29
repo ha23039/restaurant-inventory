@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SimpleProduct;
 use App\Models\Table;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -85,13 +86,24 @@ class OrderController extends Controller
             }
 
             // Calculate delivery fee
-            $deliveryFee = $validated['delivery_method'] === 'delivery' ? $settings->delivery_fee : 0;
+            $deliveryFee = $validated['delivery_method'] === 'delivery' ? (float) $settings->delivery_fee : 0;
             $total = $subtotal + $deliveryFee;
 
             // Check minimum order amount
-            if ($total < $settings->min_order_amount) {
+            if ($total < (float) $settings->min_order_amount) {
                 throw new \Exception("El pedido minimo es de \${$settings->min_order_amount}");
             }
+
+            // Get or create system user for digital menu orders
+            $systemUser = User::firstOrCreate(
+                ['email' => 'sistema@menudigital.local'],
+                [
+                    'name' => 'Sistema - Menú Digital',
+                    'password' => bcrypt('sistema-no-login-' . bin2hex(random_bytes(16))),
+                    'role' => 'cajero',
+                    'is_active' => false,
+                ]
+            );
 
             // Create sale
             $sale = Sale::create([
@@ -110,9 +122,9 @@ class OrderController extends Controller
                 'tax' => 0,
                 'total' => $total,
                 'payment_method' => 'efectivo',
-                'user_id' => null,
+                'user_id' => $systemUser->id,
                 'table_id' => $validated['table_id'] ?? null,
-                'estimated_ready_at' => now()->addMinutes($settings->estimated_prep_time),
+                'estimated_ready_at' => now()->addMinutes((int) $settings->estimated_prep_time),
             ]);
 
             // Create sale items

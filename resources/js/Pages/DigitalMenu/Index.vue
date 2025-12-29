@@ -11,6 +11,7 @@ const props = defineProps({
     menuItems: Array,
     simpleProducts: Array,
     categories: Array,
+    availableTables: Array,
     settings: Object,
 });
 
@@ -356,6 +357,7 @@ const handleOrderCreated = (sale) => {
             :cart="cart"
             :cart-total="cartTotal"
             :settings="settings"
+            :available-tables="availableTables"
             @close="showCheckout = false"
             @order-created="handleOrderCreated"
         />

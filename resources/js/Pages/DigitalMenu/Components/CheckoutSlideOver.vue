@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -7,6 +7,7 @@ const props = defineProps({
     cart: Array,
     cartTotal: Number,
     settings: Object,
+    availableTables: Array,
 });
 
 const emit = defineEmits(['close', 'orderCreated']);
@@ -17,17 +18,20 @@ const loading = ref(false);
 const error = ref('');
 
 // Datos del cliente
-const countryCode = ref('+52');
+const countryCode = ref(props.settings?.country_code || '+52'); // Usar país del restaurante
 const phone = ref('');
 const verificationCode = ref('');
+const generatedCode = ref(''); // El código generado por el backend
 const customerName = ref('');
 const customerId = ref(null);
 const isNewCustomer = ref(false);
+const whatsappUrl = ref(''); // URL para enviar código por WhatsApp
 
 // Datos de la orden
 const deliveryMethod = ref('pickup');
 const customerNotes = ref('');
 const customerAddress = ref('');
+const selectedTable = ref(null);
 
 // Touch gesture state
 const touchStart = ref({ y: 0 });
@@ -47,8 +51,8 @@ const countryCodes = [
 const deliveryMethods = computed(() => {
     const methods = props.settings?.delivery_methods || [];
     return methods.length > 0 ? methods : [
-        { id: 'pickup', label: 'Para llevar', fee: 0 },
-        { id: 'dine_in', label: 'Comer aquí', fee: 0 },
+        { value: 'pickup', label: 'Para llevar', fee: 0 },
+        { value: 'dine_in', label: 'Comer aquí', fee: 0 },
     ];
 });
 
@@ -56,6 +60,36 @@ const deliveryMethods = computed(() => {
 const isPhoneValid = computed(() => phone.value.trim().length >= 8);
 const isCodeValid = computed(() => verificationCode.value.length === 6);
 const isNameValid = computed(() => customerName.value.trim().length >= 2);
+
+// Función para seleccionar método de entrega
+const selectDeliveryMethod = (methodId) => {
+    deliveryMethod.value = methodId;
+};
+
+// Verificar autenticación cuando se abre el modal
+const checkAuthStatus = async () => {
+    try {
+        const response = await axios.get('/api/digital-menu/auth/me');
+        if (response.data.authenticated) {
+            customerId.value = response.data.customer.id;
+            customerName.value = response.data.customer.name;
+            phone.value = response.data.customer.phone;
+            countryCode.value = response.data.customer.country_code;
+            currentStep.value = 4; // Ir directo al paso de detalles
+        }
+    } catch (err) {
+        // No hay sesión activa, empezar desde paso 1
+        console.log('No hay sesión activa');
+    }
+};
+
+// Cuando se abre el modal, verificar si ya está autenticado
+watch(() => props.show, (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+        // Modal se acaba de abrir
+        checkAuthStatus();
+    }
+});
 
 // Paso 1: Enviar código de verificación
 const sendVerificationCode = async () => {
@@ -76,10 +110,12 @@ const sendVerificationCode = async () => {
         if (response.data.success) {
             customerId.value = response.data.customer_id;
             isNewCustomer.value = response.data.is_new_customer || false;
+            generatedCode.value = response.data.verification_code; // Código para mostrar
+            whatsappUrl.value = response.data.whatsapp_url || ''; // URL de WhatsApp opcional
             currentStep.value = 2;
         }
     } catch (err) {
-        error.value = err.response?.data?.message || 'Error al enviar el código. Intenta de nuevo.';
+        error.value = err.response?.data?.message || 'Error al generar el código. Intenta de nuevo.';
     } finally {
         loading.value = false;
     }
@@ -135,6 +171,30 @@ const createOrder = async () => {
     loading.value = true;
     error.value = '';
 
+    // Debug: ver valor de deliveryMethod
+    console.log('deliveryMethod:', deliveryMethod.value);
+
+    // Validar que delivery method esté seleccionado
+    if (!deliveryMethod.value) {
+        error.value = 'Por favor selecciona un método de entrega';
+        loading.value = false;
+        return;
+    }
+
+    // Validar que se haya seleccionado mesa si es dine_in
+    if (deliveryMethod.value === 'dine_in' && !selectedTable.value) {
+        error.value = 'Por favor selecciona una mesa';
+        loading.value = false;
+        return;
+    }
+
+    // Validar que se haya ingresado dirección si es delivery
+    if (deliveryMethod.value === 'delivery' && !customerAddress.value.trim()) {
+        error.value = 'Por favor ingresa tu dirección de entrega';
+        loading.value = false;
+        return;
+    }
+
     try {
         const orderData = {
             items: props.cart.map(item => ({
@@ -147,7 +207,10 @@ const createOrder = async () => {
             delivery_method: deliveryMethod.value,
             customer_notes: customerNotes.value.trim(),
             customer_address: customerAddress.value.trim(),
+            table_id: selectedTable.value,
         };
+
+        console.log('orderData:', orderData);
 
         const response = await axios.post('/api/digital-menu/orders', orderData);
 
@@ -164,6 +227,13 @@ const createOrder = async () => {
         error.value = err.response?.data?.message || 'Error al crear la orden. Intenta de nuevo.';
     } finally {
         loading.value = false;
+    }
+};
+
+// Abrir WhatsApp para recibir código
+const openWhatsAppCode = () => {
+    if (whatsappUrl.value) {
+        window.open(whatsappUrl.value, '_blank');
     }
 };
 
@@ -406,9 +476,47 @@ const handleTouchEnd = () => {
 
                 <!-- Paso 2: Código -->
                 <div v-if="currentStep === 2" class="space-y-4">
+                    <!-- Mostrar código generado prominentemente -->
+                    <div v-if="generatedCode" class="p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-2xl border-2 border-green-400 dark:border-green-600 shadow-lg">
+                        <p class="text-sm text-center text-gray-700 dark:text-gray-300 mb-2">
+                            Tu código de verificación es:
+                        </p>
+                        <div class="flex items-center justify-center gap-1 mb-3">
+                            <p class="text-5xl font-bold text-center text-green-700 dark:text-green-400 tracking-[0.3em] font-mono">
+                                {{ generatedCode }}
+                            </p>
+                            <button
+                                @click="verificationCode = generatedCode"
+                                class="ml-3 p-2 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800/50 rounded-lg transition-colors"
+                                title="Copiar código"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Válido por 10 minutos</span>
+                        </div>
+
+                        <!-- Botón opcional de WhatsApp -->
+                        <button
+                            v-if="whatsappUrl"
+                            @click="openWhatsAppCode"
+                            class="mt-3 w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            Recibir código por WhatsApp
+                        </button>
+                    </div>
+
                     <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
-                        Enviamos un código de 6 dígitos a<br>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ countryCode }} {{ phone }}</span>
+                        Ingresa el código en el campo de abajo para continuar
                     </p>
 
                     <div>
@@ -469,24 +577,36 @@ const handleTouchEnd = () => {
                     <!-- Método de entrega -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            ¿Cómo lo quieres?
+                            ¿Cómo lo quieres? <span v-if="deliveryMethod" class="text-xs text-gray-500">(Seleccionado: {{ deliveryMethod }})</span>
                         </label>
                         <div class="grid grid-cols-2 gap-3">
-                            <button
+                            <label
                                 v-for="method in deliveryMethods"
-                                :key="method.id"
-                                @click="deliveryMethod = method.id"
-                                class="p-3 rounded-xl border-2 text-center transition-all"
-                                :class="deliveryMethod === method.id
-                                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-                                    : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-orange-300'
-                                "
+                                :key="method.value"
+                                class="relative cursor-pointer"
                             >
-                                <span class="text-lg mb-1 block">
-                                    {{ method.id === 'pickup' ? '🛍️' : method.id === 'dine_in' ? '🍽️' : '🛵' }}
-                                </span>
-                                <span class="text-sm font-medium">{{ method.label }}</span>
-                            </button>
+                                <input
+                                    type="radio"
+                                    name="delivery_method"
+                                    :value="method.value"
+                                    v-model="deliveryMethod"
+                                    class="sr-only peer"
+                                />
+                                <div class="p-3 rounded-xl border-2 text-center transition-all peer-checked:border-orange-500 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/30 peer-checked:text-orange-700 dark:peer-checked:text-orange-300 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-orange-300">
+                                    <!-- Icono -->
+                                    <svg v-if="method.value === 'pickup'" class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </svg>
+                                    <svg v-else-if="method.value === 'dine_in'" class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                    <svg v-else class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                    </svg>
+                                    <span class="text-sm font-medium block">{{ method.label }}</span>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
@@ -501,6 +621,29 @@ const handleTouchEnd = () => {
                             placeholder="Calle, número, colonia..."
                             class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
                         ></textarea>
+                    </div>
+
+                    <!-- Selector de Mesa (solo si es dine_in) -->
+                    <div v-if="deliveryMethod === 'dine_in'">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Selecciona tu mesa *
+                        </label>
+                        <select
+                            v-model="selectedTable"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        >
+                            <option :value="null">Selecciona una mesa...</option>
+                            <option
+                                v-for="table in availableTables"
+                                :key="table.id"
+                                :value="table.id"
+                            >
+                                Mesa {{ table.table_number }} ({{ table.capacity }} personas)
+                            </option>
+                        </select>
+                        <p v-if="deliveryMethod === 'dine_in' && !selectedTable" class="mt-1 text-xs text-red-500">
+                            Debes seleccionar una mesa para continuar
+                        </p>
                     </div>
 
                     <!-- Notas -->

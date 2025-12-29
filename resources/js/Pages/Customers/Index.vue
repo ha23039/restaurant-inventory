@@ -200,7 +200,7 @@ const hasActiveFilters = computed(() => {
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos Totales</div>
-                            <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">${{ (statistics?.total_revenue || 0).toFixed(2) }}</div>
+                            <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">${{ parseFloat(statistics?.total_revenue || 0).toFixed(2) }}</div>
                         </div>
                     </div>
                 </div>
