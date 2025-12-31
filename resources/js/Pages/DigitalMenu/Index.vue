@@ -1,11 +1,14 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import DigitalMenuLayout from '@/Layouts/DigitalMenuLayout.vue';
 import ProductCard from './Components/ProductCard.vue';
 import CartSlideOver from './Components/CartSlideOver.vue';
 import VariantSlideOver from './Components/VariantSlideOver.vue';
 import CheckoutSlideOver from './Components/CheckoutSlideOver.vue';
+import OrderConfirmationSlideOver from './Components/OrderConfirmationSlideOver.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     menuItems: Array,
@@ -21,7 +24,13 @@ const cart = ref([]);
 const showCart = ref(false);
 const showVariantModal = ref(false);
 const showCheckout = ref(false);
+const showConfirmation = ref(false);
 const selectedProduct = ref(null);
+const orderData = ref(null);
+const pendingOrders = ref([]);
+
+// Composable para confirmación
+const { confirm } = useConfirmDialog();
 
 // ===== PERSISTENCIA DEL CARRITO =====
 const CART_STORAGE_KEY = 'digital_menu_cart';
@@ -57,8 +66,41 @@ watch(cart, () => {
     cart.value.length > 0 ? saveCartToStorage() : clearCartStorage();
 }, { deep: true });
 
+// ===== NAVEGACIÓN =====
+let navigationInterceptor = null;
+
+const setupNavigationGuard = () => {
+    // Interceptar navegación de Inertia
+    navigationInterceptor = router.on('before', async (event) => {
+        // Solo confirmar si hay items en el carrito y no estamos en checkout/confirmation
+        if (cart.value.length > 0 && !showCheckout.value && !showConfirmation.value) {
+            const confirmed = await confirm({
+                title: '¿Salir del menú?',
+                message: 'Puedes volver más tarde, tu carrito se guardará automáticamente.',
+                confirmText: 'Sí, salir',
+                cancelText: 'Quedarme',
+                type: 'warning'
+            });
+
+            // Si no confirma, cancelar la navegación
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        }
+    });
+};
+
 onMounted(() => {
     loadCartFromStorage();
+    checkPendingOrders();
+    setupNavigationGuard();
+});
+
+onBeforeUnmount(() => {
+    // Limpiar el interceptor cuando el componente se desmonte
+    if (navigationInterceptor) {
+        navigationInterceptor();
+    }
 });
 
 // ===== CATEGORIZACIÓN DINÁMICA (como POS) =====
@@ -156,6 +198,30 @@ const currentProducts = computed(() => {
     return products;
 });
 
+// ===== PEDIDOS PENDIENTES =====
+const checkPendingOrders = async () => {
+    try {
+        const response = await axios.get('/api/digital-menu/orders/pending');
+        if (response.data.pending_orders) {
+            pendingOrders.value = response.data.pending_orders;
+        }
+    } catch (error) {
+        // Silently fail - customer might not be logged in
+        console.log('No se pudieron cargar pedidos pendientes');
+    }
+};
+
+const viewPendingOrder = (order) => {
+    window.open(order.tracking_url, '_blank');
+};
+
+const dismissPendingOrderBanner = () => {
+    // Just hide the first one from the list
+    if (pendingOrders.value.length > 0) {
+        pendingOrders.value.shift();
+    }
+};
+
 // ===== CARRITO =====
 const cartTotal = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 const cartItemsCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
@@ -194,9 +260,19 @@ const updateQuantity = (index, newQuantity) => {
     }
 };
 
-const clearCart = () => {
-    cart.value = [];
-    clearCartStorage();
+const clearCart = async () => {
+    const confirmed = await confirm({
+        title: '¿Vaciar carrito?',
+        message: 'Se eliminarán todos los productos del carrito.',
+        confirmText: 'Sí, vaciar',
+        cancelText: 'Cancelar',
+        type: 'warning'
+    });
+
+    if (confirmed) {
+        cart.value = [];
+        clearCartStorage();
+    }
 };
 
 const proceedToCheckout = () => {
@@ -204,12 +280,25 @@ const proceedToCheckout = () => {
     showCheckout.value = true;
 };
 
-const handleOrderCreated = (sale) => {
-    // Mostrar mensaje de éxito
-    alert(`¡Pedido #${sale.sale_number} creado exitosamente!\n\nEstado: ${sale.status}\nTotal: $${sale.total.toFixed(2)}`);
+const handleOrderCreated = (data) => {
+    // Guardar datos de la orden
+    orderData.value = data;
 
-    // Limpiar carrito
-    clearCart();
+    // Mostrar pantalla de confirmación
+    showCheckout.value = false;
+    showConfirmation.value = true;
+};
+
+const handleConfirmationClose = () => {
+    showConfirmation.value = false;
+    orderData.value = null;
+
+    // Limpiar carrito al cerrar confirmación
+    cart.value = [];
+    clearCartStorage();
+
+    // Actualizar pedidos pendientes
+    checkPendingOrders();
 };
 </script>
 
@@ -217,6 +306,51 @@ const handleOrderCreated = (sale) => {
     <Head title="Menu Digital" />
     
     <DigitalMenuLayout>
+        <!-- Pending Order Banner -->
+        <div v-if="pendingOrders.length > 0" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-2xl border-2 border-blue-400 dark:border-blue-600 shadow-lg">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 mt-0.5">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">
+                        Tienes {{ pendingOrders.length }} pedido{{ pendingOrders.length > 1 ? 's' : '' }} en proceso
+                    </h3>
+                    <p class="text-xs text-blue-700 dark:text-blue-400 mb-3">
+                        Pedido #{{ pendingOrders[0].sale_number }} · {{ pendingOrders[0].items_count }} artículo{{ pendingOrders[0].items_count > 1 ? 's' : '' }} · ${{ pendingOrders[0].total.toFixed(2) }}
+                    </p>
+                    <div class="flex gap-2">
+                        <button
+                            @click="viewPendingOrder(pendingOrders[0])"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Ver pedido
+                        </button>
+                        <button
+                            @click="dismissPendingOrderBanner"
+                            class="px-4 py-2 bg-blue-100 dark:bg-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-xl transition-colors"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+                <button
+                    @click="dismissPendingOrderBanner"
+                    class="flex-shrink-0 p-1 text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
         <!-- Hero Section with Search -->
         <div class="mb-8">
             <!-- Welcome Banner -->
@@ -360,6 +494,17 @@ const handleOrderCreated = (sale) => {
             :available-tables="availableTables"
             @close="showCheckout = false"
             @order-created="handleOrderCreated"
+        />
+
+        <!-- Order Confirmation SlideOver -->
+        <OrderConfirmationSlideOver
+            :show="showConfirmation"
+            :sale="orderData?.sale"
+            :whatsapp-url="orderData?.whatsappUrl"
+            :tracking-url="orderData?.trackingUrl"
+            :settings="settings"
+            @close="handleConfirmationClose"
+            @make-another-order="handleConfirmationClose"
         />
     </DigitalMenuLayout>
 </template>

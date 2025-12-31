@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('sales', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->change();
+        Schema::table('business_settings', function (Blueprint $table) {
+            $table->string('country_code', 5)->default('+503')->after('whatsapp_number');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('sales', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable(false)->change();
+        Schema::table('business_settings', function (Blueprint $table) {
+            $table->dropColumn('country_code');
         });
     }
 };

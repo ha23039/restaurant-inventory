@@ -38,16 +38,6 @@ const touchStart = ref({ y: 0 });
 const touchDelta = ref(0);
 const isDragging = ref(false);
 
-const countryCodes = [
-    { value: '+52', label: '+52 (México)' },
-    { value: '+503', label: '+503 (El Salvador)' },
-    { value: '+56', label: '+56 (Chile)' },
-    { value: '+1', label: '+1 (USA/Canada)' },
-    { value: '+34', label: '+34 (España)' },
-    { value: '+54', label: '+54 (Argentina)' },
-    { value: '+55', label: '+55 (Brasil)' },
-];
-
 const deliveryMethods = computed(() => {
     const methods = props.settings?.delivery_methods || [];
     return methods.length > 0 ? methods : [
@@ -90,6 +80,50 @@ watch(() => props.show, (newVal, oldVal) => {
         checkAuthStatus();
     }
 });
+
+// Formateo inteligente de número de teléfono
+const formatPhoneNumber = (event) => {
+    let value = event.target.value;
+
+    // Permitir solo números, espacios y guiones
+    value = value.replace(/[^\d\s-]/g, '');
+
+    // Aplicar formato según el código de país
+    if (countryCode.value === '+503') {
+        // El Salvador: 8 dígitos (7355-4002)
+        value = value.replace(/\D/g, '').substring(0, 8);
+        if (value.length > 4) {
+            value = value.substring(0, 4) + '-' + value.substring(4);
+        }
+    } else if (countryCode.value === '+52') {
+        // México: 10 dígitos (664-123-4567)
+        value = value.replace(/\D/g, '').substring(0, 10);
+        if (value.length > 6) {
+            value = value.substring(0, 3) + '-' + value.substring(3, 6) + '-' + value.substring(6);
+        } else if (value.length > 3) {
+            value = value.substring(0, 3) + '-' + value.substring(3);
+        }
+    } else {
+        // Otros países: máximo 15 dígitos
+        value = value.replace(/\D/g, '').substring(0, 15);
+    }
+
+    phone.value = value;
+};
+
+// Placeholder según código de país
+const getPhonePlaceholder = () => {
+    const placeholders = {
+        '+503': '7355-4002',
+        '+52': '664-123-4567',
+        '+1': '555-123-4567',
+        '+34': '612-345-678',
+        '+54': '11-2345-6789',
+        '+55': '11-98765-4321',
+        '+56': '9-1234-5678'
+    };
+    return placeholders[countryCode.value] || '1234567890';
+};
 
 // Paso 1: Enviar código de verificación
 const sendVerificationCode = async () => {
@@ -215,11 +249,12 @@ const createOrder = async () => {
         const response = await axios.post('/api/digital-menu/orders', orderData);
 
         if (response.data.success) {
-            // Enviar notificación de WhatsApp al restaurante
-            sendWhatsAppToRestaurant(response.data.sale);
-
-            // Emitir evento de orden creada
-            emit('orderCreated', response.data.sale);
+            // Emitir evento de orden creada con todos los datos
+            emit('orderCreated', {
+                sale: response.data.sale,
+                whatsappUrl: response.data.whatsapp_url,
+                trackingUrl: response.data.tracking_url,
+            });
             resetForm();
             emit('close');
         }
@@ -445,29 +480,21 @@ const handleTouchEnd = () => {
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Código de país
-                        </label>
-                        <select
-                            v-model="countryCode"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        >
-                            <option v-for="country in countryCodes" :key="country.value" :value="country.value">
-                                {{ country.label }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Número de WhatsApp *
                         </label>
-                        <input
-                            v-model="phone"
-                            type="tel"
-                            placeholder="1234567890"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            @keyup.enter="sendVerificationCode"
-                        />
+                        <div class="flex gap-2">
+                            <div class="flex-shrink-0 flex items-center px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">
+                                {{ countryCode }}
+                            </div>
+                            <input
+                                v-model="phone"
+                                type="tel"
+                                :placeholder="getPhonePlaceholder()"
+                                class="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                @input="formatPhoneNumber"
+                                @keyup.enter="sendVerificationCode"
+                            />
+                        </div>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Usaremos este número para enviarte el código de verificación
                         </p>

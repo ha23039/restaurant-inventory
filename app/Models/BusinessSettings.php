@@ -23,6 +23,7 @@ class BusinessSettings extends Model
         'social_media',
         'digital_menu_enabled',
         'whatsapp_number',
+        'country_code',
         'digital_menu_welcome_message',
         'digital_menu_closed_message',
         'min_order_amount',

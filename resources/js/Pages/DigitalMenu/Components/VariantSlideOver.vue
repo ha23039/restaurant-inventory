@@ -75,9 +75,17 @@ const getProductType = computed(() => {
 const handleSelectVariant = (variant) => {
     // Para productos simples, available_quantity puede ser 999 (sin límite) o mayor a 0
     if (variant.available_quantity <= 0 && variant.available_quantity !== 999) return;
-    
+
+    // Solo marcar como seleccionada, no cerrar
     selectedId.value = variant.id;
-    
+};
+
+const addToCart = () => {
+    if (!selectedId.value) return;
+
+    const variant = activeProduct.value.variants.find(v => v.id === selectedId.value);
+    if (!variant) return;
+
     emit('select', {
         type: 'variant',
         product_type: getProductType.value === 'menu' ? 'variant' : 'simple_variant',
@@ -89,12 +97,10 @@ const handleSelectVariant = (variant) => {
         image_path: activeProduct.value.image_path,
         available_quantity: variant.available_quantity,
     });
-    
-    // Esperar más tiempo para que el usuario vea el checkmark verde
-    setTimeout(() => {
-        selectedId.value = null;
-        emit('close');
-    }, 600);
+
+    // Resetear selección y cerrar
+    selectedId.value = null;
+    emit('close');
 };
 
 // Touch handlers for swipe-to-close
@@ -275,6 +281,26 @@ onUnmounted(() => {
                         </button>
                     </div>
                 </template>
+            </div>
+
+            <!-- Botón Agregar al Carrito -->
+            <div class="sticky bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                <button
+                    @click="addToCart"
+                    :disabled="!selectedId"
+                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all"
+                    :class="selectedId
+                        ? 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'"
+                >
+                    <span v-if="selectedId" class="flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        Agregar al carrito
+                    </span>
+                    <span v-else>Selecciona una opción</span>
+                </button>
             </div>
 
             <!-- Swipe hint -->

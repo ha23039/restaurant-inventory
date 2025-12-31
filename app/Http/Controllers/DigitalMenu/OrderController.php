@@ -293,4 +293,95 @@ class OrderController extends Controller
             default => $method,
         };
     }
+
+    /**
+     * Get pending orders for current customer
+     */
+    public function getPendingOrders()
+    {
+        $customerId = Session::get('digital_customer_id');
+
+        if (!$customerId) {
+            return response()->json([
+                'pending_orders' => [],
+            ]);
+        }
+
+        $pendingOrders = Sale::where('digital_customer_id', $customerId)
+            ->whereIn('status', ['pendiente', 'en_preparacion'])
+            ->with('saleItems')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($sale) {
+                return [
+                    'id' => $sale->id,
+                    'sale_number' => $sale->sale_number,
+                    'status' => $sale->status,
+                    'total' => $sale->total,
+                    'delivery_method' => $sale->delivery_method,
+                    'estimated_ready_at' => $sale->estimated_ready_at,
+                    'created_at' => $sale->created_at,
+                    'items_count' => $sale->saleItems->sum('quantity'),
+                    'tracking_url' => route('digital-menu.order.show', $sale->sale_number),
+                ];
+            });
+
+        return response()->json([
+            'pending_orders' => $pendingOrders,
+        ]);
+    }
+
+    /**
+     * Get all orders for current customer
+     */
+    public function getMyOrders(Request $request)
+    {
+        $customerId = Session::get('digital_customer_id');
+
+        if (!$customerId) {
+            return response()->json([
+                'authenticated' => false,
+                'orders' => [],
+            ]);
+        }
+
+        $customer = DigitalCustomer::find($customerId);
+
+        if (!$customer) {
+            return response()->json([
+                'authenticated' => false,
+                'orders' => [],
+            ]);
+        }
+
+        $query = Sale::where('digital_customer_id', $customerId)
+            ->with('saleItems');
+
+        // Filter by status if provided
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($sale) {
+                return [
+                    'id' => $sale->id,
+                    'sale_number' => $sale->sale_number,
+                    'status' => $sale->status,
+                    'total' => $sale->total,
+                    'delivery_method' => $sale->delivery_method,
+                    'estimated_ready_at' => $sale->estimated_ready_at,
+                    'created_at' => $sale->created_at,
+                    'items_count' => $sale->saleItems->sum('quantity'),
+                    'tracking_url' => route('digital-menu.order.show', $sale->sale_number),
+                ];
+            });
+
+        return response()->json([
+            'authenticated' => true,
+            'customer' => $customer->only(['name', 'phone', 'country_code']),
+            'orders' => $orders,
+        ]);
+    }
 }

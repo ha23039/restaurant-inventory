@@ -557,6 +557,8 @@ Route::prefix('api/digital-menu')->name('api.digital-menu.')->group(function () 
 
     // Órdenes
     Route::post('/orders', [App\Http\Controllers\DigitalMenu\OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/pending', [App\Http\Controllers\DigitalMenu\OrderController::class, 'getPendingOrders'])->name('orders.pending');
+    Route::get('/orders/my-orders', [App\Http\Controllers\DigitalMenu\OrderController::class, 'getMyOrders'])->name('orders.my-orders');
 });
 
 require __DIR__.'/auth.php';
