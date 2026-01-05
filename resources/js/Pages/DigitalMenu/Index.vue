@@ -250,6 +250,25 @@ const addVariantToCart = (variantItem) => {
     showVariantModal.value = false;
 };
 
+// Actualizar variantes en el carrito (MODO EDITAR - reemplaza en lugar de sumar)
+const updateVariantsInCart = ({ productId, productName, variants }) => {
+    // 1. Eliminar todas las variantes existentes de este producto del carrito
+    cart.value = cart.value.filter(item => {
+        // Si es una variante, verificar si pertenece al producto actual
+        if (item.variant_id) {
+            // Extraer el nombre base del producto de la variante
+            const itemProductName = item.name.split(' - ')[0];
+            return itemProductName !== productName;
+        }
+        return true;
+    });
+
+    // 2. Agregar las nuevas variantes
+    variants.forEach(variant => {
+        cart.value.push(variant);
+    });
+};
+
 const removeFromCart = (index) => cart.value.splice(index, 1);
 
 const updateQuantity = (index, newQuantity) => {
@@ -469,8 +488,10 @@ const handleConfirmationClose = () => {
             :show="showVariantModal"
             :menu-item="selectedProduct?.product_type === 'menu' ? selectedProduct : null"
             :product="selectedProduct"
+            :cart="cart"
             @close="showVariantModal = false"
             @select="addVariantToCart"
+            @update-variants="updateVariantsInCart"
         />
 
         <!-- Cart SlideOver -->
