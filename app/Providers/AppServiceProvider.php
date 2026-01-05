@@ -49,6 +49,23 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // Establecer timezone dinámicamente desde BusinessSettings
+        try {
+            $settings = \App\Models\BusinessSettings::get();
+            $timezone = $settings->timezone ?? 'America/El_Salvador';
+
+            // Establecer timezone para Laravel (afecta Carbon y Eloquent timestamps)
+            config(['app.timezone' => $timezone]);
+
+            // Establecer timezone para PHP (afecta date(), time(), etc.)
+            date_default_timezone_set($timezone);
+        } catch (\Exception $e) {
+            // Si falla (ej: durante migraciones o cuando no existe la tabla aún)
+            // usar timezone por defecto
+            config(['app.timezone' => 'America/El_Salvador']);
+            date_default_timezone_set('America/El_Salvador');
+        }
+
         Product::observe(ProductObserver::class);
         Sale::observe(SaleObserver::class);
         SaleReturn::observe(SaleReturnObserver::class);

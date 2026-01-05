@@ -39,6 +39,7 @@ class SettingsController extends Controller
             'welcome_message' => 'nullable|string|max:1000',
             'footer_message' => 'nullable|string|max:1000',
             'currency' => 'required|string|max:10',
+            'country_code' => 'nullable|string|max:10',
             'timezone' => 'required|string|max:50',
             'social_media' => 'nullable|array',
 

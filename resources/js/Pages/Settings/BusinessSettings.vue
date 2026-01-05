@@ -25,6 +25,7 @@ const form = ref({
     restaurant_email: props.settings.restaurant_email || '',
     restaurant_tax_id: props.settings.restaurant_tax_id || '',
     currency: props.settings.currency || 'MXN',
+    country_code: props.settings.country_code || '+503',
     timezone: props.settings.timezone || 'America/El_Salvador',
 
     // Branding
@@ -231,6 +232,48 @@ const handleSubmit = () => {
                                         <option value="MXN">MXN - Peso Mexicano</option>
                                         <option value="USD">USD - Dólar Estadounidense</option>
                                         <option value="EUR">EUR - Euro</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <InputLabel for="country_code" value="Código de País" />
+                                    <select
+                                        id="country_code"
+                                        v-model="form.country_code"
+                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 dark:focus:border-purple-600 focus:ring-purple-500 dark:focus:ring-purple-600 rounded-md shadow-sm"
+                                    >
+                                        <optgroup label="Centroamérica">
+                                            <option value="+503">+503 - El Salvador</option>
+                                            <option value="+502">+502 - Guatemala</option>
+                                            <option value="+504">+504 - Honduras</option>
+                                            <option value="+505">+505 - Nicaragua</option>
+                                            <option value="+506">+506 - Costa Rica</option>
+                                            <option value="+507">+507 - Panamá</option>
+                                            <option value="+501">+501 - Belice</option>
+                                        </optgroup>
+                                        <optgroup label="México">
+                                            <option value="+52">+52 - México</option>
+                                        </optgroup>
+                                        <optgroup label="Sudamérica">
+                                            <option value="+57">+57 - Colombia</option>
+                                            <option value="+58">+58 - Venezuela</option>
+                                            <option value="+51">+51 - Perú</option>
+                                            <option value="+593">+593 - Ecuador</option>
+                                            <option value="+591">+591 - Bolivia</option>
+                                            <option value="+56">+56 - Chile</option>
+                                            <option value="+54">+54 - Argentina</option>
+                                            <option value="+598">+598 - Uruguay</option>
+                                            <option value="+595">+595 - Paraguay</option>
+                                            <option value="+55">+55 - Brasil</option>
+                                        </optgroup>
+                                        <optgroup label="Caribe">
+                                            <option value="+53">+53 - Cuba</option>
+                                            <option value="+1-809">+1-809 - República Dominicana</option>
+                                            <option value="+1-787">+1-787 - Puerto Rico</option>
+                                        </optgroup>
+                                        <optgroup label="Norteamérica">
+                                            <option value="+1">+1 - Estados Unidos / Canadá</option>
+                                        </optgroup>
                                     </select>
                                 </div>
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useToast } from 'vue-toastification';
 
 const props = defineProps({
     show: Boolean,
@@ -12,8 +13,11 @@ const emit = defineEmits(['close', 'select']);
 // Usar menuItem o product
 const activeProduct = computed(() => props.product || props.menuItem);
 
+const toast = useToast();
 const selectedId = ref(null);
 const slideOverRef = ref(null);
+const justAdded = ref(false);
+const quantity = ref(1);
 
 // Touch gesture state
 const touchStart = ref({ y: 0, x: 0 });
@@ -76,15 +80,35 @@ const handleSelectVariant = (variant) => {
     // Para productos simples, available_quantity puede ser 999 (sin límite) o mayor a 0
     if (variant.available_quantity <= 0 && variant.available_quantity !== 999) return;
 
-    // Solo marcar como seleccionada, no cerrar
+    // Marcar como seleccionada y resetear cantidad
     selectedId.value = variant.id;
+    quantity.value = 1;
+};
+
+const incrementQuantity = () => {
+    const variant = activeProduct.value.variants.find(v => v.id === selectedId.value);
+    if (!variant) return;
+
+    const maxQuantity = variant.available_quantity === 999 ? 99 : variant.available_quantity;
+    if (quantity.value < maxQuantity) {
+        quantity.value++;
+    }
+};
+
+const decrementQuantity = () => {
+    if (quantity.value > 1) {
+        quantity.value--;
+    }
 };
 
 const addToCart = () => {
-    if (!selectedId.value) return;
+    if (!selectedId.value || justAdded.value) return;
 
     const variant = activeProduct.value.variants.find(v => v.id === selectedId.value);
     if (!variant) return;
+
+    // Activar animación de "añadido"
+    justAdded.value = true;
 
     emit('select', {
         type: 'variant',
@@ -92,15 +116,25 @@ const addToCart = () => {
         id: variant.id,
         name: `${activeProduct.value.name} - ${variant.variant_name}`,
         price: parseFloat(variant.price),
-        quantity: 1,
+        quantity: quantity.value,
         variant_id: variant.id,
         image_path: activeProduct.value.image_path,
         available_quantity: variant.available_quantity,
     });
 
-    // Resetear selección y cerrar
-    selectedId.value = null;
-    emit('close');
+    // Toast de éxito
+    const quantityText = quantity.value > 1 ? ` (x${quantity.value})` : '';
+    toast.success(`${variant.variant_name}${quantityText} agregado al carrito`, {
+        timeout: 2000,
+        icon: '🛒'
+    });
+
+    // Resetear selección pero NO cerrar - permitir agregar más
+    setTimeout(() => {
+        selectedId.value = null;
+        quantity.value = 1;
+        justAdded.value = false;
+    }, 400);
 };
 
 // Touch handlers for swipe-to-close
@@ -245,12 +279,12 @@ onUnmounted(() => {
                             :key="variant.id"
                             @click="handleSelectVariant(variant)"
                             :disabled="variant.available_quantity <= 0 && variant.available_quantity !== 999"
-                            class="p-3 rounded-xl border-2 text-left transition-all duration-150"
+                            class="p-3 rounded-xl border-2 text-left transition-all duration-200 relative"
                             :class="[
                                 selectedId === variant.id
-                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/30 shadow-md scale-[1.02]'
                                     : (variant.available_quantity > 0 || variant.available_quantity === 999)
-                                        ? 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 hover:border-orange-500 dark:hover:border-orange-400 active:scale-95'
+                                        ? 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 hover:border-orange-500 dark:hover:border-orange-400 hover:shadow-sm active:scale-95'
                                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
                             ]"
                         >
@@ -262,17 +296,27 @@ onUnmounted(() => {
                                     <span class="text-base font-bold text-orange-600 dark:text-orange-400">
                                         ${{ parseFloat(variant.price).toFixed(2) }}
                                     </span>
-                                    <svg 
-                                        v-if="selectedId === variant.id" 
-                                        class="w-5 h-5 text-green-600 dark:text-green-400" 
-                                        fill="currentColor" 
-                                        viewBox="0 0 20 20"
+                                    <Transition
+                                        enter-active-class="transition-all duration-300 ease-out"
+                                        enter-from-class="scale-0 rotate-180 opacity-0"
+                                        enter-to-class="scale-100 rotate-0 opacity-100"
+                                        leave-active-class="transition-all duration-200"
+                                        leave-from-class="scale-100 opacity-100"
+                                        leave-to-class="scale-0 opacity-0"
                                     >
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span 
-                                        v-else-if="variant.available_quantity <= 0 && variant.available_quantity !== 999"
-                                        class="text-xs text-red-500"
+                                        <svg
+                                            v-if="selectedId === variant.id"
+                                            class="w-6 h-6 text-green-600 dark:text-green-400 drop-shadow"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                    </Transition>
+                                    <span
+                                        v-if="!selectedId || selectedId !== variant.id"
+                                        v-show="variant.available_quantity <= 0 && variant.available_quantity !== 999"
+                                        class="text-xs text-red-500 font-medium"
                                     >
                                         Agotado
                                     </span>
@@ -283,23 +327,83 @@ onUnmounted(() => {
                 </template>
             </div>
 
-            <!-- Botón Agregar al Carrito -->
-            <div class="sticky bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <!-- Selector de Cantidad y Botón -->
+            <div class="sticky bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <!-- Selector de Cantidad -->
+                <Transition
+                    enter-active-class="transition-all duration-300"
+                    enter-from-class="opacity-0 -translate-y-2"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition-all duration-200"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 -translate-y-2"
+                >
+                    <div v-if="selectedId && !justAdded" class="flex items-center justify-center gap-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-2">
+                        <button
+                            @click="decrementQuantity"
+                            :disabled="quantity <= 1"
+                            class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold text-xl flex items-center justify-center transition-all hover:border-orange-500 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4" />
+                            </svg>
+                        </button>
+
+                        <div class="flex flex-col items-center">
+                            <span class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+                                {{ quantity }}
+                            </span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                cantidad
+                            </span>
+                        </div>
+
+                        <button
+                            @click="incrementQuantity"
+                            class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold text-xl flex items-center justify-center transition-all hover:border-orange-500 active:scale-95"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </button>
+                    </div>
+                </Transition>
+
+                <!-- Botón Agregar al Carrito -->
                 <button
                     @click="addToCart"
-                    :disabled="!selectedId"
-                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all"
-                    :class="selectedId
-                        ? 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'"
+                    :disabled="!selectedId || justAdded"
+                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all relative overflow-hidden"
+                    :class="[
+                        selectedId && !justAdded
+                            ? 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95 shadow-lg hover:shadow-xl'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed',
+                        justAdded ? 'bg-green-500 scale-95' : ''
+                    ]"
                 >
-                    <span v-if="selectedId" class="flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        Agregar al carrito
-                    </span>
-                    <span v-else>Selecciona una opción</span>
+                    <Transition
+                        enter-active-class="transition-all duration-300"
+                        leave-active-class="transition-all duration-200"
+                        enter-from-class="opacity-0 -translate-y-2"
+                        enter-to-class="opacity-100 translate-y-0"
+                        leave-from-class="opacity-100 translate-y-0"
+                        leave-to-class="opacity-0 translate-y-2"
+                        mode="out-in"
+                    >
+                        <span v-if="justAdded" class="flex items-center justify-center gap-2" key="added">
+                            <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                            ¡Agregado!
+                        </span>
+                        <span v-else-if="selectedId" class="flex items-center justify-center gap-2" key="add">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            Agregar al carrito
+                        </span>
+                        <span v-else key="select">Selecciona una opción</span>
+                    </Transition>
                 </button>
             </div>
 

@@ -128,6 +128,8 @@ class MenuController extends Controller
                 'estimated_prep_time' => $settings->estimated_prep_time,
                 'delivery_methods' => $settings->getAvailableDeliveryMethods(),
                 'whatsapp_number' => $settings->whatsapp_number,
+                'country_code' => $settings->country_code ?? '+503',
+                'timezone' => $settings->timezone ?? 'America/El_Salvador',
                 'restaurant_name' => $settings->restaurant_name,
                 'restaurant_phone' => $settings->restaurant_phone,
                 'restaurant_address' => $settings->restaurant_address,
