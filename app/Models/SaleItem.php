@@ -14,6 +14,7 @@ class SaleItem extends Model
         'menu_item_id',
         'menu_item_variant_id',
         'simple_product_id',
+        'simple_product_variant_id',
         'free_sale_name',
         'free_sale_price',
         'quantity',
@@ -51,29 +52,33 @@ class SaleItem extends Model
         return $this->belongsTo(SimpleProduct::class);
     }
 
+    public function simpleProductVariant()
+    {
+        return $this->belongsTo(SimpleProductVariant::class);
+    }
+
     // Accessor para obtener el producto (sea del menú, variante o simple)
     public function getProductAttribute()
     {
-        if ($this->product_type === 'variant') {
-            return $this->menuItemVariant;
-        } elseif ($this->product_type === 'menu') {
-            return $this->menuItem;
-        } else {
-            return $this->simpleProduct;
-        }
+        return match ($this->product_type) {
+            'variant' => $this->menuItemVariant,
+            'simple_variant' => $this->simpleProductVariant,
+            'menu' => $this->menuItem,
+            'simple' => $this->simpleProduct,
+            default => $this->simpleProduct,
+        };
     }
 
     // Accessor para obtener el nombre del producto
     public function getProductNameAttribute()
     {
-        if ($this->product_type === 'free') {
-            return $this->free_sale_name;
-        } elseif ($this->product_type === 'variant') {
-            return $this->menuItemVariant?->variant_name;
-        } elseif ($this->product_type === 'menu') {
-            return $this->menuItem?->name;
-        } else {
-            return $this->simpleProduct?->name;
-        }
+        return match ($this->product_type) {
+            'free' => $this->free_sale_name,
+            'variant' => $this->menuItemVariant?->variant_name,
+            'simple_variant' => $this->simpleProductVariant?->variant_name,
+            'menu' => $this->menuItem?->name,
+            'simple' => $this->simpleProduct?->name,
+            default => $this->simpleProduct?->name,
+        };
     }
 }

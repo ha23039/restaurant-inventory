@@ -206,8 +206,8 @@ const checkPendingOrders = async () => {
             pendingOrders.value = response.data.pending_orders;
         }
     } catch (error) {
-        // Silently fail - customer might not be logged in
-        console.log('No se pudieron cargar pedidos pendientes');
+        // Silently fail - customer might not be logged in or no pending orders
+        // No action needed
     }
 };
 

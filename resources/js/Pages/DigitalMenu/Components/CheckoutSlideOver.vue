@@ -47,7 +47,11 @@ const deliveryMethods = computed(() => {
 });
 
 // Validaciones
-const isPhoneValid = computed(() => phone.value.trim().length >= 8);
+const isPhoneValid = computed(() => {
+    // Remover guiones, espacios y otros caracteres no numéricos para validar
+    const digitsOnly = phone.value.replace(/\D/g, '');
+    return digitsOnly.length >= 8;
+});
 const isCodeValid = computed(() => verificationCode.value.length === 6);
 const isNameValid = computed(() => customerName.value.trim().length >= 2);
 

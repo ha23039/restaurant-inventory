@@ -10,8 +10,11 @@ use App\Models\MenuItemVariant;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SimpleProduct;
+use App\Models\SimpleProductVariant;
 use App\Models\Table;
+use App\Models\KitchenOrderState;
 use App\Models\User;
+use App\Services\ThermalTicketService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -25,7 +28,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:menu,simple,variant',
+            'items.*.type' => 'required|in:menu,simple,variant,simple_variant',
             'items.*.id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
             'delivery_method' => 'required|in:pickup,delivery,dine_in',
@@ -135,11 +138,19 @@ class OrderController extends Controller
                     'menu_item_id' => $itemData['type'] === 'menu' ? $itemData['product']->id : null,
                     'menu_item_variant_id' => $itemData['type'] === 'variant' ? $itemData['product']->id : null,
                     'simple_product_id' => $itemData['type'] === 'simple' ? $itemData['product']->id : null,
+                    'simple_product_variant_id' => $itemData['type'] === 'simple_variant' ? $itemData['product']->id : null,
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'total_price' => $itemData['total_price'],
                 ]);
             }
+
+            // Crear orden de cocina para que aparezca en Kitchen Display
+            KitchenOrderState::create([
+                'sale_id' => $sale->id,
+                'status' => 'nueva',
+                'priority' => 1, // Prioridad normal para órdenes digitales
+            ]);
 
             // Update customer stats
             $customer->incrementOrderStats($total);
@@ -157,6 +168,15 @@ class OrderController extends Controller
             }
 
             DB::commit();
+
+            // Imprimir ticket de cocina
+            try {
+                $ticketService = app(ThermalTicketService::class);
+                $ticketService->generateKitchenOrder($sale);
+            } catch (\Exception $e) {
+                // Log error pero no fallar la orden
+                \Log::warning('Error al imprimir ticket de cocina desde menú digital: ' . $e->getMessage());
+            }
 
             // Build WhatsApp confirmation message
             $whatsappMessage = $this->buildWhatsAppMessage($sale, $itemsData);
@@ -192,6 +212,7 @@ class OrderController extends Controller
             'menu' => MenuItem::find($id),
             'variant' => MenuItemVariant::find($id),
             'simple' => SimpleProduct::find($id),
+            'simple_variant' => SimpleProductVariant::find($id),
             default => null,
         };
     }
@@ -205,6 +226,7 @@ class OrderController extends Controller
             'menu' => (float) $product->price,
             'variant' => (float) $product->price,
             'simple' => (float) $product->sale_price,
+            'simple_variant' => (float) $product->price,
             default => 0,
         };
     }
@@ -260,9 +282,11 @@ class OrderController extends Controller
         $lines[] = "Productos:";
 
         foreach ($items as $item) {
-            $name = $item['type'] === 'variant'
-                ? $item['product']->menuItem->name . ' - ' . $item['product']->variant_name
-                : $item['product']->name;
+            $name = match ($item['type']) {
+                'variant' => $item['product']->menuItem->name . ' - ' . $item['product']->variant_name,
+                'simple_variant' => $item['product']->simpleProduct->name . ' - ' . $item['product']->variant_name,
+                default => $item['product']->name,
+            };
             $lines[] = "- {$item['quantity']}x {$name} (\${$item['total_price']})";
         }
 

@@ -24,7 +24,8 @@ class KitchenDisplayController extends Controller
         $orders = KitchenOrderState::with([
             'sale.saleItems.menuItem',
             'sale.saleItems.simpleProduct',
-            'sale.saleItems.menuItemVariant.menuItem',  // Soporte para variantes
+            'sale.saleItems.menuItemVariant.menuItem',
+            'sale.saleItems.simpleProductVariant.simpleProduct',
             'sale.table'
         ])
             ->whereHas('sale') // Solo órdenes con venta válida (no eliminada)
@@ -59,14 +60,19 @@ class KitchenDisplayController extends Controller
     }
 
     /**
-     * Obtener nombre del item (soporta menu, variant, simple, free)
+     * Obtener nombre del item (soporta menu, variant, simple, simple_variant, free)
      */
     private function getItemName($item): string
     {
         if ($item->product_type === 'variant' && $item->menuItemVariant) {
-            // Para variantes, mostrar nombre del platillo padre + nombre de variante
+            // Para variantes de menú, mostrar nombre del platillo padre + nombre de variante
             $parentName = $item->menuItemVariant->menuItem->name ?? '';
             $variantName = $item->menuItemVariant->variant_name;
+            return $parentName ? "{$parentName} - {$variantName}" : $variantName;
+        } elseif ($item->product_type === 'simple_variant' && $item->simpleProductVariant) {
+            // Para variantes de productos simples
+            $parentName = $item->simpleProductVariant->simpleProduct->name ?? '';
+            $variantName = $item->simpleProductVariant->variant_name;
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
         } elseif ($item->product_type === 'menu' && $item->menuItem) {
             return $item->menuItem->name;
