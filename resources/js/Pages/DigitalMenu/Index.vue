@@ -14,8 +14,8 @@ const props = defineProps({
     menuItems: Array,
     simpleProducts: Array,
     categories: Array,
-    availableTables: Array,
     settings: Object,
+    availableTables: Array,
 });
 
 const searchQuery = ref('');
@@ -338,7 +338,7 @@ const handleConfirmationClose = () => {
                         Tienes {{ pendingOrders.length }} pedido{{ pendingOrders.length > 1 ? 's' : '' }} en proceso
                     </h3>
                     <p class="text-xs text-blue-700 dark:text-blue-400 mb-3">
-                        Pedido #{{ pendingOrders[0].sale_number }} · {{ pendingOrders[0].items_count }} artículo{{ pendingOrders[0].items_count > 1 ? 's' : '' }} · ${{ pendingOrders[0].total.toFixed(2) }}
+                        Pedido #{{ pendingOrders[0].sale_number }} · {{ pendingOrders[0].items_count }} artículo{{ pendingOrders[0].items_count > 1 ? 's' : '' }} · ${{ Number(pendingOrders[0].total).toFixed(2) }}
                     </p>
                     <div class="flex gap-2">
                         <button

@@ -545,20 +545,10 @@ Route::prefix('menu')->name('digital-menu.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| API Routes para Menú Digital (para frontend Vue)
+| API Routes para Menú Digital - MOVIDAS A routes/api.php
 |--------------------------------------------------------------------------
+| Las rutas de API ahora están en routes/api.php para evitar problemas
+| con CSRF y usar el middleware API correcto
 */
-
-Route::prefix('api/digital-menu')->name('api.digital-menu.')->group(function () {
-    // Autenticación
-    Route::post('/auth/send-code', [App\Http\Controllers\DigitalMenu\AuthController::class, 'requestCode'])->name('auth.send-code');
-    Route::post('/auth/verify-code', [App\Http\Controllers\DigitalMenu\AuthController::class, 'verifyCode'])->name('auth.verify-code');
-    Route::get('/auth/me', [App\Http\Controllers\DigitalMenu\AuthController::class, 'me'])->name('auth.me');
-
-    // Órdenes
-    Route::post('/orders', [App\Http\Controllers\DigitalMenu\OrderController::class, 'store'])->name('orders.store');
-    Route::get('/orders/pending', [App\Http\Controllers\DigitalMenu\OrderController::class, 'getPendingOrders'])->name('orders.pending');
-    Route::get('/orders/my-orders', [App\Http\Controllers\DigitalMenu\OrderController::class, 'getMyOrders'])->name('orders.my-orders');
-});
 
 require __DIR__.'/auth.php';

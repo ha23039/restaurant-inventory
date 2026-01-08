@@ -287,7 +287,7 @@ const handleTouchEnd = () => {
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
-                                <span class="font-bold text-orange-600 dark:text-orange-400">${{ order.total.toFixed(2) }}</span>
+                                <span class="font-bold text-orange-600 dark:text-orange-400">${{ Number(order.total).toFixed(2) }}</span>
                             </div>
                             <div class="col-span-2 flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

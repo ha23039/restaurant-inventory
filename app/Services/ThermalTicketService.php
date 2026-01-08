@@ -21,14 +21,8 @@ class ThermalTicketService
 
     public function __construct()
     {
-        $this->config = config('thermal_printer', [
-            'kitchen_printer' => env('KITCHEN_PRINTER_IP', '192.168.1.100'),
-            'customer_printer' => env('CUSTOMER_PRINTER_NAME', 'ThermalPrinter'),
-            'restaurant_name' => env('RESTAURANT_NAME', 'Restaurante Demo'),
-            'restaurant_address' => env('RESTAURANT_ADDRESS', 'Calle Principal #123'),
-            'restaurant_phone' => env('RESTAURANT_PHONE', '(555) 123-4567'),
-            'restaurant_website' => env('RESTAURANT_WEBSITE', 'www.restaurante.com'),
-        ]);
+        // Usar el archivo de configuración completo
+        $this->config = config('thermal_printer');
     }
 
     /**
@@ -37,6 +31,11 @@ class ThermalTicketService
     public function generateKitchenOrder(Sale $sale): bool
     {
         try {
+            // Verificar si la impresora está habilitada
+            if (!($this->config['kitchen_printer']['enabled'] ?? true)) {
+                return true; // Silenciosamente salir si está deshabilitada
+            }
+
             // 🚀 MODO DESARROLLO: Simular éxito y crear archivo
             if (app()->environment(['local', 'development'])) {
                 return $this->simulateKitchenOrder($sale);
@@ -116,6 +115,11 @@ class ThermalTicketService
     public function generateCustomerReceipt(Sale $sale): bool
     {
         try {
+            // Verificar si la impresora está habilitada
+            if (!($this->config['customer_printer']['enabled'] ?? true)) {
+                return true; // Silenciosamente salir si está deshabilitada
+            }
+
             // 🚀 MODO DESARROLLO: Simular éxito y crear archivo
             if (app()->environment(['local', 'development'])) {
                 return $this->simulateCustomerReceipt($sale);
@@ -127,10 +131,10 @@ class ThermalTicketService
             // Header del restaurante
             $this->printer->setJustification(Printer::JUSTIFY_CENTER);
             $this->printer->setTextSize(2, 2);
-            $this->printer->text("{$this->config['restaurant_name']}\n");
+            $this->printer->text("{$this->config['restaurant']['name']}\n");
             $this->printer->setTextSize(1, 1);
-            $this->printer->text("{$this->config['restaurant_address']}\n");
-            $this->printer->text("Tel: {$this->config['restaurant_phone']}\n");
+            $this->printer->text("{$this->config['restaurant']['address']}\n");
+            $this->printer->text("Tel: {$this->config['restaurant']['phone']}\n");
             $this->printer->text("================================\n");
 
             // Información del ticket
@@ -297,9 +301,9 @@ class ThermalTicketService
 
             $content = "🧾 TICKET DE CLIENTE (SIMULACIÓN)\n";
             $content .= "================================\n";
-            $content .= "{$this->config['restaurant_name']}\n";
-            $content .= "{$this->config['restaurant_address']}\n";
-            $content .= "Tel: {$this->config['restaurant_phone']}\n";
+            $content .= "{$this->config['restaurant']['name']}\n";
+            $content .= "{$this->config['restaurant']['address']}\n";
+            $content .= "Tel: {$this->config['restaurant']['phone']}\n";
             $content .= "================================\n";
             $content .= "Ticket: #{$sale->sale_number}\n";
             $content .= 'Fecha: ' . Carbon::parse($sale->created_at)->format('d/m/Y H:i') . "\n";
@@ -362,6 +366,11 @@ class ThermalTicketService
     public function generateReturnReceipt(SaleReturn $return): bool
     {
         try {
+            // Verificar si la impresora está habilitada
+            if (!($this->config['customer_printer']['enabled'] ?? true)) {
+                return true; // Silenciosamente salir si está deshabilitada
+            }
+
             // 🚀 MODO DESARROLLO: Simular si no hay impresora
             if (app()->environment(['local', 'development'])) {
                 return $this->simulateReturnReceipt($return);
@@ -479,7 +488,9 @@ class ThermalTicketService
     {
         if (env('APP_ENV') === 'production') {
             // Conectar por red en producción
-            $connector = new NetworkPrintConnector($this->config['kitchen_printer'], 9100);
+            $ip = $this->config['kitchen_printer']['ip'] ?? '192.168.1.100';
+            $port = $this->config['kitchen_printer']['port'] ?? 9100;
+            $connector = new NetworkPrintConnector($ip, $port);
         } else {
             // Archivo temporal en desarrollo
             $connector = new FilePrintConnector(storage_path('app/tickets/kitchen_' . time() . '.txt'));
@@ -495,9 +506,12 @@ class ThermalTicketService
     {
         if (env('APP_ENV') === 'production') {
             if (PHP_OS_FAMILY === 'Windows') {
-                $connector = new WindowsPrintConnector($this->config['customer_printer']);
+                $printerName = $this->config['customer_printer']['name'] ?? 'ThermalPrinter';
+                $connector = new WindowsPrintConnector($printerName);
             } else {
-                $connector = new NetworkPrintConnector($this->config['customer_printer'], 9100);
+                $ip = $this->config['customer_printer']['ip'] ?? '192.168.1.101';
+                $port = $this->config['customer_printer']['port'] ?? 9100;
+                $connector = new NetworkPrintConnector($ip, $port);
             }
         } else {
             // Archivo temporal en desarrollo

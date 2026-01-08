@@ -150,7 +150,7 @@ const handleTouchEnd = () => {
                             <span class="text-xs font-medium">Total</span>
                         </div>
                         <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                            ${{ sale?.total?.toFixed(2) }}
+                            ${{ sale?.total ? Number(sale.total).toFixed(2) : '0.00' }}
                         </p>
                     </div>
 
