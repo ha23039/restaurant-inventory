@@ -108,10 +108,31 @@ class KitchenDisplayController extends Controller
         $order->status = $newStatus;
         $order->save();
 
+        // Sincronizar estado con la venta
+        if ($order->sale) {
+            $saleStatus = $this->mapKitchenStatusToSaleStatus($newStatus);
+
+            if ($order->sale->status !== $saleStatus) {
+                $order->sale->update(['status' => $saleStatus]);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Estado actualizado correctamente',
             'order' => $order,
         ]);
+    }
+
+    /**
+     * Mapear estado de cocina a estado de venta
+     */
+    private function mapKitchenStatusToSaleStatus(string $kitchenStatus): string
+    {
+        return match($kitchenStatus) {
+            'entregada' => 'completada',
+            'nueva', 'preparando', 'lista' => 'pendiente',
+            default => 'pendiente',
+        };
     }
 }

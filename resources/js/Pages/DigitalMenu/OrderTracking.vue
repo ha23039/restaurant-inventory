@@ -7,25 +7,30 @@ const props = defineProps({
     sale: Object,
 });
 
-const currentStatus = ref(props.sale.status);
+// Estados dinámicos basados en lo que viene de cocina
+const currentKitchenStatus = ref(props.sale.kitchen_status);
+const currentStatusLabel = ref(props.sale.status_label);
+const currentStatusColor = ref(props.sale.status_color);
+const elapsedMinutes = ref(props.sale.elapsed_minutes);
 let refreshInterval = null;
 
+// Timeline de estados (del backend)
 const statuses = [
-    { key: 'pendiente', label: 'Recibida', icon: 'check' },
-    { key: 'en_preparacion', label: 'En Preparacion', icon: 'fire' },
-    { key: 'lista', label: 'Lista', icon: 'check-circle' },
-    { key: 'completada', label: 'Completada', icon: 'star' },
+    { key: 'nueva', label: 'Pedido Recibido', icon: 'check', color: 'blue' },
+    { key: 'preparando', label: 'En Preparación', icon: 'fire', color: 'yellow' },
+    { key: 'lista', label: 'Lista para Recoger', icon: 'check-circle', color: 'green' },
+    { key: 'entregada', label: 'Entregada', icon: 'star', color: 'gray' },
 ];
 
 const currentStepIndex = computed(() => {
-    return statuses.findIndex(s => s.key === currentStatus.value);
+    return statuses.findIndex(s => s.key === currentKitchenStatus.value);
 });
 
 const deliveryMethodLabel = computed(() => {
     const labels = {
         'pickup': 'Para llevar',
         'delivery': 'Delivery',
-        'dine_in': 'Comer aqui',
+        'dine_in': 'Comer aquí',
     };
     return labels[props.sale.delivery_method] || props.sale.delivery_method;
 });
@@ -38,14 +43,30 @@ const isStatusCurrent = (index) => {
     return index === currentStepIndex.value;
 };
 
+const getBadgeColor = (color) => {
+    const colors = {
+        'blue': 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700',
+        'yellow': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700',
+        'green': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700',
+        'gray': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600',
+        'red': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700',
+    };
+    return colors[color] || colors['blue'];
+};
+
 const refreshStatus = async () => {
     try {
         const response = await fetch(route('digital-menu.order.status', props.sale.sale_number));
         const data = await response.json();
-        currentStatus.value = data.status;
 
-        // Stop refreshing if order is completed
-        if (data.status === 'completada' || data.status === 'cancelada') {
+        // Actualizar con datos del backend
+        currentKitchenStatus.value = data.kitchen_status;
+        currentStatusLabel.value = data.status_label;
+        currentStatusColor.value = data.status_color;
+        elapsedMinutes.value = data.elapsed_minutes;
+
+        // Stop refreshing if order is completed or cancelled
+        if (data.kitchen_status === 'entregada' || data.kitchen_status === 'cancelada') {
             if (refreshInterval) {
                 clearInterval(refreshInterval);
             }
@@ -56,9 +77,9 @@ const refreshStatus = async () => {
 };
 
 onMounted(() => {
-    // Refresh status every 30 seconds
-    if (currentStatus.value !== 'completada' && currentStatus.value !== 'cancelada') {
-        refreshInterval = setInterval(refreshStatus, 30000);
+    // Refresh status every 15 seconds for live updates
+    if (currentKitchenStatus.value !== 'entregada' && currentKitchenStatus.value !== 'cancelada') {
+        refreshInterval = setInterval(refreshStatus, 15000);
     }
 });
 
@@ -82,10 +103,27 @@ onUnmounted(() => {
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                     Pedido #{{ sale.sale_number }}
                 </h1>
-                <p class="text-gray-600 dark:text-gray-400">
+                <p class="text-gray-600 dark:text-gray-400 mb-3">
                     {{ deliveryMethodLabel }}
                     <span v-if="sale.table_number">- Mesa {{ sale.table_number }}</span>
                 </p>
+
+                <!-- Current Status Badge -->
+                <div class="inline-flex items-center gap-2">
+                    <span
+                        class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold border-2"
+                        :class="getBadgeColor(currentStatusColor)"
+                    >
+                        <span class="w-2 h-2 rounded-full mr-2" :class="`bg-${currentStatusColor}-500`"></span>
+                        {{ currentStatusLabel }}
+                    </span>
+                    <span
+                        v-if="elapsedMinutes !== null"
+                        class="text-sm text-gray-500 dark:text-gray-400"
+                    >
+                        · {{ elapsedMinutes }} min
+                    </span>
+                </div>
             </div>
 
             <!-- Status Timeline -->

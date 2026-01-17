@@ -173,16 +173,19 @@ const verifyCode = async () => {
         const response = await axios.post('/api/digital-menu/auth/verify-code', {
             customer_id: customerId.value,
             code: verificationCode.value,
-            name: isNewCustomer.value ? customerName.value.trim() : undefined,
+            // Solo enviar el nombre si ya está lleno (paso 3)
+            name: customerName.value.trim() || undefined,
         });
 
         if (response.data.success) {
-            // Si es cliente nuevo y no pidió nombre, ir a paso 3
-            if (isNewCustomer.value && !customerName.value) {
+            const returnedName = response.data.customer.name || '';
+
+            // Si es cliente nuevo y no tiene nombre, ir a paso 3
+            if (isNewCustomer.value && !returnedName) {
                 currentStep.value = 3;
             } else {
                 // Ir directo a detalles de orden
-                customerName.value = response.data.customer.name || '';
+                customerName.value = returnedName;
                 currentStep.value = 4;
             }
         }

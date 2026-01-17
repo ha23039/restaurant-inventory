@@ -68,8 +68,9 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if (!$customer->name && isset($validated['name'])) {
-            $customer->update(['name' => $validated['name']]);
+        // Solo guardar el nombre si no está vacío
+        if (!$customer->name && !empty($validated['name']) && trim($validated['name']) !== '') {
+            $customer->update(['name' => trim($validated['name'])]);
         }
 
         Session::put('digital_customer_id', $customer->id);
