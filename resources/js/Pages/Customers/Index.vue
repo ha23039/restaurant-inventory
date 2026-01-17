@@ -110,6 +110,34 @@ const deleteCustomer = () => {
     }
 };
 
+// Cleanup incomplete customers
+const cleanupIncomplete = async () => {
+    const count = props.statistics?.incomplete || 0;
+
+    if (count === 0) {
+        await confirm({
+            title: 'Sin clientes incompletos',
+            message: 'No hay clientes incompletos para eliminar.',
+            confirmText: 'Entendido',
+            type: 'info'
+        });
+        return;
+    }
+
+    const confirmed = await confirm({
+        title: 'Limpiar clientes incompletos',
+        message: `Se eliminarán ${count} cliente(s) sin nombre y sin órdenes. Esta acción no se puede deshacer.`,
+        confirmText: `Eliminar ${count} cliente(s)`,
+        type: 'warning'
+    });
+
+    if (confirmed) {
+        router.post(route('customers.cleanup-incomplete'), {}, {
+            preserveScroll: true,
+        });
+    }
+};
+
 // Has active filters
 const hasActiveFilters = computed(() => {
     return localFilters.value.search || localFilters.value.is_verified !== '' || localFilters.value.is_active !== '';
@@ -139,7 +167,7 @@ const hasActiveFilters = computed(() => {
 
         <div class="space-y-6">
             <!-- Statistics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -201,6 +229,34 @@ const hasActiveFilters = computed(() => {
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos Totales</div>
                             <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">${{ parseFloat(statistics?.total_revenue || 0).toFixed(2) }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-2 border-dashed" :class="statistics?.incomplete > 0 ? 'border-orange-300 dark:border-orange-700' : 'border-gray-300 dark:border-gray-600'">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 rounded-lg flex items-center justify-center" :class="statistics?.incomplete > 0 ? 'bg-orange-100 dark:bg-orange-900' : 'bg-gray-100 dark:bg-gray-700'">
+                                <svg class="w-6 h-6" :class="statistics?.incomplete > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Incompletos</div>
+                            <div class="flex items-center justify-between">
+                                <div class="text-2xl font-bold" :class="statistics?.incomplete > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'">
+                                    {{ statistics?.incomplete || 0 }}
+                                </div>
+                                <button
+                                    v-if="statistics?.incomplete > 0"
+                                    @click="cleanupIncomplete"
+                                    class="text-xs px-2 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
+                                    title="Limpiar registros incompletos sin órdenes"
+                                >
+                                    Limpiar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

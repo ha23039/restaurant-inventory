@@ -99,6 +99,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('customers')->name('customers.
     // Special actions
     Route::post('/{customer}/toggle-status', [App\Http\Controllers\CustomerController::class, 'toggleStatus'])->name('toggle-status');
     Route::post('/{customer}/toggle-verified', [App\Http\Controllers\CustomerController::class, 'toggleVerified'])->name('toggle-verified');
+
+    // Cleanup incomplete customers
+    Route::post('/cleanup-incomplete', [App\Http\Controllers\CustomerController::class, 'cleanupIncomplete'])->name('cleanup-incomplete');
 });
 
 /*

@@ -165,13 +165,51 @@ class CustomerService
      */
     public function getStatistics(): array
     {
+        $incompleteCount = DigitalCustomer::where(function ($q) {
+            $q->whereNull('name')
+              ->orWhere('name', '')
+              ->orWhere('name', 'like', 'Cliente%');
+        })->where('orders_count', 0)->count();
+
         return [
             'total' => DigitalCustomer::count(),
             'verified' => DigitalCustomer::where('is_verified', true)->count(),
             'unverified' => DigitalCustomer::where('is_verified', false)->count(),
             'active' => DigitalCustomer::where('is_active', true)->count(),
+            'incomplete' => $incompleteCount,
             'total_orders' => DigitalCustomer::sum('orders_count'),
             'total_revenue' => DigitalCustomer::sum('total_spent'),
         ];
+    }
+
+    /**
+     * Delete incomplete customers (no name and no orders)
+     */
+    public function deleteIncompleteCustomers(): int
+    {
+        return DB::transaction(function () {
+            $incompleteCustomers = DigitalCustomer::where(function ($q) {
+                $q->whereNull('name')
+                  ->orWhere('name', '')
+                  ->orWhere('name', 'like', 'Cliente%');
+            })
+            ->where('orders_count', 0)
+            ->doesntHave('sales') // Double-check with real relationship
+            ->get();
+
+            $count = $incompleteCustomers->count();
+
+            if ($count > 0) {
+                foreach ($incompleteCustomers as $customer) {
+                    $customer->delete();
+                }
+
+                Log::info('Clientes incompletos eliminados en masa', [
+                    'count' => $count,
+                ]);
+            }
+
+            return $count;
+        });
     }
 }

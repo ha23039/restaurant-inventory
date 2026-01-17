@@ -109,17 +109,22 @@ class CustomerController extends Controller
      */
     public function destroy(DigitalCustomer $customer): RedirectResponse
     {
-        // Prevent deleting customers with orders
-        if ($customer->orders_count > 0) {
-            return back()->withErrors(['error' => 'No se puede eliminar un cliente con órdenes registradas']);
+        // Prevent deleting customers with orders (check real relationship)
+        $ordersCount = $customer->sales()->count();
+
+        if ($ordersCount > 0) {
+            return back()->withErrors([
+                'error' => "No se puede eliminar un cliente con {$ordersCount} orden(es) registrada(s). Los datos históricos deben conservarse."
+            ]);
         }
 
         try {
+            $customerName = $customer->name ?: 'Sin nombre';
             $this->customerService->delete($customer);
 
             return redirect()
                 ->route('customers.index')
-                ->with('success', 'Cliente eliminado exitosamente');
+                ->with('success', "Cliente '{$customerName}' eliminado exitosamente");
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al eliminar el cliente: ' . $e->getMessage()]);
         }
@@ -162,6 +167,28 @@ class CustomerController extends Controller
                 ->with('success', $message);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al cambiar el estado de verificación: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Clean up incomplete customers (no name and no orders)
+     */
+    public function cleanupIncomplete(): RedirectResponse
+    {
+        try {
+            $count = $this->customerService->deleteIncompleteCustomers();
+
+            if ($count > 0) {
+                return redirect()
+                    ->route('customers.index')
+                    ->with('success', "Se eliminaron {$count} cliente(s) incompleto(s) sin órdenes");
+            }
+
+            return redirect()
+                ->route('customers.index')
+                ->with('info', 'No se encontraron clientes incompletos para eliminar');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al limpiar clientes incompletos: ' . $e->getMessage()]);
         }
     }
 }
