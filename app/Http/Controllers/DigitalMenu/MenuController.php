@@ -103,15 +103,23 @@ class MenuController extends Controller
 
         $categories = Category::orderBy('name')->get();
 
-        // Get available tables for dine-in
-        $availableTables = Table::where('status', 'disponible')
+        // Get tables for dine-in (disponibles y ocupadas - pueden recibir múltiples pedidos)
+        $availableTables = Table::whereIn('status', ['disponible', 'ocupada'])
+            ->where('is_active', true)
             ->orderBy('table_number')
             ->get()
             ->map(function ($table) {
+                // Contar pedidos pendientes en esta mesa
+                $pendingOrders = \App\Models\Sale::where('table_id', $table->id)
+                    ->whereIn('status', ['pendiente', 'en_preparacion'])
+                    ->count();
+
                 return [
                     'id' => $table->id,
                     'table_number' => $table->table_number,
                     'capacity' => $table->capacity,
+                    'status' => $table->status,
+                    'pending_orders' => $pendingOrders,
                 ];
             });
 

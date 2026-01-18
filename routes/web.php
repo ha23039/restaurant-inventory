@@ -139,7 +139,14 @@ Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('tables')->name(
     Route::post('/{table}/occupy', [App\Http\Controllers\TableController::class, 'occupyTable'])->name('occupy');
     Route::post('/{table}/release', [App\Http\Controllers\TableController::class, 'releaseTable'])->name('release');
     Route::post('/{table}/toggle-active', [App\Http\Controllers\TableController::class, 'toggleActive'])->name('toggle-active');
+
+    // Multi-order table management (cobro por mesa)
+    Route::get('/{table}/pending-sales', [App\Http\Controllers\TableController::class, 'getPendingSales'])->name('pending-sales');
+    Route::post('/{table}/charge-all', [App\Http\Controllers\TableController::class, 'chargeAllSales'])->name('charge-all');
 });
+
+// Charge individual sale (separate route because it uses Sale model binding)
+Route::middleware(['auth', 'role:admin,cajero,mesero'])->post('/sales/{sale}/charge', [App\Http\Controllers\TableController::class, 'chargeSale'])->name('sales.charge');
 
 /*
 |--------------------------------------------------------------------------

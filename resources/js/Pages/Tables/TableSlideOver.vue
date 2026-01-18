@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import TableChargeSlideOver from './TableChargeSlideOver.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
@@ -19,19 +20,31 @@ const emit = defineEmits(['close', 'updated']);
 const { confirm } = useConfirmDialog();
 
 // State
-const currentSale = ref(null);
-const cartItems = ref([]);
+const pendingSales = ref([]);
+const totalPending = ref(0);
+const salesCount = ref(0);
+const isLoading = ref(false);
 const isProcessing = ref(false);
-const updatingStatus = ref(null); // Track which status button is loading
-const localTableStatus = ref(null); // Local status for instant UI feedback
+const updatingStatus = ref(null);
+const localTableStatus = ref(null);
 
-// Load table details when opened
+// Charge slideover state
+const showChargeSlideOver = ref(false);
+const chargeMode = ref('single'); // 'single' or 'all'
+const selectedSale = ref(null);
+
+// Polling
+let pollingInterval = null;
+
+// Load pending sales when opened
 watch(() => props.show, (newVal) => {
     if (newVal && props.table) {
-        loadTableDetails();
         localTableStatus.value = props.table.status;
+        loadPendingSales();
+        startPolling();
     } else {
         resetState();
+        stopPolling();
     }
 });
 
@@ -42,43 +55,64 @@ watch(() => props.table?.status, (newStatus) => {
     }
 });
 
-const loadTableDetails = () => {
-    // If table is occupied, load current sale
-    if (props.table?.status === 'ocupada' && props.table?.current_sale) {
-        currentSale.value = props.table.current_sale;
-        // Load sale items into cart
-        cartItems.value = props.table.current_sale.sale_items?.map(item => ({
-            id: item.id,
-            name: item.product_type === 'menu' ? item.menu_item?.name : item.simple_product?.name,
-            quantity: item.quantity,
-            unit_price: parseFloat(item.unit_price),
-            subtotal: parseFloat(item.subtotal)
-        })) || [];
-    } else {
-        currentSale.value = null;
-        cartItems.value = [];
+const loadPendingSales = async () => {
+    if (!props.table) return;
+
+    isLoading.value = true;
+    try {
+        const response = await fetch(route('tables.pending-sales', props.table.id));
+        const data = await response.json();
+
+        pendingSales.value = data.pending_sales || [];
+        totalPending.value = data.total_pending || 0;
+        salesCount.value = data.sales_count || 0;
+
+        // Update local status from response
+        if (data.table?.status) {
+            localTableStatus.value = data.table.status;
+        }
+    } catch (error) {
+        console.error('Error loading pending sales:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const startPolling = () => {
+    stopPolling();
+    pollingInterval = setInterval(loadPendingSales, 10000); // Every 10 seconds
+};
+
+const stopPolling = () => {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
     }
 };
 
 const resetState = () => {
-    currentSale.value = null;
-    cartItems.value = [];
+    pendingSales.value = [];
+    totalPending.value = 0;
+    salesCount.value = 0;
+    isLoading.value = false;
     isProcessing.value = false;
     updatingStatus.value = null;
     localTableStatus.value = null;
+    showChargeSlideOver.value = false;
+    selectedSale.value = null;
 };
 
 // Computed
-const cartTotal = computed(() => {
-    return cartItems.value.reduce((sum, item) => sum + item.subtotal, 0);
-});
-
 const isOccupied = computed(() => {
     return localTableStatus.value === 'ocupada';
 });
 
 const currentStatus = computed(() => {
     return localTableStatus.value || props.table?.status;
+});
+
+const hasPendingSales = computed(() => {
+    return pendingSales.value.length > 0;
 });
 
 // Methods
@@ -96,9 +130,7 @@ const updateStatus = async (newStatus) => {
     }, {
         preserveScroll: true,
         onSuccess: () => {
-            // Update local status immediately for instant feedback
             localTableStatus.value = newStatus;
-            // Emit event so parent can refresh if needed
             emit('updated', { id: props.table.id, status: newStatus });
         },
         onFinish: () => {
@@ -110,14 +142,17 @@ const updateStatus = async (newStatus) => {
 const releaseTable = async () => {
     if (!props.table) return;
 
-    const confirmed = await confirm({
-        title: '¿Liberar mesa?',
-        message: `¿Estás seguro de liberar la mesa ${props.table.table_number}?`,
-        confirmText: 'Liberar',
-        type: 'warning'
-    });
+    // Check if there are pending sales
+    if (hasPendingSales.value) {
+        const confirmed = await confirm({
+            title: 'Hay pedidos pendientes',
+            message: `Esta mesa tiene ${salesCount.value} pedido(s) sin cobrar. ¿Deseas liberarla de todos modos?`,
+            confirmText: 'Liberar de todos modos',
+            type: 'warning'
+        });
 
-    if (!confirmed) return;
+        if (!confirmed) return;
+    }
 
     isProcessing.value = true;
 
@@ -133,12 +168,39 @@ const releaseTable = async () => {
 };
 
 const goToPOS = () => {
-    // Close slideover and navigate to POS with table pre-selected
     handleClose();
     router.visit(route('sales.pos', { table_id: props.table.id }));
 };
 
-// Status color helper
+// Charge actions
+const openChargeSingle = (sale) => {
+    selectedSale.value = sale;
+    chargeMode.value = 'single';
+    showChargeSlideOver.value = true;
+};
+
+const openChargeAll = () => {
+    selectedSale.value = null;
+    chargeMode.value = 'all';
+    showChargeSlideOver.value = true;
+};
+
+const handleCharged = (result) => {
+    showChargeSlideOver.value = false;
+
+    // Reload pending sales
+    loadPendingSales();
+
+    // If table was released, close the slideover
+    if (result.table_released) {
+        emit('updated', { id: props.table.id, status: 'disponible' });
+        handleClose();
+    } else {
+        emit('updated', { id: props.table.id });
+    }
+};
+
+// Status helpers
 const getStatusColorClass = (status) => {
     const colors = {
         disponible: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30',
@@ -158,10 +220,39 @@ const getStatusLabel = (status) => {
     };
     return labels[status] || status;
 };
+
+const getKitchenStatusLabel = (status) => {
+    const labels = {
+        nueva: 'Nueva',
+        preparando: 'Preparando',
+        lista: 'Lista',
+        entregada: 'Entregada',
+        sin_estado: 'Sin estado',
+    };
+    return labels[status] || status;
+};
+
+const getKitchenStatusColor = (status) => {
+    const colors = {
+        nueva: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+        preparando: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+        lista: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+        entregada: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        sin_estado: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+    };
+    return colors[status] || colors.sin_estado;
+};
+
+// Kitchen status icons are rendered as SVG in template
+
+// Lifecycle
+onUnmounted(() => {
+    stopPolling();
+});
 </script>
 
 <template>
-    <!-- Slide-over backdrop (SIN backdrop-blur para mejor rendimiento) -->
+    <!-- Slide-over backdrop -->
     <Transition
         enter-active-class="transition-opacity duration-200"
         enter-from-class="opacity-0"
@@ -213,9 +304,23 @@ const getStatusLabel = (status) => {
                         </div>
                     </div>
 
-                    <span :class="['px-3 py-1 rounded-full text-sm font-semibold', getStatusColorClass(currentStatus)]">
-                        {{ getStatusLabel(currentStatus) }}
-                    </span>
+                    <div class="flex items-center space-x-2">
+                        <!-- Refresh indicator -->
+                        <button
+                            @click="loadPendingSales"
+                            :disabled="isLoading"
+                            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                            title="Actualizar"
+                        >
+                            <svg :class="['w-5 h-5', isLoading && 'animate-spin']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+
+                        <span :class="['px-3 py-1 rounded-full text-sm font-semibold', getStatusColorClass(currentStatus)]">
+                            {{ getStatusLabel(currentStatus) }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -229,93 +334,162 @@ const getStatusLabel = (status) => {
                             <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ table.capacity }} personas</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
-                            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ getStatusLabel(currentStatus) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Pedidos Activos</p>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ salesCount }}</p>
                         </div>
-                    </div>
-
-                    <div v-if="table.notes" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Notas</p>
-                        <p class="text-sm text-gray-900 dark:text-white mt-1">{{ table.notes }}</p>
                     </div>
                 </div>
 
-                <!-- Current Sale Section (if occupied) -->
-                <div v-if="isOccupied && currentSale" class="space-y-4">
+                <!-- Pending Sales Section -->
+                <div v-if="hasPendingSales" class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Venta Actual</h3>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">
-                            #{{ currentSale.sale_number }}
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Pedidos en esta Mesa
+                        </h3>
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Total: ${{ totalPending.toFixed(2) }}
                         </span>
                     </div>
 
-                    <!-- Cart Items -->
-                    <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg divide-y divide-gray-200 dark:divide-gray-600">
+                    <!-- Sales List -->
+                    <div class="space-y-4">
                         <div
-                            v-for="item in cartItems"
-                            :key="item.id"
-                            class="p-4"
+                            v-for="sale in pendingSales"
+                            :key="sale.id"
+                            class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl overflow-hidden shadow-sm"
                         >
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1">
-                                    <p class="font-medium text-gray-900 dark:text-white">{{ item.name }}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ item.quantity }} x ${{ item.unit_price.toFixed(2) }}
-                                    </p>
+                            <!-- Sale Header -->
+                            <div class="bg-gray-50 dark:bg-gray-800 px-4 py-3 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ sale.customer_name }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            #{{ sale.sale_number }} • {{ sale.created_at }}
+                                            <span v-if="sale.customer_phone" class="ml-1">• {{ sale.customer_phone }}</span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                                    ${{ item.subtotal.toFixed(2) }}
-                                </p>
+                                <span :class="['px-2 py-1 rounded-full text-xs font-medium', getKitchenStatusColor(sale.kitchen_status)]">
+                                    {{ getKitchenStatusLabel(sale.kitchen_status) }}
+                                </span>
+                            </div>
+
+                            <!-- Items -->
+                            <div class="px-4 py-3 divide-y divide-gray-100 dark:divide-gray-600">
+                                <div
+                                    v-for="item in sale.items"
+                                    :key="item.id"
+                                    class="py-2 flex items-center justify-between"
+                                >
+                                    <div class="flex items-center">
+                                        <span class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-600 text-xs font-medium flex items-center justify-center text-gray-700 dark:text-gray-300 mr-3">
+                                            {{ item.quantity }}
+                                        </span>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ item.name }}</span>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                        ${{ item.subtotal.toFixed(2) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Sale Footer -->
+                            <div class="bg-gray-50 dark:bg-gray-800 px-4 py-3 flex items-center justify-between">
+                                <div>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Subtotal:</span>
+                                    <span class="ml-2 text-lg font-bold text-gray-900 dark:text-white">
+                                        ${{ sale.total.toFixed(2) }}
+                                    </span>
+                                </div>
+                                <button
+                                    @click="openChargeSingle(sale)"
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center"
+                                >
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    Cobrar
+                                </button>
                             </div>
                         </div>
-
-                        <div v-if="cartItems.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                            No hay productos en esta venta
-                        </div>
                     </div>
 
-                    <!-- Total -->
-                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-lg font-semibold text-gray-700 dark:text-gray-300">Total</span>
-                            <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                ${{ cartTotal.toFixed(2) }}
-                            </span>
-                        </div>
-                    </div>
+                    <!-- Action buttons -->
+                    <div class="space-y-3 pt-4">
+                        <!-- Charge All Button -->
+                        <button
+                            v-if="salesCount > 1"
+                            @click="openChargeAll"
+                            class="w-full px-4 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-xl transition-all flex items-center justify-center shadow-lg"
+                        >
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Cobrar Todo Junto (${{ totalPending.toFixed(2) }})
+                        </button>
 
-                    <!-- Actions for occupied table -->
-                    <div class="space-y-2">
+                        <!-- Release Table Button -->
                         <button
                             @click="releaseTable"
                             :disabled="isProcessing"
-                            class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg disabled:opacity-50 flex items-center justify-center"
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
                         >
                             <svg v-if="isProcessing" class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
                             {{ isProcessing ? 'Liberando...' : 'Liberar Mesa' }}
                         </button>
+                    </div>
+                </div>
 
-                        <p class="text-xs text-center text-gray-500 dark:text-gray-400">
-                            Nota: Para procesar el pago de esta venta, ve al módulo de POS o Ventas
-                        </p>
+                <!-- Empty State (no pending sales but occupied) -->
+                <div v-else-if="isOccupied && !isLoading" class="text-center py-8">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Sin pedidos pendientes</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                        Esta mesa está ocupada pero no tiene pedidos activos.
+                    </p>
+                    <div class="flex flex-col gap-3">
+                        <button
+                            @click="goToPOS"
+                            class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+                        >
+                            Tomar Pedido en POS
+                        </button>
+                        <button
+                            @click="releaseTable"
+                            :disabled="isProcessing"
+                            class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                            Liberar Mesa
+                        </button>
                     </div>
                 </div>
 
                 <!-- Available Table Section -->
-                <div v-else class="space-y-4">
+                <div v-else-if="!isOccupied && !isLoading" class="space-y-4">
                     <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
                         <svg class="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                         <h3 class="text-lg font-semibold text-green-900 dark:text-green-300 mb-2">Mesa Disponible</h3>
                         <p class="text-sm text-green-700 dark:text-green-400 mb-4">
-                            Esta mesa está disponible para nuevos clientes
+                            Esta mesa está lista para nuevos clientes
                         </p>
 
                         <button
@@ -334,7 +508,6 @@ const getStatusLabel = (status) => {
                         <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Cambiar Estado</p>
 
                         <div class="grid grid-cols-2 gap-2">
-                            <!-- Reservar -->
                             <button
                                 v-if="currentStatus !== 'reservada'"
                                 @click="updateStatus('reservada')"
@@ -348,7 +521,6 @@ const getStatusLabel = (status) => {
                                 Reservar
                             </button>
 
-                            <!-- En Limpieza -->
                             <button
                                 v-if="currentStatus !== 'en_limpieza'"
                                 @click="updateStatus('en_limpieza')"
@@ -362,7 +534,6 @@ const getStatusLabel = (status) => {
                                 En Limpieza
                             </button>
 
-                            <!-- Disponible -->
                             <button
                                 v-if="currentStatus !== 'disponible'"
                                 @click="updateStatus('disponible')"
@@ -379,17 +550,25 @@ const getStatusLabel = (status) => {
                     </div>
                 </div>
 
-                <!-- Additional Info -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400">
-                    <p class="flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                        </svg>
-                        Tip: Haz clic en las mesas del grid para gestionar pedidos rápidamente
-                    </p>
+                <!-- Loading State -->
+                <div v-if="isLoading && !hasPendingSales" class="flex items-center justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                 </div>
             </div>
         </div>
-
     </Transition>
+
+    <!-- Charge SlideOver (Nested) -->
+    <TableChargeSlideOver
+        :show="showChargeSlideOver"
+        :sale="selectedSale"
+        :sales="pendingSales"
+        :table-id="table?.id"
+        :mode="chargeMode"
+        @close="showChargeSlideOver = false"
+        @charged="handleCharged"
+    />
 </template>

@@ -155,15 +155,24 @@ class OrderController extends Controller
             // Update customer stats
             $customer->incrementOrderStats($total);
 
-            // If dine-in, occupy table
+            // If dine-in, occupy table (solo si estaba disponible, no sobrescribir si ya ocupada)
             if ($validated['table_id']) {
                 $table = Table::find($validated['table_id']);
                 if ($table) {
-                    $table->update([
-                        'status' => 'ocupada',
-                        'current_sale_id' => $sale->id,
-                        'last_occupied_at' => now(),
-                    ]);
+                    // Solo actualizar current_sale_id si la mesa estaba disponible
+                    // Si ya estaba ocupada, mantener el current_sale_id original
+                    if ($table->status === 'disponible') {
+                        $table->update([
+                            'status' => 'ocupada',
+                            'current_sale_id' => $sale->id,
+                            'last_occupied_at' => now(),
+                        ]);
+                    } else {
+                        // Mesa ya ocupada - solo actualizar timestamp
+                        $table->update([
+                            'last_occupied_at' => now(),
+                        ]);
+                    }
                 }
             }
 
