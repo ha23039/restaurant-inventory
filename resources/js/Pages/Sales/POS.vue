@@ -904,35 +904,35 @@ onBeforeUnmount(() => {
 
     <AdminLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="font-semibold text-xl text-gray-800 dark:text-white leading-tight">
+            <div class="space-y-3 md:space-y-0 md:flex md:justify-between md:items-center">
+                <div class="min-w-0 flex-1">
+                    <h2 class="font-semibold text-lg md:text-xl text-gray-800 dark:text-white leading-tight truncate">
                         Punto de Venta (POS)
                     </h2>
-                    <p v-if="selectedExistingSale" class="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                        ✏️ Editando orden: #{{ selectedExistingSale.sale_number }} - Total actual: ${{ parseFloat(selectedExistingSale.total).toFixed(2) }}
+                    <p v-if="selectedExistingSale" class="text-xs md:text-sm text-orange-600 dark:text-orange-400 mt-1 truncate">
+                        Editando: #{{ selectedExistingSale.sale_number }} - ${{ parseFloat(selectedExistingSale.total).toFixed(2) }}
                     </p>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex flex-wrap items-center gap-2 md:gap-4">
                     <!-- Botón de órdenes pendientes -->
                     <button
                         v-if="pending_sales && pending_sales.length > 0"
                         @click="showPendingSales = !showPendingSales"
-                        class="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors relative"
+                        class="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors relative text-sm"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
-                        <span>Órdenes Activas</span>
-                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                        <span class="hidden sm:inline">Órdenes</span>
+                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 md:h-6 md:w-6 flex items-center justify-center">
                             {{ pending_sales.length }}
                         </span>
                     </button>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <div class="hidden md:block text-sm text-gray-600 dark:text-gray-400">
                         {{ currentDate }}
                     </div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
-                        Cajero: {{ $page.props.auth.user.name }}
+                    <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate max-w-[120px] md:max-w-none">
+                        {{ $page.props.auth.user.name }}
                     </div>
                 </div>
             </div>
@@ -941,53 +941,53 @@ onBeforeUnmount(() => {
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Panel de Órdenes Pendientes -->
-                <div v-if="showPendingSales" class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <div v-if="showPendingSales" class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-6 overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
                             Órdenes Activas ({{ pending_sales.length }})
                         </h3>
                         <button
                             @click="showPendingSales = false"
-                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
                         >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         <div
                             v-for="sale in pending_sales"
                             :key="sale.id"
-                            class="border-2 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                            class="border-2 rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow cursor-pointer min-w-0"
                             :class="selectedExistingSale?.id === sale.id ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600'"
                             @click="selectExistingSale(sale)"
                         >
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-gray-900 dark:text-white">
+                            <div class="flex justify-between items-start mb-3 gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-gray-900 dark:text-white text-sm md:text-base truncate">
                                         #{{ sale.sale_number }}
                                     </h4>
                                     <!-- Nombre del Cliente (si existe) -->
-                                    <p v-if="sale.customer_name" class="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center mt-1">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <p v-if="sale.customer_name" class="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center mt-1 truncate">
+                                        <svg class="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
-                                        {{ sale.customer_name }}
+                                        <span class="truncate">{{ sale.customer_name }}</span>
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {{ new Date(sale.created_at).toLocaleString('es-ES') }}
+                                        {{ new Date(sale.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) }}
                                     </p>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-semibold rounded-full">
-                                        Pendiente
+                                <div class="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                                    <span class="px-1.5 md:px-2 py-0.5 md:py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-semibold rounded-full whitespace-nowrap">
+                                        Pend.
                                     </span>
                                     <!-- Botón eliminar -->
                                     <button
                                         @click.stop="deletePendingOrder(sale)"
-                                        class="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                        class="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors flex-shrink-0"
                                         title="Eliminar orden"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -997,12 +997,12 @@ onBeforeUnmount(() => {
                                 </div>
                             </div>
 
-                            <div v-if="sale.table" class="mb-2 flex items-center">
-                                <svg class="w-4 h-4 mr-1 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div v-if="sale.table" class="mb-2 flex items-center min-w-0">
+                                <svg class="w-3 h-3 md:w-4 md:h-4 mr-1 text-gray-500 dark:text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">
-                                    Mesa {{ sale.table.table_number }} {{ sale.table.name ? `- ${sale.table.name}` : '' }}
+                                <span class="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate">
+                                    Mesa {{ sale.table.table_number }}{{ sale.table.name ? ` - ${sale.table.name}` : '' }}
                                 </span>
                             </div>
 
@@ -1010,39 +1010,39 @@ onBeforeUnmount(() => {
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Items:</p>
                                 <div class="space-y-1">
                                     <div
-                                        v-for="item in sale.sale_items.slice(0, 3)"
+                                        v-for="item in sale.sale_items.slice(0, 2)"
                                         :key="item.id"
-                                        class="text-xs text-gray-700 dark:text-gray-300"
+                                        class="text-xs text-gray-700 dark:text-gray-300 truncate"
                                     >
-                                        • {{ item.quantity }}x {{ getSaleItemName(item) }}
+                                        {{ item.quantity }}x {{ getSaleItemName(item) }}
                                     </div>
-                                    <p v-if="sale.sale_items.length > 3" class="text-xs text-gray-500 dark:text-gray-400">
-                                        + {{ sale.sale_items.length - 3 }} más...
+                                    <p v-if="sale.sale_items.length > 2" class="text-xs text-gray-500 dark:text-gray-400">
+                                        + {{ sale.sale_items.length - 2 }} más...
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
-                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                            <div class="flex justify-between items-center pt-2 md:pt-3 border-t border-gray-200 dark:border-gray-700">
+                                <span class="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[80px]">
                                     {{ sale.user?.name }}
                                 </span>
-                                <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                <span class="text-base md:text-lg font-bold text-green-600 dark:text-green-400">
                                     ${{ parseFloat(sale.total).toFixed(2) }}
                                 </span>
                             </div>
 
-                            <div class="mt-3 grid grid-cols-2 gap-2">
+                            <div class="mt-2 md:mt-3 grid grid-cols-2 gap-1.5 md:gap-2">
                                 <button
                                     @click.stop="selectExistingSale(sale)"
-                                    class="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                    class="px-2 md:px-3 py-1.5 md:py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
                                 >
-                                    ➕ Agregar Items
+                                    + Items
                                 </button>
                                 <button
                                     @click.stop="completeExistingSale(sale)"
-                                    class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                    class="px-2 md:px-3 py-1.5 md:py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
                                 >
-                                    ✓ Completar
+                                    Cobrar
                                 </button>
                             </div>
                         </div>

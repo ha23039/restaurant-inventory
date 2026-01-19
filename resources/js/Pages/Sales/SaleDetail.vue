@@ -3,48 +3,49 @@
 
     <AdminLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-800 dark:text-white leading-tight">
+            <div class="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
+                <h2 class="font-semibold text-lg md:text-xl text-gray-800 dark:text-white leading-tight">
                     Detalle de Venta #{{ sale?.sale_number || 'N/A' }}
-                    <span v-if="sale?.has_returns" class="ml-2 text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded">
+                    <span v-if="sale?.has_returns" class="ml-2 text-xs md:text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded">
                         Con devoluciones
                     </span>
                 </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('sales.index')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        ← Volver
+                <div class="flex flex-wrap gap-2">
+                    <Link :href="route('sales.index')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-3 md:px-4 rounded text-sm">
+                        <span class="hidden sm:inline">←</span> Volver
                     </Link>
                     <!-- Botón para cobrar/continuar órdenes pendientes -->
-                    <Link 
+                    <Link
                         v-if="sale?.status === 'pendiente'"
-                        :href="route('sales.pos', { load_sale: sale.id })" 
-                        class="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                        :href="route('sales.pos', { load_sale: sale.id })"
+                        class="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-3 md:px-4 rounded inline-flex items-center text-sm"
                     >
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        Cobrar / Continuar
+                        <span class="hidden sm:inline ml-1">Cobrar</span>
                     </Link>
                     <!-- Botón para eliminar órdenes pendientes -->
                     <button
                         v-if="sale?.status === 'pendiente'"
                         @click="deletePendingSale"
-                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 md:px-4 rounded inline-flex items-center text-sm"
                     >
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Eliminar
+                        <span class="hidden sm:inline ml-1">Eliminar</span>
                     </button>
-                    <Link 
+                    <Link
                         v-if="sale?.can_return"
-                        :href="route('returns.create', { sale_id: sale.id })" 
-                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+                        :href="route('returns.create', { sale_id: sale.id })"
+                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-3 md:px-4 rounded text-sm"
                     >
                         Devolver
                     </Link>
-                    <Link :href="route('sales.pos')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        Nueva Venta
+                    <Link :href="route('sales.pos')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-3 md:px-4 rounded text-sm">
+                        <span class="hidden sm:inline">Nueva Venta</span>
+                        <span class="sm:hidden">+ Venta</span>
                     </Link>
                 </div>
             </div>
@@ -423,13 +424,13 @@
                                                     {{ getProductDescription(item) }}
                                                 </p>
 
-                                                <div class="flex items-center space-x-2 mt-1">
+                                                <div class="flex flex-wrap items-center gap-2 mt-1">
                                                     <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                         :class="{
-                                                            'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200': item.product_type === 'menu',
-                                                            'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200': item.product_type === 'simple',
-                                                            'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200': item.product_type === 'free'
+                                                            'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300': item.product_type === 'menu',
+                                                            'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300': item.product_type === 'simple',
+                                                            'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300': item.product_type === 'free'
                                                         }"
                                                     >
                                                         {{ item.product_type === 'menu' ? 'Platillo del Menú' : item.product_type === 'simple' ? 'Producto Individual' : 'Venta Libre' }}
@@ -437,14 +438,14 @@
 
                                                     <span
                                                         v-if="hasItemReturns(item)"
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300"
                                                     >
                                                         {{ item.quantity_returned || 0 }} devueltos
                                                     </span>
 
                                                     <span
                                                         v-if="canReturnItem(item)"
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300"
                                                     >
                                                         {{ item.can_return_quantity || item.quantity }} disponibles
                                                     </span>

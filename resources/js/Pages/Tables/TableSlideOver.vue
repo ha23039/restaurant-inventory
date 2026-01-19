@@ -28,6 +28,11 @@ const isProcessing = ref(false);
 const updatingStatus = ref(null);
 const localTableStatus = ref(null);
 
+// Touch gesture state for horizontal swipe-to-close
+const touchStart = ref({ x: 0 });
+const touchDelta = ref(0);
+const isDragging = ref(false);
+
 // Charge slideover state
 const showChargeSlideOver = ref(false);
 const chargeMode = ref('single'); // 'single' or 'all'
@@ -100,6 +105,9 @@ const resetState = () => {
     localTableStatus.value = null;
     showChargeSlideOver.value = false;
     selectedSale.value = null;
+    // Reset touch state
+    touchDelta.value = 0;
+    isDragging.value = false;
 };
 
 // Computed
@@ -114,6 +122,31 @@ const currentStatus = computed(() => {
 const hasPendingSales = computed(() => {
     return pendingSales.value.length > 0;
 });
+
+// Touch gesture handlers for swipe-to-close
+const handleTouchStart = (e) => {
+    touchStart.value.x = e.touches[0].clientX;
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+const handleTouchMove = (e) => {
+    const deltaX = e.touches[0].clientX - touchStart.value.x;
+
+    // Only allow dragging right (positive delta)
+    if (deltaX > 20) {
+        isDragging.value = true;
+        touchDelta.value = Math.min(deltaX, 300);
+    }
+};
+
+const handleTouchEnd = () => {
+    if (isDragging.value && touchDelta.value > 100) {
+        handleClose();
+    }
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
 
 // Methods
 const handleClose = () => {
@@ -279,7 +312,11 @@ onUnmounted(() => {
     >
         <div
             v-if="show && table"
+            @touchstart="handleTouchStart"
+            @touchmove.passive="handleTouchMove"
+            @touchend="handleTouchEnd"
             class="fixed top-0 right-0 h-full w-full md:max-w-2xl bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto transform-gpu"
+            :style="isDragging ? { transform: `translateX(${touchDelta}px)`, transition: 'none' } : {}"
         >
             <!-- Header -->
             <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
