@@ -1,5 +1,5 @@
 <script setup>
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     show: {
@@ -30,10 +30,54 @@ const props = defineProps({
     nested: {
         type: Boolean,
         default: false
+    },
+    swipeable: {
+        type: Boolean,
+        default: true
     }
 });
 
 const emit = defineEmits(['close', 'backdrop-click']);
+
+// Touch gesture state for horizontal swipe
+const touchStart = ref({ x: 0 });
+const touchDelta = ref(0);
+const isDragging = ref(false);
+
+const handleTouchStart = (e) => {
+    if (!props.swipeable || !props.closable) return;
+    touchStart.value.x = e.touches[0].clientX;
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+const handleTouchMove = (e) => {
+    if (!props.swipeable || !props.closable) return;
+    const deltaX = e.touches[0].clientX - touchStart.value.x;
+
+    // Only allow dragging right (positive delta)
+    if (deltaX > 20) {
+        isDragging.value = true;
+        touchDelta.value = Math.min(deltaX, 300);
+    }
+};
+
+const handleTouchEnd = () => {
+    if (!props.swipeable || !props.closable) return;
+    if (isDragging.value && touchDelta.value > 100) {
+        handleClose();
+    }
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+// Reset touch state when closing
+watch(() => props.show, (newVal) => {
+    if (!newVal) {
+        touchDelta.value = 0;
+        isDragging.value = false;
+    }
+});
 
 const handleBackdropClick = () => {
     if (props.preventClose) {
@@ -93,11 +137,15 @@ const sizeClasses = {
     >
         <div
             v-if="show"
+            @touchstart="handleTouchStart"
+            @touchmove.passive="handleTouchMove"
+            @touchend="handleTouchEnd"
             :class="[
                 'fixed top-0 right-0 h-full bg-white dark:bg-gray-900 shadow-2xl overflow-y-auto transform-gpu',
                 nested ? 'z-[70]' : 'z-50',
                 sizeClasses[size]
             ]"
+            :style="isDragging ? { transform: `translateX(${touchDelta}px)`, transition: 'none' } : {}"
         >
             <!-- Header -->
             <div class="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">

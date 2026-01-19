@@ -91,7 +91,7 @@ const extractPaymentMethod = (notes) => {
     <AdminLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
                     Detalles del Gasto
                 </h2>
                 <div class="flex items-center gap-3">
@@ -116,49 +116,49 @@ const extractPaymentMethod = (notes) => {
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
                 <!-- Información Principal -->
-                <BaseCard class="bg-white">
+                <BaseCard class="bg-white dark:bg-gray-800">
                     <div class="p-6">
                         <div class="flex items-start justify-between mb-6">
                             <div>
-                                <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                                     {{ expense.description }}
                                 </h3>
                                 <div class="flex items-center gap-3">
                                     <BaseBadge :variant="getCategoryVariant(expense.category)" size="lg">
                                         {{ expense.category_label }}
                                     </BaseBadge>
-                                    <span class="text-sm text-gray-500">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">
                                         {{ expense.flow_date_formatted }}
                                     </span>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm text-gray-500 mb-1">Monto Total</div>
-                                <div class="text-4xl font-bold text-red-600">
+                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Monto Total</div>
+                                <div class="text-4xl font-bold text-red-600 dark:text-red-400">
                                     {{ formatCurrency(expense.amount) }}
                                 </div>
                             </div>
                         </div>
 
                         <!-- Detalles en Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 pt-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-6">
                             <!-- Usuario que registró -->
                             <div v-if="expense.user">
-                                <dt class="text-sm font-medium text-gray-500 mb-1">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                     Registrado por
                                 </dt>
-                                <dd class="text-base text-gray-900">
+                                <dd class="text-base text-gray-900 dark:text-white">
                                     {{ expense.user.name }}
-                                    <span class="text-xs text-gray-500 ml-2">({{ expense.user.role }})</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">({{ expense.user.role }})</span>
                                 </dd>
                             </div>
 
                             <!-- Fecha de registro -->
                             <div>
-                                <dt class="text-sm font-medium text-gray-500 mb-1">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                     Fecha de Registro
                                 </dt>
-                                <dd class="text-base text-gray-900">
+                                <dd class="text-base text-gray-900 dark:text-white">
                                     {{ new Date(expense.created_at).toLocaleDateString('es-MX', {
                                         year: 'numeric',
                                         month: 'long',
@@ -171,20 +171,20 @@ const extractPaymentMethod = (notes) => {
 
                             <!-- Método de pago -->
                             <div v-if="extractPaymentMethod(expense.notes)">
-                                <dt class="text-sm font-medium text-gray-500 mb-1">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                     Método de Pago
                                 </dt>
-                                <dd class="text-base text-gray-900 capitalize">
+                                <dd class="text-base text-gray-900 dark:text-white capitalize">
                                     {{ extractPaymentMethod(expense.notes) }}
                                 </dd>
                             </div>
 
                             <!-- ID del gasto -->
                             <div>
-                                <dt class="text-sm font-medium text-gray-500 mb-1">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                     ID del Gasto
                                 </dt>
-                                <dd class="text-base text-gray-900 font-mono">
+                                <dd class="text-base text-gray-900 dark:text-white font-mono">
                                     #{{ expense.id }}
                                 </dd>
                             </div>
@@ -193,19 +193,19 @@ const extractPaymentMethod = (notes) => {
                 </BaseCard>
 
                 <!-- Productos (si es compra de productos) -->
-                <BaseCard v-if="expense.category === 'compra_productos_insumos' && extractProducts(expense.notes).length > 0" class="bg-white">
+                <BaseCard v-if="expense.category === 'compra_productos_insumos' && extractProducts(expense.notes).length > 0" class="bg-white dark:bg-gray-800">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                             Productos Comprados
                         </h3>
-                        <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                             <ul class="space-y-2">
                                 <li
                                     v-for="(product, index) in extractProducts(expense.notes)"
                                     :key="index"
-                                    class="flex items-center text-sm text-gray-700"
+                                    class="flex items-center text-sm text-gray-700 dark:text-gray-300"
                                 >
-                                    <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-4 h-4 text-green-500 dark:text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
                                     {{ product }}
@@ -216,24 +216,24 @@ const extractPaymentMethod = (notes) => {
                 </BaseCard>
 
                 <!-- Notas -->
-                <BaseCard v-if="expense.notes" class="bg-white">
+                <BaseCard v-if="expense.notes" class="bg-white dark:bg-gray-800">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                             Notas Adicionales
                         </h3>
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ expense.notes }}</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ expense.notes }}</p>
                         </div>
                     </div>
                 </BaseCard>
 
                 <!-- Historial de Modificaciones -->
-                <BaseCard v-if="expense.updated_at !== expense.created_at" class="bg-white">
+                <BaseCard v-if="expense.updated_at !== expense.created_at" class="bg-white dark:bg-gray-800">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                             Historial de Modificaciones
                         </h3>
-                        <div class="text-sm text-gray-600">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
                             <p>
                                 <span class="font-medium">Última actualización:</span>
                                 {{ new Date(expense.updated_at).toLocaleDateString('es-MX', {

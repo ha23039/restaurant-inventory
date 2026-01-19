@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Table;
 use App\Models\Sale;
+use App\Models\CashRegisterSession;
 use App\Services\TableService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -248,18 +249,33 @@ class TableController extends Controller
             'discount' => 'nullable|numeric|min:0',
         ]);
 
+        // Verify user has open cash register session
+        $cashRegisterSession = CashRegisterSession::where('user_id', auth()->id())
+            ->where('status', 'open')
+            ->first();
+
+        if (!$cashRegisterSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debes abrir una caja antes de poder cobrar',
+                'requires_cash_register' => true,
+            ], 422);
+        }
+
         try {
             \DB::beginTransaction();
 
             $discount = $validated['discount'] ?? 0;
             $newTotal = $sale->subtotal - $discount;
 
-            // Update sale
+            // Update sale and associate with cash register session
             $sale->update([
                 'status' => 'completada',
                 'payment_method' => $validated['payment_method'],
                 'discount' => $discount,
                 'total' => $newTotal,
+                'cash_register_session_id' => $cashRegisterSession->id,
+                'user_id' => auth()->id(), // Update user to the one who charged
             ]);
 
             // Update kitchen order state if exists
@@ -326,6 +342,19 @@ class TableController extends Controller
             'discount' => 'nullable|numeric|min:0',
         ]);
 
+        // Verify user has open cash register session
+        $cashRegisterSession = CashRegisterSession::where('user_id', auth()->id())
+            ->where('status', 'open')
+            ->first();
+
+        if (!$cashRegisterSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debes abrir una caja antes de poder cobrar',
+                'requires_cash_register' => true,
+            ], 422);
+        }
+
         try {
             \DB::beginTransaction();
 
@@ -344,11 +373,13 @@ class TableController extends Controller
             $discount = $validated['discount'] ?? 0;
             $finalTotal = $totalAmount - $discount;
 
-            // Update all sales
+            // Update all sales and associate with cash register session
             foreach ($pendingSales as $sale) {
                 $sale->update([
                     'status' => 'completada',
                     'payment_method' => $validated['payment_method'],
+                    'cash_register_session_id' => $cashRegisterSession->id,
+                    'user_id' => auth()->id(),
                 ]);
 
                 // Update kitchen order state if exists

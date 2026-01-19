@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import SlideOver from '@/Components/SlideOver.vue';
 
 const props = defineProps({
@@ -34,6 +35,7 @@ const paymentMethod = ref('efectivo');
 const discount = ref(0);
 const isProcessing = ref(false);
 const error = ref('');
+const requiresCashRegister = ref(false);
 
 // Reset form when opened
 watch(() => props.show, (newVal) => {
@@ -42,8 +44,15 @@ watch(() => props.show, (newVal) => {
         discount.value = 0;
         error.value = '';
         isProcessing.value = false;
+        requiresCashRegister.value = false;
     }
 });
+
+// Navigate to cash register
+const goToCashRegister = () => {
+    emit('close');
+    router.visit(route('cash-register.index'));
+};
 
 // Computed values
 const isSingleMode = computed(() => props.mode === 'single');
@@ -156,6 +165,10 @@ const handleCharge = async () => {
             emit('close');
         } else {
             error.value = result.message || 'Error al procesar el cobro';
+            // Check if cash register is required
+            if (result.requires_cash_register) {
+                requiresCashRegister.value = true;
+            }
         }
     } catch (err) {
         console.error('Error charging:', err);
@@ -178,11 +191,24 @@ const handleCharge = async () => {
         <div class="space-y-6">
             <!-- Error message -->
             <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                     </svg>
-                    <span class="text-sm text-red-700 dark:text-red-300">{{ error }}</span>
+                    <div class="flex-1">
+                        <span class="text-sm text-red-700 dark:text-red-300">{{ error }}</span>
+                        <!-- Cash register button -->
+                        <button
+                            v-if="requiresCashRegister"
+                            @click="goToCashRegister"
+                            class="mt-3 w-full flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Ir a Caja Registradora
+                        </button>
+                    </div>
                 </div>
             </div>
 
