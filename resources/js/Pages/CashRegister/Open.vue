@@ -1,25 +1,25 @@
 <template>
     <AdminLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 Abrir Caja
             </h2>
         </template>
 
         <div class="space-y-6">
             <div class="mx-auto max-w-2xl">
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div class="overflow-hidden bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
                     <div class="p-6">
                         <!-- Header con icono -->
                         <div class="mb-6 flex items-center space-x-3">
-                            <div class="rounded-full bg-green-100 p-3">
-                                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="rounded-full bg-green-100 dark:bg-green-900/50 p-3">
+                                <svg class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Iniciar Sesión de Caja</h3>
-                                <p class="text-sm text-gray-500">Registra el efectivo inicial para comenzar tu turno</p>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Iniciar Sesión de Caja</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Registra el efectivo inicial para comenzar tu turno</p>
                             </div>
                         </div>
 
@@ -27,11 +27,11 @@
                         <form @submit.prevent="submitForm">
                             <!-- Monto Inicial -->
                             <div class="mb-6">
-                                <label for="opening_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                                <label for="opening_amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Monto Inicial en Efectivo <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-3 text-gray-500 text-lg">$</span>
+                                    <span class="absolute left-3 top-3 text-gray-500 dark:text-gray-400 text-lg">$</span>
                                     <input
                                         id="opening_amount"
                                         v-model="form.opening_amount"
@@ -39,12 +39,12 @@
                                         step="0.01"
                                         min="0"
                                         required
-                                        class="w-full pl-8 pr-4 py-3 text-lg border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        class="w-full pl-8 pr-4 py-3 text-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-green-500 focus:border-green-500"
                                         placeholder="0.00"
                                         autofocus
                                     />
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     Cuenta el efectivo físico en la caja y registra el monto exacto
                                 </p>
                                 <InputError :message="errors.opening_amount" class="mt-2" />
@@ -52,7 +52,7 @@
 
                             <!-- Notas de Apertura -->
                             <div class="mb-6">
-                                <label for="opening_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                <label for="opening_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Notas (Opcional)
                                 </label>
                                 <textarea
@@ -60,23 +60,23 @@
                                     v-model="form.opening_notes"
                                     rows="3"
                                     maxlength="1000"
-                                    class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-green-500 focus:border-green-500"
                                     placeholder="Ej: Recibí caja del turno anterior, billetes de baja denominación, etc."
                                 ></textarea>
                                 <div class="mt-1 flex justify-between">
-                                    <p class="text-xs text-gray-500">Opcional: Registra cualquier observación relevante</p>
-                                    <span class="text-xs text-gray-400">{{ form.opening_notes?.length || 0 }}/1000</span>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Opcional: Registra cualquier observación relevante</p>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ form.opening_notes?.length || 0 }}/1000</span>
                                 </div>
                                 <InputError :message="errors.opening_notes" class="mt-2" />
                             </div>
 
                             <!-- Información Importante -->
-                            <div class="mb-6 rounded-lg bg-blue-50 p-4 border border-blue-200">
+                            <div class="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">
                                 <div class="flex">
-                                    <svg class="h-5 w-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
                                     </svg>
-                                    <div class="text-sm text-blue-800">
+                                    <div class="text-sm text-blue-800 dark:text-blue-300">
                                         <p class="font-semibold mb-1">Importante:</p>
                                         <ul class="list-disc list-inside space-y-1">
                                             <li>Verifica que el monto registrado coincida con el efectivo físico</li>
@@ -91,7 +91,7 @@
                             <div class="flex items-center justify-end space-x-3">
                                 <Link
                                     :href="route('dashboard')"
-                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                 >
                                     Cancelar
                                 </Link>

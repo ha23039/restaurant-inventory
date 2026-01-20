@@ -8,6 +8,7 @@ use App\Http\Resources\SimpleProductResource;
 use App\Repositories\Contracts\SimpleProductRepositoryInterface;
 use App\Services\MenuItemService;
 use App\Services\SaleService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class POSController extends Controller
@@ -113,9 +114,13 @@ class POSController extends Controller
         }
     }
 
-    public function completePendingSale(\App\Models\Sale $sale)
+    public function completePendingSale(Request $request, \App\Models\Sale $sale)
     {
         try {
+            $validated = $request->validate([
+                'payment_method' => 'nullable|in:efectivo,tarjeta,transferencia',
+            ]);
+
             // Verificar que la venta esté pendiente
             if ($sale->status !== 'pendiente') {
                 return response()->json([
@@ -124,13 +129,20 @@ class POSController extends Controller
                 ], 400);
             }
 
-            // Completar la venta usando el servicio
-            $completedSale = $this->saleService->completePendingSale($sale);
+            // Guardar info de origen antes de modificar
+            $wasDigitalOrder = $sale->source === 'digital_menu';
+
+            // Completar la venta usando el servicio (adopta al cajero actual)
+            $completedSale = $this->saleService->completePendingSale(
+                $sale,
+                $validated['payment_method'] ?? null
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => "Orden #{$sale->sale_number} completada exitosamente",
-                'sale' => $completedSale
+                'sale' => $completedSale,
+                'adopted_from_digital' => $wasDigitalOrder,
             ]);
 
         } catch (\Exception $e) {

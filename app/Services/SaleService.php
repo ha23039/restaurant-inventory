@@ -379,14 +379,45 @@ class SaleService
 
     /**
      * Completar una venta pendiente sin agregar items adicionales
+     * 
+     * Para órdenes del menú digital, adopta la venta al cajero actual:
+     * - Actualiza user_id al cajero que completa
+     * - Asocia la sesión de caja del cajero
+     * - Registra el flujo de caja correspondiente
      */
-    public function completePendingSale(Sale $sale): Sale
+    public function completePendingSale(Sale $sale, ?string $paymentMethod = null): Sale
     {
         DB::beginTransaction();
 
         try {
-            // Cambiar estado a completada
-            $sale->update(['status' => 'completada']);
+            // Obtener sesión de caja del cajero actual
+            $cashRegisterSession = $this->cashRegisterService->getCurrentSession();
+
+            if (!$cashRegisterSession) {
+                throw new \Exception('Debes abrir una caja antes de completar ventas.');
+            }
+
+            // Preparar datos de actualización
+            $updateData = [
+                'status' => 'completada',
+                'user_id' => auth()->id(),
+                'cash_register_session_id' => $cashRegisterSession->id,
+            ];
+
+            // Actualizar método de pago si se proporciona
+            if ($paymentMethod) {
+                $updateData['payment_method'] = $paymentMethod;
+            }
+
+            // Verificar si es una orden del menú digital para logging
+            $wasDigitalOrder = $sale->source === 'digital_menu';
+            $originalUserId = $sale->user_id;
+
+            // Actualizar la venta
+            $sale->update($updateData);
+
+            // Registrar flujo de caja
+            $this->cashFlowService->recordSaleIncome($sale);
 
             // Imprimir tickets (cocina y cliente) si están configurados
             if (config('thermal_printer.auto_print_kitchen')) {
@@ -408,6 +439,10 @@ class SaleService
                 'sale_id' => $sale->id,
                 'sale_number' => $sale->sale_number,
                 'total' => $sale->total,
+                'adopted_from_digital' => $wasDigitalOrder,
+                'original_user_id' => $originalUserId,
+                'new_user_id' => auth()->id(),
+                'cash_register_session_id' => $cashRegisterSession->id,
             ]);
 
             return $sale->fresh();
