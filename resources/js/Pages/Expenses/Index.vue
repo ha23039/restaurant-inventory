@@ -140,8 +140,8 @@ const getCategoryVariant = (category) => {
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-full mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="py-4 md:py-8">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8 space-y-4 md:space-y-6">
                 <!-- Estadísticas -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <BaseCard class="bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">

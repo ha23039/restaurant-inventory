@@ -158,8 +158,8 @@ const getStockBadgeClass = (product) => {
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8">
 
                 <!-- Filters -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">

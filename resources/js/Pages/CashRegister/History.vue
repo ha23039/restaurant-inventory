@@ -6,8 +6,8 @@
             </h2>
         </template>
 
-        <div class="space-y-6">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 space-y-6">
+            <div class="mx-auto max-w-full">
                 <!-- Filtros -->
                 <div class="mb-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">

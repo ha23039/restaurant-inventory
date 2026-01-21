@@ -85,8 +85,8 @@ const hasActiveFilters = computed(() => {
     <Head title="Proveedores" />
 
     <AdminLayout>
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8">
                 <!-- Header -->
                 <div class="sm:flex sm:items-center sm:justify-between mb-6">
                     <div>

@@ -96,7 +96,7 @@ const resetFilters = () => {
             </div>
         </template>
 
-        <div class="py-6 space-y-6">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 space-y-6">
             <!-- Date Range Filter -->
             <BaseCard class="bg-white dark:bg-gray-800">
                 <div class="p-6">

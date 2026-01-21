@@ -6,7 +6,7 @@
             </h2>
         </template>
 
-        <div class="space-y-6">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 space-y-6">
             <div class="mx-auto max-w-2xl">
                 <div class="overflow-hidden bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
                     <div class="p-6">

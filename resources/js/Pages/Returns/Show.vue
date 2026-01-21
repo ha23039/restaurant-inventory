@@ -31,8 +31,8 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-6xl mx-auto px-2 sm:px-6 lg:px-8">
                 <!-- Información General de la Devolución -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">

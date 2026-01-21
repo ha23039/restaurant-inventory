@@ -39,8 +39,8 @@ const formatCurrency = (amount) => {
             </h2>
         </template>
 
-        <div class="py-6 lg:py-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8">
                 <!-- Atajos Rápidos (Móvil/Tablet) -->
                 <div class="mb-6 lg:hidden">
                     <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">

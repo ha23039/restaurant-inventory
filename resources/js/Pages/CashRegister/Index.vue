@@ -6,15 +6,15 @@
                     Gestión de Caja
                 </h2>
                 <div v-if="currentSession" class="flex items-center space-x-2">
-                    <span class="px-3 py-1 text-xs font-semibold text-green-800 bg-green-100 dark:bg-green-900 rounded-full">
+                    <span class="px-3 py-1 text-xs font-semibold text-green-800 bg-green-100 dark:bg-green-900/50 dark:text-green-300 rounded-full">
                         ● Caja Abierta
                     </span>
                 </div>
             </div>
         </template>
 
-        <div class="space-y-6">
-            <div class="mx-auto max-w-7xl">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 space-y-6">
+            <div class="mx-auto max-w-full">
                 <!-- Sin Sesión Abierta -->
                 <div v-if="!currentSession">
                     <div class="overflow-hidden bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">

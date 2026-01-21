@@ -14,8 +14,8 @@
             </div>
         </template>
 
-        <div class="space-y-6">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 space-y-6">
+            <div class="mx-auto max-w-full space-y-6">
                 <!-- Resumen Principal -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Monto Inicial -->

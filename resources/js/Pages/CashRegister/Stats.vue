@@ -67,8 +67,8 @@ const mostProductiveDay = computed(() => {
             </div>
         </template>
 
-        <div class="py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
                 <!-- Filtros de Fecha -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">

@@ -16,8 +16,8 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-2xl mx-auto px-2 sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
                         <!-- Información básica -->

@@ -49,8 +49,8 @@ const handleCancel = () => {
             </h2>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-3xl mx-auto px-2 sm:px-6 lg:px-8">
                 <BaseCard class="bg-white">
                     <div class="p-6">
                         <div class="mb-6">

@@ -129,7 +129,7 @@ const handleSubmit = () => {
             </div>
         </template>
 
-        <div class="max-w-5xl mx-auto">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 max-w-5xl mx-auto">
             <!-- Tabs Navigation -->
             <div class="mb-6">
                 <nav class="flex space-x-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1">

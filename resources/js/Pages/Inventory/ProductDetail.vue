@@ -21,8 +21,8 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="py-3 md:py-6 lg:py-12">
+            <div class="max-w-4xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
                 <!-- Información principal -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">

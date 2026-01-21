@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
         <!-- Header -->
         <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8 py-3 md:py-4">
                 <div class="flex items-center justify-between">
                     <!-- Back Button + Title -->
                     <div class="flex items-center space-x-4">
@@ -56,7 +56,7 @@
         </header>
 
         <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main class="max-w-full mx-auto px-2 sm:px-6 lg:px-8 py-4 md:py-8">
             <!-- Empty State -->
             <div v-if="orders.length === 0" class="text-center py-20">
                 <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 mb-6">

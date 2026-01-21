@@ -938,8 +938,8 @@ onBeforeUnmount(() => {
             </div>
         </template>
 
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="py-3 md:py-6">
+            <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8">
                 <!-- Panel de Órdenes Pendientes -->
                 <div v-if="showPendingSales" class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-6 overflow-hidden">
                     <div class="flex justify-between items-center mb-4">

@@ -165,7 +165,7 @@ const hasActiveFilters = computed(() => {
             </div>
         </template>
 
-        <div class="space-y-6">
+        <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 space-y-6">
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
