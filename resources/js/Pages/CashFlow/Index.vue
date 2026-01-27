@@ -220,20 +220,34 @@
                             </div>
                         </template>
 
-                        <template #cell-sale="{ row }">
-                            <div v-if="row.sale">
+                        <template #cell-actions="{ row }">
+                            <div class="flex items-center gap-2">
+                                <!-- View Sale (for income with sale) -->
                                 <Link
+                                    v-if="row.sale"
                                     :href="route('sales.show', row.sale.id)"
-                                    class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    title="Ver venta"
                                 >
-                                    #{{ row.sale.sale_number }}
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <span class="hidden xl:inline">#{{ row.sale.sale_number }}</span>
                                 </Link>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ row.sale.payment_method }}
-                                </div>
-                            </div>
-                            <div v-else class="text-sm text-gray-400 dark:text-gray-500">
-                                -
+                                <!-- View Expense (for expenses/egresos) -->
+                                <Link
+                                    v-if="!row.is_income"
+                                    :href="route('expenses.show', row.id)"
+                                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/30 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
+                                    title="Ver gasto"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <span class="hidden xl:inline">Ver</span>
+                                </Link>
                             </div>
                         </template>
                     </DataTable>
@@ -292,7 +306,7 @@
                         </p>
                     </div>
 
-                    <!-- Footer: User + Sale -->
+                    <!-- Footer: User + Actions -->
                     <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
                         <div v-if="row.user" class="text-xs text-gray-500 dark:text-gray-400">
                             <span class="font-medium text-gray-700 dark:text-gray-300">{{ row.user.name }}</span>
@@ -301,13 +315,34 @@
                             Sin usuario
                         </div>
 
-                        <Link
-                            v-if="row.sale"
-                            :href="route('sales.show', row.sale.id)"
-                            class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-                        >
-                            Venta #{{ row.sale.sale_number }}
-                        </Link>
+                        <!-- Action buttons -->
+                        <div class="flex items-center gap-2">
+                            <!-- Link to Sale (for income with sale) -->
+                            <Link
+                                v-if="row.sale"
+                                :href="route('sales.show', row.sale.id)"
+                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Venta
+                            </Link>
+
+                            <!-- Link to Expense details (for expenses/egresos) -->
+                            <Link
+                                v-if="!row.is_income"
+                                :href="route('expenses.show', row.id)"
+                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/30 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Ver Gasto
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -341,23 +376,47 @@
             <!-- Mobile Pagination -->
             <div v-if="transactions.data.length > 0 && !loading" class="lg:hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
                 <div class="flex items-center justify-between">
-                    <p class="text-xs text-gray-600 dark:text-gray-400">
-                        {{ transactions.from }}-{{ transactions.to }} de {{ transactions.total }}
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ transactions.from }}-{{ transactions.to }}</span>
+                        de
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ transactions.total }}</span>
                     </p>
                     <div class="flex gap-2">
+                        <!-- Previous button -->
+                        <button
+                            v-if="!transactions.prev_page_url"
+                            disabled
+                            class="px-3 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-700 rounded-md cursor-not-allowed"
+                        >
+                            « Anterior
+                        </button>
                         <Link
-                            v-if="transactions.prev_page_url"
+                            v-else
                             :href="transactions.prev_page_url"
                             class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
                         >
-                            Anterior
+                            « Anterior
                         </Link>
+
+                        <!-- Page indicator -->
+                        <span class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/30 rounded-md">
+                            {{ transactions.current_page }} / {{ transactions.last_page }}
+                        </span>
+
+                        <!-- Next button -->
+                        <button
+                            v-if="!transactions.next_page_url"
+                            disabled
+                            class="px-3 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-700 rounded-md cursor-not-allowed"
+                        >
+                            Siguiente »
+                        </button>
                         <Link
-                            v-if="transactions.next_page_url"
+                            v-else
                             :href="transactions.next_page_url"
                             class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                         >
-                            Siguiente
+                            Siguiente »
                         </Link>
                     </div>
                 </div>
@@ -448,7 +507,7 @@ const columns = [
     { key: 'description', label: 'Descripción' },
     { key: 'amount', label: 'Monto', sortable: true },
     { key: 'user', label: 'Usuario' },
-    { key: 'sale', label: 'Venta' },
+    { key: 'actions', label: 'Acciones' },
 ];
 
 const getCategoryVariant = (category) => {
