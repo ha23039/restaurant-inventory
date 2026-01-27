@@ -28,12 +28,36 @@
         >
             <div
                 v-if="isOpen"
-                class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl z-50 max-h-[85vh] overflow-y-auto"
+                ref="slideOverRef"
+                @touchstart="handleTouchStart"
+                @touchmove="handleTouchMove"
+                @touchend="handleTouchEnd"
+                class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl z-50 max-h-[85vh] flex flex-col"
+                :style="{
+                    transform: isDragging ? `translateY(${touchDelta}px)` : '',
+                    transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                }"
             >
-                <!-- Handle bar -->
-                <div class="flex justify-center pt-3 pb-2">
+                <!-- Handle bar (draggable indicator) -->
+                <div class="flex justify-center pt-3 pb-2 cursor-grab">
                     <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
                 </div>
+
+                <!-- Swipe hint -->
+                <Transition
+                    enter-active-class="transition-opacity duration-200"
+                    enter-from-class="opacity-0"
+                    enter-to-class="opacity-100"
+                    leave-active-class="transition-opacity duration-200"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                >
+                    <div v-if="isDragging && touchDelta > 50" class="absolute inset-x-0 top-10 text-center pointer-events-none">
+                        <span class="text-xs text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-full">
+                            {{ touchDelta > 100 ? 'Suelta para cerrar' : 'Arrastra para cerrar' }}
+                        </span>
+                    </div>
+                </Transition>
 
                 <!-- Header -->
                 <div class="px-6 pb-4 border-b border-gray-100 dark:border-gray-700">
@@ -57,8 +81,8 @@
                     </div>
                 </div>
 
-                <!-- Navigation Grid -->
-                <div class="p-4">
+                <!-- Navigation Grid (Scrollable content) -->
+                <div ref="contentRef" @scroll="handleScroll" class="flex-1 overflow-y-auto overscroll-contain p-4">
                     <div class="grid grid-cols-3 gap-3">
                         <template v-for="item in filteredNavItems" :key="item.route">
                             <Link
@@ -160,14 +184,22 @@
 </template>
 
 <script setup>
-import { ref, computed, h } from 'vue';
+import { ref, computed, h, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 
 const isOpen = ref(false);
 const page = usePage();
+const slideOverRef = ref(null);
+const contentRef = ref(null);
 
 const userName = computed(() => page.props.auth.user.name);
 const userRole = computed(() => page.props.auth.user.role);
+
+// Touch gesture state
+const touchStart = ref({ y: 0, x: 0 });
+const touchDelta = ref(0);
+const isDragging = ref(false);
+const isAtTop = ref(true);
 
 const toggle = () => {
     isOpen.value = !isOpen.value;
@@ -184,6 +216,53 @@ const canAccess = (allowedRoles) => {
 const isActive = (pattern) => {
     return route().current(pattern);
 };
+
+// Detect scroll position
+const handleScroll = () => {
+    if (!contentRef.value) return;
+    isAtTop.value = contentRef.value.scrollTop <= 0;
+};
+
+// Touch handlers for swipe-to-close
+const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStart.value = { y: touch.clientY, x: touch.clientX };
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+const handleTouchMove = (e) => {
+    const deltaY = e.touches[0].clientY - touchStart.value.y;
+    const deltaX = Math.abs(e.touches[0].clientX - touchStart.value.x);
+
+    // Only allow swipe down when at top and mostly vertical movement
+    if (!isAtTop.value || deltaX > 20) return;
+
+    if (deltaY > 5) {
+        isDragging.value = true;
+        // Apply resistance for rubber-band effect
+        touchDelta.value = Math.min(deltaY * 0.8, 250);
+        e.preventDefault();
+    }
+};
+
+const handleTouchEnd = () => {
+    // Close if dragged more than 100px while at top
+    if (isDragging.value && touchDelta.value > 100 && isAtTop.value) {
+        close();
+    }
+    touchDelta.value = 0;
+    isDragging.value = false;
+};
+
+// Reset state when closing
+watch(isOpen, (newValue) => {
+    if (!newValue) {
+        touchDelta.value = 0;
+        isDragging.value = false;
+        isAtTop.value = true;
+    }
+});
 
 // Icon Components (inline SVGs as render functions)
 const HomeIcon = {
@@ -253,6 +332,24 @@ const ReportsIcon = {
     ])
 };
 
+const TablesIcon = {
+    render: () => h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' })
+    ])
+};
+
+const CashRegisterIcon = {
+    render: () => h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' })
+    ])
+};
+
+const KitchenIcon = {
+    render: () => h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' })
+    ])
+};
+
 // Navigation items with role permissions
 const navItems = [
     {
@@ -278,6 +375,30 @@ const navItems = [
         icon: SalesIcon,
         iconBg: 'bg-blue-500',
         roles: ['admin', 'cajero']
+    },
+    {
+        route: 'tables.index',
+        routePattern: 'tables.*',
+        label: 'Mesas',
+        icon: TablesIcon,
+        iconBg: 'bg-teal-500',
+        roles: ['admin', 'cajero', 'mesero']
+    },
+    {
+        route: 'cashregister.index',
+        routePattern: 'cashregister.*',
+        label: 'Caja',
+        icon: CashRegisterIcon,
+        iconBg: 'bg-yellow-500',
+        roles: ['admin', 'cajero']
+    },
+    {
+        route: 'kitchen.display',
+        routePattern: 'kitchen.*',
+        label: 'Cocina',
+        icon: KitchenIcon,
+        iconBg: 'bg-red-500',
+        roles: ['admin', 'chef', 'cajero']
     },
     {
         route: 'inventory.index',

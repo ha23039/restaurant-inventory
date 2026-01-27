@@ -137,7 +137,7 @@ class ReportController extends Controller
                 'sale_items.menu_item_id',
                 'sale_items.simple_product_id',
                 DB::raw('SUM(sale_items.quantity) as total_quantity'),
-                DB::raw('SUM(sale_items.subtotal) as total_revenue')
+                DB::raw('SUM(sale_items.total_price) as total_revenue')
             )
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completed')
@@ -232,7 +232,7 @@ class ReportController extends Controller
                 'sale_items.menu_item_id',
                 'sale_items.simple_product_id',
                 DB::raw('SUM(sale_items.quantity) as total_quantity'),
-                DB::raw('SUM(sale_items.subtotal) as total_revenue')
+                DB::raw('SUM(sale_items.total_price) as total_revenue')
             )
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completed')
