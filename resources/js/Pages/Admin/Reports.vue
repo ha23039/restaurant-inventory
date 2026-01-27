@@ -32,7 +32,23 @@
                             </div>
                             <h3 class="ml-4 text-lg font-semibold text-blue-900 dark:text-blue-100">Ventas</h3>
                         </div>
-                        <p class="text-sm text-blue-700 dark:text-blue-300">Historial completo de ventas, análisis por período, productos más vendidos</p>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">Historial completo de ventas, detalles de transacciones</p>
+                    </Link>
+
+                    <!-- Top Productos Vendidos -->
+                    <Link
+                        :href="route('reports.sales')"
+                        class="bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900 dark:to-cyan-800 border-2 border-cyan-200 dark:border-cyan-700 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                    >
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-cyan-500 dark:bg-cyan-600 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            <h3 class="ml-4 text-lg font-semibold text-cyan-900 dark:text-cyan-100">Top Productos</h3>
+                        </div>
+                        <p class="text-sm text-cyan-700 dark:text-cyan-300">Productos mas vendidos, comparativas, exportar PDF/Excel</p>
                     </Link>
 
                     <!-- Reporte de Inventario -->

@@ -185,7 +185,7 @@
 
                 <NavItem
                     :href="route('admin.reports')"
-                    :active="route().current('admin.reports')"
+                    :active="route().current('admin.reports') || route().current('reports.*')"
                     :collapsed="isCollapsed"
                     icon="reports"
                 >

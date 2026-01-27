@@ -58,6 +58,9 @@
 
         <!-- Global Confirm Dialog (único en toda la app) -->
         <ConfirmDialog />
+
+        <!-- Mobile FAB Navigation -->
+        <MobileNavFab />
     </div>
 </template>
 
@@ -71,6 +74,7 @@ import GlobalSearch from '@/Components/GlobalSearch.vue';
 import ExpenseSlideOver from '@/Components/ExpenseSlideOver.vue';
 import KeyboardShortcutsModal from '@/Components/KeyboardShortcutsModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import MobileNavFab from '@/Components/MobileNavFab.vue';
 
 const props = defineProps({
     breadcrumbs: {

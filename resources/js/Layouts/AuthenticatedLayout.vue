@@ -239,6 +239,7 @@
             </main>
         </div>
         <FlashMessage />
+        <MobileNavFab />
     </div>
 </template>
 
@@ -251,6 +252,7 @@ import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import FlashMessage from '@/Components/FlashMessage.vue';
+import MobileNavFab from '@/Components/MobileNavFab.vue';
 
 const showingNavigationDropdown = ref(false);
 const page = usePage();

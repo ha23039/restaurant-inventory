@@ -67,6 +67,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para REPORTES DE VENTAS (Admin solamente)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin'])->prefix('reports')->name('reports.')->group(function () {
+    Route::get('/sales', [App\Http\Controllers\ReportController::class, 'sales'])->name('sales');
+    Route::get('/sales/pdf', [App\Http\Controllers\ReportController::class, 'exportPdf'])->name('sales.pdf');
+    Route::get('/sales/excel', [App\Http\Controllers\ReportController::class, 'exportExcel'])->name('sales.excel');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para GESTIÓN DE USUARIOS (Admin solamente)
 |--------------------------------------------------------------------------
 */
