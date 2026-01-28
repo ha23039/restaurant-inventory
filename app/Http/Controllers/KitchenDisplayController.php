@@ -42,6 +42,7 @@ class KitchenDisplayController extends Controller
                     'elapsed_minutes' => $order->elapsed_minutes,
                     'color' => $order->color,
                     'priority' => $order->priority,
+                    'source' => $order->sale->source ?? 'pos',
                     'table_number' => $order->sale->table ? $order->sale->table->table_number : null,
                     'table_name' => $order->sale->table ? $order->sale->table->name : 'Para Llevar',
                     'customer_name' => $order->sale->customer_name,

@@ -170,24 +170,24 @@ const paymentMethods = [
     >
         <div class="flex flex-col h-full -mx-4 -mt-2">
             <!-- Items de orden existente -->
-            <div v-if="selectedExistingSale" class="mx-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 mb-4">
-                <h4 class="text-sm font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center">
+            <div v-if="selectedExistingSale" class="mx-4 bg-orange-50 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-700 rounded-lg p-3 mb-4">
+                <h4 class="text-sm font-semibold text-orange-900 dark:text-orange-200 mb-2 flex items-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     Orden #{{ selectedExistingSale.sale_number }}
                 </h4>
-                <div class="space-y-1 max-h-24 overflow-y-auto">
+                <div class="space-y-1.5 max-h-24 overflow-y-auto">
                     <div
                         v-for="item in selectedExistingSale.sale_items"
                         :key="item.id"
-                        class="flex justify-between text-xs text-orange-800 dark:text-orange-200"
+                        class="flex justify-between text-xs text-orange-800 dark:text-orange-100"
                     >
-                        <span>{{ item.quantity }}x {{ getSaleItemName(item) }}</span>
-                        <span>${{ parseFloat(item.total_price).toFixed(2) }}</span>
+                        <span class="font-medium">{{ item.quantity }}x {{ getSaleItemName(item) }}</span>
+                        <span class="font-semibold">${{ parseFloat(item.total_price).toFixed(2) }}</span>
                     </div>
                 </div>
-                <div class="mt-2 pt-2 border-t border-orange-200 dark:border-orange-800 flex justify-between text-sm font-semibold">
+                <div class="mt-2 pt-2 border-t border-orange-200 dark:border-orange-600 flex justify-between text-sm font-semibold text-orange-900 dark:text-orange-100">
                     <span>Subtotal existente:</span>
                     <span>${{ parseFloat(selectedExistingSale.total).toFixed(2) }}</span>
                 </div>

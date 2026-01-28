@@ -11,39 +11,39 @@
                     </span>
                 </h2>
                 <div class="flex flex-wrap gap-2">
-                    <Link :href="route('sales.index')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-3 md:px-4 rounded text-sm">
+                    <Link :href="route('sales.index')" class="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all active:scale-95">
                         <span class="hidden sm:inline">←</span> Volver
                     </Link>
                     <!-- Botón para cobrar/continuar órdenes pendientes -->
                     <Link
                         v-if="sale?.status === 'pendiente'"
                         :href="route('sales.pos', { load_sale: sale.id })"
-                        class="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-3 md:px-4 rounded inline-flex items-center text-sm"
+                        class="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg inline-flex items-center text-sm transition-all active:scale-95"
                     >
-                        <svg class="w-4 h-4 md:w-5 md:h-5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span class="hidden sm:inline ml-1">Cobrar</span>
+                        <span class="hidden sm:inline">Cobrar</span>
                     </Link>
                     <!-- Botón para eliminar órdenes pendientes -->
                     <button
                         v-if="sale?.status === 'pendiente'"
                         @click="deletePendingSale"
-                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 md:px-4 rounded inline-flex items-center text-sm"
+                        class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold py-2.5 px-4 rounded-lg inline-flex items-center text-sm transition-all active:scale-95"
                     >
-                        <svg class="w-4 h-4 md:w-5 md:h-5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        <span class="hidden sm:inline ml-1">Eliminar</span>
+                        <span class="hidden sm:inline">Eliminar</span>
                     </button>
                     <Link
                         v-if="sale?.can_return"
                         :href="route('returns.create', { sale_id: sale.id })"
-                        class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-3 md:px-4 rounded text-sm"
+                        class="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all active:scale-95"
                     >
                         Devolver
                     </Link>
-                    <Link :href="route('sales.pos')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-3 md:px-4 rounded text-sm">
+                    <Link :href="route('sales.pos')" class="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all active:scale-95">
                         <span class="hidden sm:inline">Nueva Venta</span>
                         <span class="sm:hidden">+ Venta</span>
                     </Link>

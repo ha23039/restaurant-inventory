@@ -385,6 +385,38 @@ const addVariantToCart = (variant) => {
     saveCartToStorage();
 };
 
+// Handle multiple variants update from the new SlideOver
+const handleUpdateVariants = ({ productId, productName, variants }) => {
+    // Remove existing variants of this product from cart
+    cartItems.value = cartItems.value.filter(item => {
+        // Keep items that are not variants of this menu item
+        return !(item.product_type === 'variant' && item.menu_item_id === productId);
+    });
+
+    // Add all selected variants with their quantities
+    variants.forEach(variant => {
+        if (variant.quantity > 0) {
+            cartItems.value.push({
+                id: variant.id,
+                name: variant.name,
+                price: variant.price,
+                quantity: variant.quantity,
+                available_quantity: variant.available_quantity,
+                product_type: 'variant',
+                variant_id: variant.variant_id,
+                menu_item_id: variant.menu_item_id
+            });
+        }
+    });
+
+    if (variants.length > 0) {
+        const totalItems = variants.reduce((sum, v) => sum + v.quantity, 0);
+        showNotification(`${totalItems} ${totalItems === 1 ? 'item' : 'items'} de ${productName} actualizados`, 'success');
+    }
+
+    saveCartToStorage();
+};
+
 const addFreeSaleToCart = (freeSaleData) => {
     cartItems.value.push({
         id: `free-${Date.now()}`,
@@ -880,12 +912,7 @@ onMounted(() => {
         }
     }
 
-    // Auto-focus en el input de búsqueda después de un pequeño delay
-    setTimeout(() => {
-        searchInputRef.value?.focus();
-    }, 300);
-
-    // Agregar keyboard shortcuts
+    // Agregar keyboard shortcuts (/ o Ctrl+F para buscar)
     document.addEventListener('keydown', handleKeyboardShortcuts);
 });
 
@@ -918,13 +945,13 @@ onBeforeUnmount(() => {
                     <button
                         v-if="pending_sales && pending_sales.length > 0"
                         @click="showPendingSales = !showPendingSales"
-                        class="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors relative text-sm"
+                        class="flex items-center space-x-1.5 md:space-x-2 px-4 py-2.5 md:px-5 md:py-2.5 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white rounded-xl transition-colors relative text-sm font-medium shadow-sm active:scale-95"
                     >
-                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                         <span class="hidden sm:inline">Órdenes</span>
-                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 md:h-6 md:w-6 flex items-center justify-center">
+                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow">
                             {{ pending_sales.length }}
                         </span>
                     </button>
@@ -948,9 +975,9 @@ onBeforeUnmount(() => {
                         </h3>
                         <button
                             @click="showPendingSales = false"
-                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors active:scale-95"
                         >
-                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
@@ -987,7 +1014,7 @@ onBeforeUnmount(() => {
                                     <!-- Botón eliminar -->
                                     <button
                                         @click.stop="deletePendingOrder(sale)"
-                                        class="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors flex-shrink-0"
+                                        class="p-2 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors flex-shrink-0 active:scale-95"
                                         title="Eliminar orden"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1793,8 +1820,10 @@ onBeforeUnmount(() => {
     <ProductVariantSlideOver
         :show="showVariantSlideOver"
         :menu-item="selectedMenuItemForVariants"
+        :cart="cartItems"
         @close="showVariantSlideOver = false"
         @select="addVariantToCart"
+        @update-variants="handleUpdateVariants"
     />
 
     <!-- Confirm Dialog -->
