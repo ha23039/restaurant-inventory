@@ -503,7 +503,7 @@ const quickActions = computed(() => {
     }
 
     // Cash Register action (dynamic based on session state)
-    if (canAccess(['admin', 'cajero']) && !loadingCashRegister.value) {
+    if (canAccess(['admin', 'cajero'])) {
         if (hasCashRegisterSession.value) {
             actions.push({
                 route: 'cashregister.close.form',

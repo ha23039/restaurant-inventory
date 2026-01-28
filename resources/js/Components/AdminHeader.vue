@@ -62,7 +62,7 @@
                 <div v-if="canAccessQuickActions" class="hidden lg:flex items-center space-x-2 px-3 border-l border-gray-200 dark:border-gray-700">
                     <!-- Abrir/Cerrar Caja (dynamic) -->
                     <Link
-                        v-if="canAccess(['admin', 'cajero']) && !loadingCashRegister"
+                        v-if="canAccess(['admin', 'cajero'])"
                         :href="hasCashRegisterSession ? route('cashregister.close.form') : route('cashregister.create')"
                         :class="[
                             'flex items-center space-x-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors',

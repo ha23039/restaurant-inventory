@@ -183,8 +183,8 @@ const totalAmount = computed(() => {
         :nested="true"
     >
         <div class="space-y-6">
-            <!-- Search -->
-            <div>
+            <!-- Search (sticky) -->
+            <div class="sticky top-0 bg-white dark:bg-gray-900 pb-2 z-10">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Buscar Producto
                 </label>
@@ -203,27 +203,27 @@ const totalAmount = computed(() => {
 
             <!-- Product Grid -->
             <div>
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center justify-between mb-2">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Productos Disponibles
                     </label>
                     <span v-if="hasMoreProducts" class="text-xs text-blue-600 dark:text-blue-400">
-                        Mostrando primeros 50 - usa búsqueda para filtrar
+                        Mostrando primeros 50
                     </span>
                 </div>
 
-                <div v-if="isLoading" class="text-center py-8">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p class="text-sm text-gray-500 mt-2">Cargando productos...</p>
+                <div v-if="isLoading" class="text-center py-6">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <p class="text-sm text-gray-500 mt-2">Cargando...</p>
                 </div>
 
-                <div v-else-if="filteredProducts.length === 0" class="text-center py-8">
-                    <p class="text-gray-500">No se encontraron productos</p>
+                <div v-else-if="filteredProducts.length === 0" class="text-center py-6">
+                    <p class="text-gray-500 text-sm">No se encontraron productos</p>
                 </div>
 
                 <div
                     v-else
-                    class="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto overscroll-contain"
+                    class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto overscroll-contain border border-gray-200 dark:border-gray-700 rounded-lg p-2"
                 >
                     <button
                         v-for="product in filteredProducts"
@@ -231,29 +231,24 @@ const totalAmount = computed(() => {
                         @click="handleProductClick(product)"
                         type="button"
                         :class="[
-                            'text-left p-3 border-2 rounded-lg',
+                            'text-left p-2 border rounded-lg',
                             selectedProduct?.id === product.id
                                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                 : isProductSelected(product.id)
                                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                : 'border-gray-200 dark:border-gray-700'
+                                : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                         ]"
                     >
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900 dark:text-white">{{ product.name }}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Stock: {{ product.current_stock }} {{ product.unit_type }}
-                                </p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    Costo: ${{ parseFloat(product.unit_cost || 0).toFixed(2) }}
+                        <div class="flex items-center justify-between gap-1">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900 dark:text-white truncate text-sm">{{ product.name }}</p>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">
+                                    ${{ parseFloat(product.unit_cost || 0).toFixed(2) }} / {{ product.unit_type }}
                                 </p>
                             </div>
-                            <div v-if="isProductSelected(product.id)" class="flex-shrink-0">
-                                <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+                            <svg v-if="isProductSelected(product.id)" class="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
                         </div>
                     </button>
                 </div>
