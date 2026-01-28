@@ -60,7 +60,7 @@
         <ConfirmDialog />
 
         <!-- Mobile FAB Navigation -->
-        <MobileNavFab />
+        <MobileNavFab @open-expense="openNewExpense" />
     </div>
 </template>
 

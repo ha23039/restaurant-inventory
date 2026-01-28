@@ -60,16 +60,21 @@
 
                 <!-- Quick Actions (only for admin & cajero) -->
                 <div v-if="canAccessQuickActions" class="hidden lg:flex items-center space-x-2 px-3 border-l border-gray-200 dark:border-gray-700">
-                    <!-- Abrir Caja -->
+                    <!-- Abrir/Cerrar Caja (dynamic) -->
                     <Link
-                        v-if="canAccess(['admin', 'cajero'])"
-                        :href="route('cashregister.index')"
-                        class="flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                        v-if="canAccess(['admin', 'cajero']) && !loadingCashRegister"
+                        :href="hasCashRegisterSession ? route('cashregister.close.form') : route('cashregister.create')"
+                        :class="[
+                            'flex items-center space-x-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                            hasCashRegisterSession 
+                                ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                                : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                        ]"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span>Abrir Caja</span>
+                        <span>{{ hasCashRegisterSession ? 'Cerrar Caja' : 'Abrir Caja' }}</span>
                     </Link>
 
                     <!-- Nuevo Gasto -->
@@ -183,11 +188,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
 import { useDarkMode } from '@/composables/useDarkMode';
 import NotificationCenter from '@/Components/Feedback/NotificationCenter.vue';
+import axios from 'axios';
 
 const props = defineProps({
     breadcrumbs: {
@@ -200,6 +206,30 @@ const emit = defineEmits(['toggle-mobile-sidebar', 'open-search', 'open-new-expe
 
 const page = usePage();
 const { isDark, toggle: toggleDarkMode } = useDarkMode();
+
+// Cash register state
+const hasCashRegisterSession = ref(false);
+const loadingCashRegister = ref(true);
+
+// Fetch cash register status on mount
+const fetchCashRegisterStatus = async () => {
+    try {
+        const response = await axios.get(route('cashregister.api.current'));
+        hasCashRegisterSession.value = response.data.has_open_session || false;
+    } catch (error) {
+        console.error('Error fetching cash register status:', error);
+        hasCashRegisterSession.value = false;
+    } finally {
+        loadingCashRegister.value = false;
+    }
+};
+
+onMounted(() => {
+    const userRole = page.props.auth.user.role;
+    if (['admin', 'cajero'].includes(userRole)) {
+        fetchCashRegisterStatus();
+    }
+});
 
 const toggleMobileSidebar = () => {
     emit('toggle-mobile-sidebar');

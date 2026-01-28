@@ -110,12 +110,13 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="px-4 pb-4" v-if="quickActions.length > 0">
+                <div class="px-4 pb-4" v-if="canAccess(['admin', 'cajero'])">
                     <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-1">
                             Acciones Rápidas
                         </p>
                         <div class="flex gap-2">
+                            <!-- Cash Register Button -->
                             <Link
                                 v-for="action in quickActions"
                                 :key="action.route"
@@ -127,32 +128,31 @@
                                 <component :is="action.icon" class="w-5 h-5" />
                                 {{ action.label }}
                             </Link>
+                            <!-- Expense Button -->
+                            <button
+                                v-if="canAccess(['admin', 'cajero'])"
+                                @click="openExpense"
+                                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 active:scale-95 bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                                <ExpenseIcon class="w-5 h-5" />
+                                + Gasto
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="px-4 pb-6 pt-2 border-t border-gray-100 dark:border-gray-700">
-                    <div class="flex gap-3">
-                        <Link
-                            :href="route('profile.edit')"
-                            @click="close"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-95"
-                        >
-                            <UserIcon class="w-5 h-5" />
-                            Perfil
-                        </Link>
-                        <Link
-                            :href="route('logout')"
-                            method="post"
-                            as="button"
-                            @click="close"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-medium text-sm hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors active:scale-95"
-                        >
-                            <LogoutIcon class="w-5 h-5" />
-                            Salir
-                        </Link>
-                    </div>
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        @click="close"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-medium text-sm hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors active:scale-95"
+                    >
+                        <LogoutIcon class="w-5 h-5" />
+                        Cerrar Sesión
+                    </Link>
                 </div>
             </div>
         </Transition>
@@ -184,8 +184,11 @@
 </template>
 
 <script setup>
-import { ref, computed, h, watch } from 'vue';
+import { ref, computed, h, watch, onMounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+
+const emit = defineEmits(['open-expense']);
 
 const isOpen = ref(false);
 const page = usePage();
@@ -194,6 +197,29 @@ const contentRef = ref(null);
 
 const userName = computed(() => page.props.auth.user.name);
 const userRole = computed(() => page.props.auth.user.role);
+
+// Cash register state
+const hasCashRegisterSession = ref(false);
+const loadingCashRegister = ref(true);
+
+// Fetch cash register status on mount
+const fetchCashRegisterStatus = async () => {
+    try {
+        const response = await axios.get(route('cashregister.api.current'));
+        hasCashRegisterSession.value = response.data.has_open_session || false;
+    } catch (error) {
+        console.error('Error fetching cash register status:', error);
+        hasCashRegisterSession.value = false;
+    } finally {
+        loadingCashRegister.value = false;
+    }
+};
+
+onMounted(() => {
+    if (canAccess(['admin', 'cajero'])) {
+        fetchCashRegisterStatus();
+    }
+});
 
 // Touch gesture state
 const touchStart = ref({ y: 0, x: 0 });
@@ -346,7 +372,14 @@ const CashRegisterIcon = {
 
 const KitchenIcon = {
     render: () => h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
-        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' })
+        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z' }),
+        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z' })
+    ])
+};
+
+const ExpenseIcon = {
+    render: () => h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+        h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' })
     ])
 };
 
@@ -459,6 +492,7 @@ const filteredNavItems = computed(() => {
 const quickActions = computed(() => {
     const actions = [];
 
+    // POS button - always show for admin/cajero
     if (canAccess(['admin', 'cajero'])) {
         actions.push({
             route: 'sales.pos',
@@ -468,6 +502,31 @@ const quickActions = computed(() => {
         });
     }
 
+    // Cash Register action (dynamic based on session state)
+    if (canAccess(['admin', 'cajero']) && !loadingCashRegister.value) {
+        if (hasCashRegisterSession.value) {
+            actions.push({
+                route: 'cashregister.close.form',
+                label: 'Cerrar Caja',
+                icon: CashRegisterIcon,
+                class: 'bg-amber-600 hover:bg-amber-700 text-white'
+            });
+        } else {
+            actions.push({
+                route: 'cashregister.create',
+                label: 'Abrir Caja',
+                icon: CashRegisterIcon,
+                class: 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            });
+        }
+    }
+
     return actions;
 });
+
+// Handle expense button click
+const openExpense = () => {
+    close();
+    emit('open-expense');
+};
 </script>
