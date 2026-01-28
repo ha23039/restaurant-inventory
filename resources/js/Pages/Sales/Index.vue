@@ -187,8 +187,9 @@
                 </div>
 
                 <!-- Tabla de ventas -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-                    <div class="p-6 overflow-x-auto">
+                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+                    <!-- Vista Desktop: Tabla -->
+                    <div class="hidden md:block p-6 overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
@@ -341,9 +342,131 @@
                                     </tr>
                                 </tbody>
                             </table>
+                    </div>
 
-                        <!-- Mensaje si no hay ventas -->
-                        <div v-if="sales.data.length === 0" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <!-- Vista Mobile: Cards -->
+                    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                        <div
+                            v-for="sale in sales.data"
+                            :key="'mobile-' + sale.id"
+                            class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
+                        >
+                            <!-- Header: Ticket, Estado y Total -->
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base font-bold text-gray-900 dark:text-white">
+                                            #{{ sale.sale_number }}
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                                            :class="{
+                                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': sale.status === 'completada',
+                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': sale.status === 'pendiente',
+                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300': sale.status === 'cancelada'
+                                            }"
+                                        >
+                                            {{ sale.status }}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {{ formatDate(sale.created_at) }} • {{ formatTime(sale.created_at) }}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                                        ${{ formatPrice(sale.total) }}
+                                    </div>
+                                    <div v-if="sale.has_returns" class="text-xs text-red-600 dark:text-red-400">
+                                        -${{ formatPrice(sale.total_returned) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Info secundaria -->
+                            <div class="flex flex-wrap items-center gap-2 mb-3 text-xs">
+                                <!-- Método de pago -->
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 gap-1">
+                                    <component :is="getPaymentIcon(sale.payment_method)" class="w-3 h-3" />
+                                    {{ sale.payment_method }}
+                                </span>
+                                <!-- Mesa o Para llevar -->
+                                <span v-if="sale.table" class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                    Mesa {{ sale.table.table_number }}
+                                </span>
+                                <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                    Para llevar
+                                </span>
+                                <!-- Items -->
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    {{ sale.sale_items.length }} items
+                                </span>
+                                <!-- Indicador de devolución -->
+                                <span v-if="sale.has_returns" class="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300 gap-1">
+                                    <component :is="icons.refund" class="w-3 h-3" />
+                                    {{ sale.return_percentage }}% devuelto
+                                </span>
+                            </div>
+
+                            <!-- Cajero -->
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                Cajero: {{ sale.user.name }}
+                            </div>
+
+                            <!-- Acciones -->
+                            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <div class="flex items-center gap-1">
+                                    <!-- Ver Detalle -->
+                                    <Link
+                                        :href="route('sales.show', sale.id)"
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                                    >
+                                        <component :is="icons.view" class="w-4 h-4 mr-1" />
+                                        Ver
+                                    </Link>
+                                    <!-- Devolver -->
+                                    <Link
+                                        v-if="sale.can_return"
+                                        :href="route('returns.create', { sale_id: sale.id })"
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50"
+                                    >
+                                        <component :is="icons.refund" class="w-4 h-4 mr-1" />
+                                        Devolver
+                                    </Link>
+                                    <!-- Eliminar/Cancelar (solo admin) -->
+                                    <button
+                                        v-if="isAdmin && sale.status !== 'cancelada' && !sale.has_returns"
+                                        @click="deleteSale(sale)"
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50"
+                                    >
+                                        <component :is="icons.trash" class="w-4 h-4 mr-1" />
+                                        {{ sale.status === 'pendiente' ? 'Eliminar' : 'Cancelar' }}
+                                    </button>
+                                </div>
+                                <!-- Estado de devolución si aplica -->
+                                <span v-if="sale.status === 'completada' && sale.has_returns && !sale.can_return" class="text-xs text-gray-400">
+                                    {{ sale.total_returned >= sale.total ? 'Total' : 'Parcial' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Empty state mobile -->
+                        <div v-if="sales.data.length === 0" class="p-8 text-center">
+                            <component :is="icons.receipt" class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
+                            <div class="text-gray-500 dark:text-gray-400">No se encontraron ventas</div>
+                            <Link
+                                :href="route('sales.pos')"
+                                class="mt-4 inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded gap-2"
+                            >
+                                <component :is="icons.pos" class="w-5 h-5" />
+                                Realizar primera venta
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Desktop: Empty state after table -->
+                    <div v-if="sales.data.length === 0" class="hidden md:block p-6">
+                        <div class="text-center py-12 text-gray-500 dark:text-gray-400">
                             <component :is="icons.receipt" class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
                             <div>No se encontraron ventas</div>
                             <Link
@@ -354,66 +477,74 @@
                                 Realizar primera venta
                             </Link>
                         </div>
+                    </div>
 
-                        <!-- Paginación -->
-                        <div class="mt-6" v-if="sales.links && sales.links.length > 3">
-                            <nav class="flex items-center justify-between">
-                                <div class="flex justify-between flex-1 sm:hidden">
-                                    <Link
-                                        v-if="sales.prev_page_url"
-                                        :href="sales.prev_page_url"
-                                        class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:text-gray-400"
-                                    >
-                                        Anterior
-                                    </Link>
-                                    <Link
-                                        v-if="sales.next_page_url"
-                                        :href="sales.next_page_url"
-                                        class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:text-gray-400"
-                                    >
-                                        Siguiente
-                                    </Link>
+                    <!-- Paginación (visible en ambas vistas) -->
+                    <div class="px-4 md:px-6 py-4 border-t border-gray-200 dark:border-gray-700" v-if="sales.links && sales.links.length > 3">
+                        <nav class="flex items-center justify-between">
+                            <!-- Mobile: Anterior/Siguiente -->
+                            <div class="flex justify-between flex-1 sm:hidden">
+                                <Link
+                                    v-if="sales.prev_page_url"
+                                    :href="sales.prev_page_url"
+                                    class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:text-gray-400"
+                                >
+                                    Anterior
+                                </Link>
+                                <span v-else class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 dark:text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md cursor-default">
+                                    Anterior
+                                </span>
+                                <Link
+                                    v-if="sales.next_page_url"
+                                    :href="sales.next_page_url"
+                                    class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:text-gray-400"
+                                >
+                                    Siguiente
+                                </Link>
+                                <span v-else class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 dark:text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md cursor-default">
+                                    Siguiente
+                                </span>
+                            </div>
+                            <!-- Desktop: Full pagination -->
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        Mostrando
+                                        <span class="font-medium">{{ sales.from }}</span>
+                                        a
+                                        <span class="font-medium">{{ sales.to }}</span>
+                                        de
+                                        <span class="font-medium">{{ sales.total }}</span>
+                                        ventas
+                                    </p>
                                 </div>
-                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm text-gray-700 dark:text-gray-300">
-                                            Mostrando
-                                            <span class="font-medium">{{ sales.from }}</span>
-                                            a
-                                            <span class="font-medium">{{ sales.to }}</span>
-                                            de
-                                            <span class="font-medium">{{ sales.total }}</span>
-                                            ventas
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                            <template v-for="(link, index) in sales.links" :key="index">
-                                                <Link
-                                                    v-if="link.url"
-                                                    :href="link.url"
-                                                    v-html="link.label"
-                                                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium transition-colors"
-                                                    :class="[
-                                                        link.active
-                                                            ? 'z-10 bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-600 dark:text-indigo-300'
-                                                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700',
-                                                        index === 0 ? 'rounded-l-md' : '',
-                                                        index === sales.links.length - 1 ? 'rounded-r-md' : '',
-                                                        'border'
-                                                    ]"
-                                                />
-                                                <span
-                                                    v-else
-                                                    v-html="link.label"
-                                                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 dark:text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-default"
-                                                />
-                                            </template>
-                                        </nav>
-                                    </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                        <template v-for="(link, index) in sales.links" :key="index">
+                                            <Link
+                                                v-if="link.url"
+                                                :href="link.url"
+                                                v-html="link.label"
+                                                class="relative inline-flex items-center px-2 py-2 text-sm font-medium transition-colors"
+                                                :class="[
+                                                    link.active
+                                                        ? 'z-10 bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-600 dark:text-indigo-300'
+                                                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700',
+                                                    index === 0 ? 'rounded-l-md' : '',
+                                                    index === sales.links.length - 1 ? 'rounded-r-md' : '',
+                                                    'border'
+                                                ]"
+                                            />
+                                            <span
+                                                v-else
+                                                v-html="link.label"
+                                                class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 dark:text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-default"
+                                            />
+                                        </template>
+                                    </nav>
                                 </div>
-                            </nav>
-                        </div>
+                            </div>
+                        </nav>
                     </div>
                 </div>
 
