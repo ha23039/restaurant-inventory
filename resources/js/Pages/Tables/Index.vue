@@ -10,6 +10,7 @@ const props = defineProps({
     tables: Array,
     filters: Object,
     statistics: Object,
+    payment_methods: Array,
 });
 
 // State
@@ -334,6 +335,7 @@ const hasActiveFilters = computed(() => {
         <TableSlideOver
             :show="showSlideOver"
             :table="selectedTable"
+            :payment-methods="payment_methods"
             @close="closeSlideOver"
         />
 

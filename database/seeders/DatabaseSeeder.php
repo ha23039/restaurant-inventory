@@ -17,6 +17,10 @@ class DatabaseSeeder extends Seeder
             SimpleProductSeeder::class,
             SupplierSeeder::class,
             PupusaSeeder::class,
+            PaymentMethodSeeder::class,
+            PrinterSettingsSeeder::class,
+            TicketSettingsSeeder::class,
+            OrderSettingsSeeder::class,
         ]);
     }
 }

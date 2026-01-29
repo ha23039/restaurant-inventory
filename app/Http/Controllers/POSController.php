@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSaleRequest;
 use App\Http\Resources\MenuItemResource;
 use App\Http\Resources\SimpleProductResource;
+use App\Models\PaymentMethod;
 use App\Repositories\Contracts\SimpleProductRepositoryInterface;
 use App\Services\MenuItemService;
 use App\Services\SaleService;
@@ -93,6 +94,7 @@ class POSController extends Controller
             'simple_products' => SimpleProductResource::collection($simpleProducts),
             'pending_sales' => $pendingSales,
             'available_tables' => $availableTables,
+            'payment_methods' => PaymentMethod::getActive(),
         ]);
     }
 

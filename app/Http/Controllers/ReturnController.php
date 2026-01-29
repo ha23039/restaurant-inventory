@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProcessReturnRequest;
 use App\Models\CashFlow;
 use App\Models\InventoryMovement;
+use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
@@ -123,6 +124,7 @@ class ReturnController extends Controller
             'sale' => $sale,
             'searchResults' => $searchResults,
             'searchTerm' => $search,
+            'payment_methods' => PaymentMethod::getActive(),
         ]);
     }
 
@@ -160,6 +162,7 @@ class ReturnController extends Controller
             'searchResults' => $sales,
             'searchTerm' => $search,
             'success' => "Se encontraron {$sales->count()} ventas para '{$search}'",
+            'payment_methods' => PaymentMethod::getActive(),
         ]);
     }
 

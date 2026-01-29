@@ -13,6 +13,10 @@ const props = defineProps({
     table: {
         type: Object,
         default: null
+    },
+    paymentMethods: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -605,6 +609,7 @@ onUnmounted(() => {
         :sales="pendingSales"
         :table-id="table?.id"
         :mode="chargeMode"
+        :payment-methods-from-db="paymentMethods"
         @close="showChargeSlideOver = false"
         @charged="handleCharged"
     />

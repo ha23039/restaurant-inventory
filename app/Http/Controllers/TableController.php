@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Table;
 use App\Models\Sale;
 use App\Models\CashRegisterSession;
+use App\Models\PaymentMethod;
 use App\Services\TableService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,6 +32,7 @@ class TableController extends Controller
             'tables' => $tables,
             'filters' => $request->only(['status', 'search']),
             'statistics' => $this->tableService->getStatistics(),
+            'payment_methods' => PaymentMethod::getActive(),
         ]);
     }
 

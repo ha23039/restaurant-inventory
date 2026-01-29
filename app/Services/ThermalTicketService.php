@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\PrinterSettings;
 use App\Models\Sale;
 use App\Models\SaleReturn;
+use App\Models\TicketSettings;
 use Carbon\Carbon;
 use Exception;
 use Mike42\Escpos\EscposImage;
@@ -19,10 +21,23 @@ class ThermalTicketService
 
     private $config;
 
+    private $kitchenPrinterConfig;
+
+    private $customerPrinterConfig;
+
+    private $ticketSettings;
+
     public function __construct()
     {
-        // Usar el archivo de configuración completo
+        // Usar el archivo de configuración como fallback
         $this->config = config('thermal_printer');
+
+        // Obtener configuración de impresoras desde BD (con fallback a .env)
+        $this->kitchenPrinterConfig = PrinterSettings::getKitchenPrinter();
+        $this->customerPrinterConfig = PrinterSettings::getCustomerPrinter();
+
+        // Obtener configuración de tickets desde BD (con fallback a config)
+        $this->ticketSettings = TicketSettings::get();
     }
 
     /**
@@ -31,8 +46,9 @@ class ThermalTicketService
     public function generateKitchenOrder(Sale $sale): bool
     {
         try {
-            // Verificar si la impresora está habilitada
-            if (!($this->config['kitchen_printer']['enabled'] ?? true)) {
+            // Verificar si la impresora está habilitada (desde BD o .env)
+            if (!$this->kitchenPrinterConfig['enabled']) {
+                \Log::info('Impresora de cocina deshabilitada, saltando impresión');
                 return true; // Silenciosamente salir si está deshabilitada
             }
 
@@ -115,8 +131,9 @@ class ThermalTicketService
     public function generateCustomerReceipt(Sale $sale): bool
     {
         try {
-            // Verificar si la impresora está habilitada
-            if (!($this->config['customer_printer']['enabled'] ?? true)) {
+            // Verificar si la impresora está habilitada (desde BD o .env)
+            if (!$this->customerPrinterConfig['enabled']) {
+                \Log::info('Impresora de cliente deshabilitada, saltando impresión');
                 return true; // Silenciosamente salir si está deshabilitada
             }
 
@@ -487,10 +504,14 @@ class ThermalTicketService
     private function connectToKitchenPrinter(): void
     {
         if (env('APP_ENV') === 'production') {
-            // Conectar por red en producción
-            $ip = $this->config['kitchen_printer']['ip'] ?? '192.168.1.100';
-            $port = $this->config['kitchen_printer']['port'] ?? 9100;
-            $connector = new NetworkPrintConnector($ip, $port);
+            $config = $this->kitchenPrinterConfig;
+
+            if ($config['connection_type'] === 'windows_share' && $config['printer_name']) {
+                $connector = new WindowsPrintConnector($config['printer_name']);
+            } else {
+                // Conectar por red (default)
+                $connector = new NetworkPrintConnector($config['ip'], $config['port']);
+            }
         } else {
             // Archivo temporal en desarrollo
             $connector = new FilePrintConnector(storage_path('app/tickets/kitchen_' . time() . '.txt'));
@@ -505,13 +526,15 @@ class ThermalTicketService
     private function connectToCustomerPrinter(): void
     {
         if (env('APP_ENV') === 'production') {
-            if (PHP_OS_FAMILY === 'Windows') {
-                $printerName = $this->config['customer_printer']['name'] ?? 'ThermalPrinter';
-                $connector = new WindowsPrintConnector($printerName);
+            $config = $this->customerPrinterConfig;
+
+            if ($config['connection_type'] === 'windows_share' && $config['printer_name']) {
+                $connector = new WindowsPrintConnector($config['printer_name']);
+            } elseif (PHP_OS_FAMILY === 'Windows' && $config['printer_name']) {
+                $connector = new WindowsPrintConnector($config['printer_name']);
             } else {
-                $ip = $this->config['customer_printer']['ip'] ?? '192.168.1.101';
-                $port = $this->config['customer_printer']['port'] ?? 9100;
-                $connector = new NetworkPrintConnector($ip, $port);
+                // Conectar por red (default)
+                $connector = new NetworkPrintConnector($config['ip'], $config['port']);
             }
         } else {
             // Archivo temporal en desarrollo
@@ -557,10 +580,12 @@ class ThermalTicketService
      */
     private function requiresKitchen($item): bool
     {
-        // Puedes personalizar esta lógica según tus categorías
-        $nonKitchenCategories = ['bebidas', 'postres_frios', 'extras'];
+        // Obtener categorías que NO van a cocina desde configuración
+        $nonKitchenCategories = $this->ticketSettings['non_kitchen_categories'] ?? [];
 
-        return !in_array($item->category_slug ?? '', $nonKitchenCategories);
+        $categorySlug = strtolower($item->category_slug ?? '');
+
+        return !in_array($categorySlug, array_map('strtolower', $nonKitchenCategories));
     }
 
     /**
@@ -570,10 +595,13 @@ class ThermalTicketService
     {
         $itemCount = $sale->saleItems->sum('quantity');
 
-        if ($itemCount >= 10) {
+        $highThreshold = $this->ticketSettings['priority_high_threshold'] ?? 10;
+        $mediumThreshold = $this->ticketSettings['priority_medium_threshold'] ?? 5;
+
+        if ($itemCount >= $highThreshold) {
             return 'ALTA';
         }
-        if ($itemCount >= 5) {
+        if ($itemCount >= $mediumThreshold) {
             return 'MEDIA';
         }
 

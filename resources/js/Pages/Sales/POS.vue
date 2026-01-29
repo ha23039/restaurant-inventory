@@ -15,7 +15,27 @@ const props = defineProps({
     menu_items: Object,
     simple_products: Object,
     pending_sales: Array,
-    available_tables: Array
+    available_tables: Array,
+    payment_methods: Array
+});
+
+// Computed para métodos de pago activos (con fallback)
+const activePaymentMethods = computed(() => {
+    if (props.payment_methods && props.payment_methods.length > 0) {
+        return props.payment_methods;
+    }
+    // Fallback si no vienen del servidor
+    return [
+        { name: 'efectivo', label: 'Efectivo', icon: 'cash', requires_amount_input: true },
+        { name: 'tarjeta', label: 'Tarjeta', icon: 'credit-card', requires_amount_input: false },
+        { name: 'transferencia', label: 'Transferencia', icon: 'bank', requires_amount_input: false },
+    ];
+});
+
+// Computed para saber si el método actual requiere input de monto
+const currentMethodRequiresAmountInput = computed(() => {
+    const method = activePaymentMethods.value.find(m => m.name === paymentMethod.value);
+    return method?.requires_amount_input ?? (paymentMethod.value === 'efectivo' || paymentMethod.value === 'mixto');
 });
 
 // 3. ESTADO PRINCIPAL DEL POS
@@ -1591,15 +1611,18 @@ onBeforeUnmount(() => {
                                             v-model="paymentMethod"
                                             class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                         >
-                                            <option value="efectivo">Efectivo</option>
-                                            <option value="tarjeta">Tarjeta</option>
-                                            <option value="transferencia">Transferencia</option>
-                                            <option value="mixto">Mixto</option>
+                                            <option
+                                                v-for="method in activePaymentMethods"
+                                                :key="method.name"
+                                                :value="method.name"
+                                            >
+                                                {{ method.label }}
+                                            </option>
                                         </select>
                                     </div>
 
-                                    <!-- Calculadora de Cambio (solo para efectivo) -->
-                                    <div v-show="hasItemsToSell && (paymentMethod === 'efectivo' || paymentMethod === 'mixto')" class="mt-4">
+                                    <!-- Calculadora de Cambio (solo para métodos que requieren input de monto) -->
+                                    <div v-show="hasItemsToSell && currentMethodRequiresAmountInput" class="mt-4">
                                         <label class="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                             <span>💵 Efectivo Recibido</span>
                                             <span class="text-gray-500 dark:text-gray-400 font-normal">(Atajo: *)</span>

@@ -334,9 +334,13 @@
                                             class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-orange-500 focus:ring-orange-500 rounded-md"
                                         >
                                             <option value="">Seleccionar método</option>
-                                            <option value="efectivo">Efectivo</option>
-                                            <option value="tarjeta">Tarjeta</option>
-                                            <option value="transferencia">Transferencia</option>
+                                            <option
+                                                v-for="method in activePaymentMethods"
+                                                :key="method.name"
+                                                :value="method.name"
+                                            >
+                                                {{ method.label }}
+                                            </option>
                                             <option value="credito">Crédito a cuenta</option>
                                         </select>
                                     </div>
@@ -440,7 +444,23 @@ const props = defineProps({
     sale: {
         type: Object,
         default: null
+    },
+    payment_methods: {
+        type: Array,
+        default: () => []
     }
+});
+
+// Computed para métodos de pago (con fallback)
+const activePaymentMethods = computed(() => {
+    if (props.payment_methods && props.payment_methods.length > 0) {
+        return props.payment_methods;
+    }
+    return [
+        { name: 'efectivo', label: 'Efectivo' },
+        { name: 'tarjeta', label: 'Tarjeta' },
+        { name: 'transferencia', label: 'Transferencia' },
+    ];
 });
 
 // Estado reactivo

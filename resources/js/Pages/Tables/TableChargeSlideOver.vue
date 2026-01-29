@@ -25,6 +25,10 @@ const props = defineProps({
         type: String,
         default: 'single', // 'single' or 'all'
         validator: (value) => ['single', 'all'].includes(value)
+    },
+    paymentMethodsFromDb: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -86,12 +90,23 @@ const subtitle = computed(() => {
     return 'Cobro conjunto de todas las cuentas';
 });
 
-// Payment method options (icons are rendered in template as SVG)
-const paymentMethods = [
-    { value: 'efectivo', label: 'Efectivo' },
-    { value: 'tarjeta', label: 'Tarjeta' },
-    { value: 'transferencia', label: 'Transferencia' },
-];
+// Payment method options (from DB with fallback)
+const paymentMethods = computed(() => {
+    if (props.paymentMethodsFromDb && props.paymentMethodsFromDb.length > 0) {
+        return props.paymentMethodsFromDb.map(m => ({
+            value: m.name,
+            label: m.label,
+            icon: m.icon,
+            requires_amount_input: m.requires_amount_input
+        }));
+    }
+    // Fallback to hardcoded values
+    return [
+        { value: 'efectivo', label: 'Efectivo', icon: 'cash' },
+        { value: 'tarjeta', label: 'Tarjeta', icon: 'credit-card' },
+        { value: 'transferencia', label: 'Transferencia', icon: 'bank' },
+    ];
+});
 
 // Kitchen status helpers
 const getKitchenStatusLabel = (status) => {
