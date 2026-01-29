@@ -95,7 +95,7 @@ const decrementQuantity = (index) => {
             :style="isDragging ? { transform: `translateX(${touchDelta}px)`, transition: 'none' } : {}"
         >
             <!-- Header -->
-            <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-orange-500 to-red-500">
+            <div class="flex items-center justify-between px-5 py-4 bg-brand-gradient">
                 <div>
                     <h2 class="text-xl font-bold text-white">Tu Pedido</h2>
                     <p class="text-sm text-white/80">{{ cartItemsCount }} producto{{ cartItemsCount !== 1 ? 's' : '' }}</p>
@@ -123,7 +123,7 @@ const decrementQuantity = (index) => {
                     <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">Agrega productos deliciosos para comenzar tu pedido</p>
                     <button
                         @click="emit('close')"
-                        class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors"
+                        class="px-6 py-2.5 bg-brand hover:opacity-90 text-white font-semibold rounded-xl transition-colors"
                     >
                         Explorar menú
                     </button>
@@ -144,7 +144,7 @@ const decrementQuantity = (index) => {
                                 :alt="item.name"
                                 class="w-full h-full object-cover"
                             >
-                            <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-400 to-red-500">
+                            <div v-else class="w-full h-full flex items-center justify-center bg-brand-gradient-br">
                                 <svg class="w-8 h-8 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -172,7 +172,7 @@ const decrementQuantity = (index) => {
                                 <div class="flex items-center gap-1 bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
                                     <button
                                         @click="decrementQuantity(index)"
-                                        class="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-orange-500 transition-colors"
+                                        class="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand transition-colors"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -183,7 +183,7 @@ const decrementQuantity = (index) => {
                                     </span>
                                     <button
                                         @click="incrementQuantity(index)"
-                                        class="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-orange-500 transition-colors"
+                                        class="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand transition-colors"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -192,7 +192,7 @@ const decrementQuantity = (index) => {
                                 </div>
 
                                 <!-- Price -->
-                                <p class="text-base font-bold text-orange-600 dark:text-orange-400">
+                                <p class="text-base font-bold text-brand dark:text-brand-dark">
                                     ${{ (parseFloat(item.price) * item.quantity).toFixed(2) }}
                                 </p>
                             </div>
@@ -227,7 +227,7 @@ const decrementQuantity = (index) => {
                 <!-- Total -->
                 <div class="flex items-center justify-between">
                     <span class="text-gray-600 dark:text-gray-400">Total</span>
-                    <span class="text-2xl font-black bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                    <span class="text-2xl font-black text-brand">
                         ${{ cartTotal.toFixed(2) }}
                     </span>
                 </div>
@@ -238,7 +238,7 @@ const decrementQuantity = (index) => {
                     :disabled="!canProceed"
                     class="w-full py-4 rounded-2xl font-bold text-lg transition-all duration-200 active:scale-98"
                     :class="canProceed
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg shadow-orange-500/30'
+                        ? 'bg-brand-gradient hover:opacity-90 text-white shadow-lg'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     "
                 >

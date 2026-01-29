@@ -142,6 +142,10 @@ class MenuController extends Controller
                 'restaurant_phone' => $settings->restaurant_phone,
                 'restaurant_address' => $settings->restaurant_address,
                 'logo_path' => $settings->logo_path,
+                // Branding colors
+                'primary_color' => $settings->primary_color ?? '#f97316',
+                'secondary_color' => $settings->secondary_color ?? '#ea580c',
+                'accent_color' => $settings->accent_color ?? '#fb923c',
             ],
         ]);
     }

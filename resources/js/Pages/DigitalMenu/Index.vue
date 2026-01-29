@@ -373,7 +373,7 @@ const handleConfirmationClose = () => {
         <!-- Hero Section with Search -->
         <div class="mb-8">
             <!-- Welcome Banner -->
-            <div v-if="settings.welcome_message" class="mb-6 p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
+            <div v-if="settings.welcome_message" class="mb-6 p-4 bg-brand-gradient rounded-2xl shadow-lg">
                 <p class="text-white text-center font-medium">
                     {{ settings.welcome_message }}
                 </p>
@@ -397,7 +397,7 @@ const handleConfirmationClose = () => {
                     v-model="searchQuery"
                     type="text"
                     placeholder="¿Qué se te antoja hoy?"
-                    class="w-full pl-12 pr-4 py-4 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:focus:ring-orange-400 dark:focus:border-orange-400 transition-all dark:text-white dark:placeholder-gray-400"
+                    class="w-full pl-12 pr-4 py-4 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all dark:text-white dark:placeholder-gray-400"
                 />
             </div>
         </div>
@@ -411,8 +411,8 @@ const handleConfirmationClose = () => {
                     @click="activeTab = key; searchQuery = ''"
                     class="flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
                     :class="activeTab === key && !searchQuery
-                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600'
+                        ? 'bg-brand text-white shadow-lg'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-brand'
                     "
                 >
                     {{ group.title }} ({{ group.count }})
@@ -463,13 +463,13 @@ const handleConfirmationClose = () => {
             <button
                 v-if="cartItemsCount > 0"
                 @click="showCart = true"
-                class="fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-2xl shadow-2xl shadow-orange-500/40 px-6 py-4 flex items-center gap-4 transition-all duration-200 active:scale-95"
+                class="fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 bg-brand-gradient hover:opacity-90 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 transition-all duration-200 active:scale-95"
             >
                 <div class="relative">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span class="absolute -top-2 -right-2 bg-white text-orange-600 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    <span class="absolute -top-2 -right-2 bg-white text-brand text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {{ cartItemsCount }}
                     </span>
                 </div>

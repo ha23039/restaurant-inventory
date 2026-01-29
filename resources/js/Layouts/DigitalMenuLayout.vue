@@ -1,11 +1,24 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import MyOrdersSlideOver from '@/Components/MyOrdersSlideOver.vue';
 
 const page = usePage();
 const settings = computed(() => page.props.settings || {});
+
+// Brand colors with defaults
+const primaryColor = computed(() => settings.value.primary_color || '#f97316');
+const secondaryColor = computed(() => settings.value.secondary_color || '#ea580c');
+const accentColor = computed(() => settings.value.accent_color || '#fb923c');
+
+// Apply brand colors as CSS custom properties
+const applyBrandColors = () => {
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', primaryColor.value);
+    root.style.setProperty('--brand-secondary', secondaryColor.value);
+    root.style.setProperty('--brand-accent', accentColor.value);
+};
 
 // My Orders slideOver
 const showMyOrders = ref(false);
@@ -25,6 +38,9 @@ const toggleDarkMode = () => {
 };
 
 onMounted(() => {
+    // Apply brand colors
+    applyBrandColors();
+
     // Check for saved theme or system preference
     const savedTheme = localStorage.getItem('digital_menu_theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -32,6 +48,9 @@ onMounted(() => {
         document.documentElement.classList.add('dark');
     }
 });
+
+// Watch for color changes
+watch([primaryColor, secondaryColor, accentColor], applyBrandColors);
 </script>
 
 <template>
@@ -48,7 +67,11 @@ onMounted(() => {
                             :alt="settings.restaurant_name"
                             class="h-10 w-10 rounded-xl object-cover shadow-sm"
                         >
-                        <div v-else class="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-sm">
+                        <div
+                            v-else
+                            class="h-10 w-10 rounded-xl flex items-center justify-center shadow-sm"
+                            :style="{ background: `linear-gradient(to bottom right, ${primaryColor}, ${secondaryColor})` }"
+                        >
                             <span class="text-white font-bold text-lg">{{ settings.restaurant_name?.charAt(0) || 'R' }}</span>
                         </div>
                         <div class="hidden sm:block">

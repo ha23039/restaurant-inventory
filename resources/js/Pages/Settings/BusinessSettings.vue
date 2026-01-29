@@ -11,7 +11,11 @@ import DeliveryMethodsEditor from '@/Components/Settings/DeliveryMethodsEditor.v
 import { useToast } from '@/composables';
 
 const props = defineProps({
-    settings: Object
+    settings: Object,
+    paymentMethods: Array,
+    printerSettings: Object,
+    ticketSettings: Object,
+    orderSettings: Object,
 });
 
 const toast = useToast();
@@ -63,7 +67,183 @@ const tabs = [
     { id: 'general', name: 'General', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { id: 'branding', name: 'Marca', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
     { id: 'digital-menu', name: 'Menú Digital', icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z' },
+    { id: 'payment-methods', name: 'Pagos', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
+    { id: 'printers', name: 'Impresoras', icon: 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z' },
+    { id: 'tickets', name: 'Tickets', icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z' },
+    { id: 'orders', name: 'Pedidos', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
 ];
+
+// ===== PAYMENT METHODS =====
+const paymentMethodsForm = ref(JSON.parse(JSON.stringify(props.paymentMethods || [])));
+const paymentMethodsProcessing = ref(false);
+
+const paymentMethodIcons = [
+    { value: 'cash', label: 'Efectivo' },
+    { value: 'card', label: 'Tarjeta' },
+    { value: 'transfer', label: 'Transferencia' },
+    { value: 'mixed', label: 'Mixto' },
+    { value: 'qr', label: 'QR' },
+    { value: 'wallet', label: 'Billetera' },
+];
+
+const addPaymentMethod = () => {
+    paymentMethodsForm.value.push({
+        id: null,
+        name: '',
+        label: '',
+        icon: 'cash',
+        is_active: true,
+        requires_reference: false,
+        requires_amount_input: false,
+        commission_percent: 0,
+        sort_order: paymentMethodsForm.value.length,
+    });
+};
+
+const removePaymentMethod = (index) => {
+    paymentMethodsForm.value.splice(index, 1);
+};
+
+const savePaymentMethods = () => {
+    paymentMethodsProcessing.value = true;
+    router.post(route('settings.payment-methods.update'), {
+        methods: paymentMethodsForm.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Métodos de pago actualizados');
+            paymentMethodsProcessing.value = false;
+        },
+        onError: () => {
+            toast.error('Error al actualizar métodos de pago');
+            paymentMethodsProcessing.value = false;
+        },
+    });
+};
+
+// ===== PRINTER SETTINGS =====
+const printerForm = ref({
+    kitchen: {
+        ip_address: props.printerSettings?.kitchen?.ip_address || '',
+        port: props.printerSettings?.kitchen?.port || 9100,
+        width_mm: props.printerSettings?.kitchen?.width_mm || 58,
+        is_enabled: props.printerSettings?.kitchen?.is_enabled ?? false,
+        auto_print: props.printerSettings?.kitchen?.auto_print ?? true,
+    },
+    customer: {
+        ip_address: props.printerSettings?.customer?.ip_address || '',
+        port: props.printerSettings?.customer?.port || 9100,
+        width_mm: props.printerSettings?.customer?.width_mm || 80,
+        is_enabled: props.printerSettings?.customer?.is_enabled ?? false,
+        auto_print: props.printerSettings?.customer?.auto_print ?? true,
+    },
+});
+const printerProcessing = ref(false);
+
+const savePrinterSettings = () => {
+    printerProcessing.value = true;
+    router.post(route('settings.printers.update'), printerForm.value, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Configuración de impresoras actualizada');
+            printerProcessing.value = false;
+        },
+        onError: () => {
+            toast.error('Error al actualizar impresoras');
+            printerProcessing.value = false;
+        },
+    });
+};
+
+// ===== TICKET SETTINGS =====
+const ticketForm = ref({
+    // Ticket de cliente
+    show_logo: props.ticketSettings?.show_logo ?? true,
+    show_address: props.ticketSettings?.show_address ?? true,
+    show_phone: props.ticketSettings?.show_phone ?? true,
+    show_qr_code: props.ticketSettings?.show_qr_code ?? true,
+    qr_content: props.ticketSettings?.qr_content || 'sale_number',
+    header_message: props.ticketSettings?.header_message || '',
+    footer_message: props.ticketSettings?.footer_message || '¡Gracias por su compra!',
+    // Ticket de cocina
+    kitchen_show_customer_name: props.ticketSettings?.kitchen_show_customer_name ?? false,
+    kitchen_show_table_number: props.ticketSettings?.kitchen_show_table_number ?? true,
+    kitchen_show_notes: props.ticketSettings?.kitchen_show_notes ?? true,
+    kitchen_show_order_number: props.ticketSettings?.kitchen_show_order_number ?? true,
+    kitchen_font_size: props.ticketSettings?.kitchen_font_size || 'large',
+    // Categorías y prioridades
+    non_kitchen_categories: props.ticketSettings?.non_kitchen_categories || ['Bebidas', 'Postres', 'Extras'],
+    priority_high_threshold: props.ticketSettings?.priority_high_threshold || 10,
+    priority_medium_threshold: props.ticketSettings?.priority_medium_threshold || 5,
+});
+const ticketProcessing = ref(false);
+const newNonKitchenCategory = ref('');
+
+const addNonKitchenCategory = () => {
+    if (newNonKitchenCategory.value && !ticketForm.value.non_kitchen_categories.includes(newNonKitchenCategory.value)) {
+        ticketForm.value.non_kitchen_categories.push(newNonKitchenCategory.value);
+        newNonKitchenCategory.value = '';
+    }
+};
+
+const removeNonKitchenCategory = (index) => {
+    ticketForm.value.non_kitchen_categories.splice(index, 1);
+};
+
+const saveTicketSettings = () => {
+    ticketProcessing.value = true;
+    router.post(route('settings.tickets.update'), ticketForm.value, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Configuración de tickets actualizada');
+            ticketProcessing.value = false;
+        },
+        onError: () => {
+            toast.error('Error al actualizar tickets');
+            ticketProcessing.value = false;
+        },
+    });
+};
+
+// ===== ORDER SETTINGS =====
+const orderForm = ref({
+    order_number_prefix: props.orderSettings?.order_number_prefix || '',
+    order_number_padding: props.orderSettings?.order_number_padding || 4,
+    order_number_reset: props.orderSettings?.order_number_reset || 'daily',
+    allow_dine_in: props.orderSettings?.allow_dine_in ?? true,
+    allow_takeout: props.orderSettings?.allow_takeout ?? true,
+    allow_delivery: props.orderSettings?.allow_delivery ?? false,
+    allow_scheduled: props.orderSettings?.allow_scheduled ?? false,
+    tax_included: props.orderSettings?.tax_included ?? true,
+    tax_percentage: props.orderSettings?.tax_percentage || 13,
+    show_tax_breakdown: props.orderSettings?.show_tax_breakdown ?? false,
+    tip_enabled: props.orderSettings?.tip_enabled ?? false,
+    tip_suggestions: props.orderSettings?.tip_suggestions || [10, 15, 20],
+    tip_mandatory_above: props.orderSettings?.tip_mandatory_above || null,
+    require_customer_name: props.orderSettings?.require_customer_name ?? false,
+    require_customer_phone: props.orderSettings?.require_customer_phone ?? false,
+    allow_notes_per_item: props.orderSettings?.allow_notes_per_item ?? true,
+    default_prep_time_minutes: props.orderSettings?.default_prep_time_minutes || 20,
+    min_order_amount: props.orderSettings?.min_order_amount || 0,
+    delivery_min_amount: props.orderSettings?.delivery_min_amount || 0,
+    delivery_fee: props.orderSettings?.delivery_fee || 0,
+});
+const orderProcessing = ref(false);
+
+const saveOrderSettings = () => {
+    orderProcessing.value = true;
+    router.post(route('settings.orders.update'), orderForm.value, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Configuración de pedidos actualizada');
+            orderProcessing.value = false;
+        },
+        onError: () => {
+            toast.error('Error al actualizar configuración de pedidos');
+            orderProcessing.value = false;
+        },
+    });
+};
 
 const handleLogoChange = (event) => {
     const file = event.target.files[0];
@@ -132,21 +312,21 @@ const handleSubmit = () => {
         <div class="py-3 md:py-6 lg:py-12 px-2 sm:px-6 lg:px-8 max-w-5xl mx-auto">
             <!-- Tabs Navigation -->
             <div class="mb-6">
-                <nav class="flex space-x-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1">
+                <nav class="flex overflow-x-auto scrollbar-hide gap-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1 -mx-2 px-2 sm:mx-0 sm:px-1">
                     <button
                         v-for="tab in tabs"
                         :key="tab.id"
                         @click="activeTab = tab.id"
                         type="button"
-                        class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200"
+                        class="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap"
                         :class="activeTab === tab.id
                             ? 'bg-purple-600 text-white shadow-sm'
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="tab.icon" />
                         </svg>
-                        <span>{{ tab.name }}</span>
+                        <span class="hidden sm:inline">{{ tab.name }}</span>
                     </button>
                 </nav>
             </div>
@@ -581,6 +761,270 @@ const handleSubmit = () => {
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </BaseCard>
+                </div>
+
+                <!-- Payment Methods Tab -->
+                <div v-show="activeTab === 'payment-methods'">
+                    <BaseCard>
+                        <div class="p-4 md:p-6 space-y-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Métodos de Pago</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Configura los métodos de pago aceptados</p>
+                                </div>
+                                <button type="button" @click="addPaymentMethod" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    Agregar
+                                </button>
+                            </div>
+                            <div class="space-y-4">
+                                <div v-for="(method, index) in paymentMethodsForm" :key="index" class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <InputLabel :for="'method_name_' + index" value="Nombre *" />
+                                            <TextInput :id="'method_name_' + index" v-model="method.name" type="text" class="mt-1 block w-full" placeholder="efectivo" required />
+                                        </div>
+                                        <div>
+                                            <InputLabel :for="'method_label_' + index" value="Etiqueta *" />
+                                            <TextInput :id="'method_label_' + index" v-model="method.label" type="text" class="mt-1 block w-full" placeholder="Efectivo" required />
+                                        </div>
+                                        <div>
+                                            <InputLabel :for="'method_icon_' + index" value="Icono" />
+                                            <select :id="'method_icon_' + index" v-model="method.icon" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md shadow-sm">
+                                                <option v-for="icon in paymentMethodIcons" :key="icon.value" :value="icon.value">{{ icon.label }}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <InputLabel :for="'method_commission_' + index" value="Comisión %" />
+                                            <TextInput :id="'method_commission_' + index" v-model="method.commission_percent" type="number" step="0.01" min="0" max="100" class="mt-1 block w-full" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex flex-wrap items-center gap-4">
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" v-model="method.is_active" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 focus:ring-purple-500" />
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Activo</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" v-model="method.requires_reference" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 focus:ring-purple-500" />
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Requiere referencia</span>
+                                        </label>
+                                        <button type="button" @click="removePaymentMethod(index)" class="ml-auto text-red-600 hover:text-red-700 dark:text-red-400 text-sm font-medium">Eliminar</button>
+                                    </div>
+                                </div>
+                                <div v-if="paymentMethodsForm.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                    <p>No hay métodos de pago configurados</p>
+                                </div>
+                            </div>
+                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <BaseButton variant="primary" type="button" @click="savePaymentMethods" :disabled="paymentMethodsProcessing">
+                                    {{ paymentMethodsProcessing ? 'Guardando...' : 'Guardar Métodos de Pago' }}
+                                </BaseButton>
+                            </div>
+                        </div>
+                    </BaseCard>
+                </div>
+
+                <!-- Printers Tab -->
+                <div v-show="activeTab === 'printers'">
+                    <BaseCard>
+                        <div class="p-4 md:p-6 space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Configuración de Impresoras</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Configura las impresoras térmicas del sistema</p>
+                            </div>
+                            <!-- Kitchen Printer -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    <h4 class="font-medium text-gray-900 dark:text-white">Impresora de Cocina</h4>
+                                    <label class="ml-auto inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" v-model="printerForm.kitchen.is_enabled" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" />
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Habilitada</span>
+                                    </label>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div><InputLabel value="IP" /><TextInput v-model="printerForm.kitchen.ip_address" type="text" class="mt-1 block w-full" placeholder="192.168.1.100" /></div>
+                                    <div><InputLabel value="Puerto" /><TextInput v-model="printerForm.kitchen.port" type="number" class="mt-1 block w-full" placeholder="9100" /></div>
+                                    <div><InputLabel value="Ancho (mm)" /><select v-model="printerForm.kitchen.width_mm" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md shadow-sm"><option value="58">58mm</option><option value="80">80mm</option></select></div>
+                                    <div class="flex items-end"><label class="inline-flex items-center gap-2 cursor-pointer pb-2"><input type="checkbox" v-model="printerForm.kitchen.auto_print" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Auto imprimir</span></label></div>
+                                </div>
+                            </div>
+                            <!-- Customer Printer -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    <h4 class="font-medium text-gray-900 dark:text-white">Impresora de Cliente</h4>
+                                    <label class="ml-auto inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" v-model="printerForm.customer.is_enabled" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" />
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Habilitada</span>
+                                    </label>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div><InputLabel value="IP" /><TextInput v-model="printerForm.customer.ip_address" type="text" class="mt-1 block w-full" placeholder="192.168.1.101" /></div>
+                                    <div><InputLabel value="Puerto" /><TextInput v-model="printerForm.customer.port" type="number" class="mt-1 block w-full" placeholder="9100" /></div>
+                                    <div><InputLabel value="Ancho (mm)" /><select v-model="printerForm.customer.width_mm" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md shadow-sm"><option value="58">58mm</option><option value="80">80mm</option></select></div>
+                                    <div class="flex items-end"><label class="inline-flex items-center gap-2 cursor-pointer pb-2"><input type="checkbox" v-model="printerForm.customer.auto_print" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Auto imprimir</span></label></div>
+                                </div>
+                            </div>
+                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <BaseButton variant="primary" type="button" @click="savePrinterSettings" :disabled="printerProcessing">{{ printerProcessing ? 'Guardando...' : 'Guardar Impresoras' }}</BaseButton>
+                            </div>
+                        </div>
+                    </BaseCard>
+                </div>
+
+                <!-- Tickets Tab -->
+                <div v-show="activeTab === 'tickets'">
+                    <BaseCard>
+                        <div class="p-4 md:p-6 space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Configuración de Tickets</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Personaliza el contenido de los tickets impresos</p>
+                            </div>
+                            <!-- Customer Ticket Content -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    Ticket de Cliente
+                                </h4>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.show_logo" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Logo</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.show_address" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Dirección</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.show_phone" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Teléfono</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.show_qr_code" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Código QR</span></label>
+                                </div>
+                                <div v-if="ticketForm.show_qr_code" class="mt-4">
+                                    <InputLabel value="Contenido QR" />
+                                    <select v-model="ticketForm.qr_content" class="mt-1 block w-full sm:w-auto border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md shadow-sm">
+                                        <option value="sale_number">Número de venta</option>
+                                        <option value="sale_url">URL de venta</option>
+                                        <option value="menu_url">URL del menú</option>
+                                        <option value="custom">Personalizado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Messages -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><InputLabel value="Mensaje de encabezado" /><TextInput v-model="ticketForm.header_message" type="text" class="mt-1 block w-full" placeholder="¡Bienvenido!" /></div>
+                                <div><InputLabel value="Mensaje de pie" /><TextInput v-model="ticketForm.footer_message" type="text" class="mt-1 block w-full" placeholder="¡Gracias por su compra!" /></div>
+                            </div>
+                            <!-- Kitchen Ticket -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                    Ticket de Cocina
+                                </h4>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.kitchen_show_order_number" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300"># Pedido</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.kitchen_show_table_number" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300"># Mesa</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.kitchen_show_customer_name" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Nombre cliente</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="ticketForm.kitchen_show_notes" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Notas</span></label>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <InputLabel value="Tamaño de fuente" />
+                                        <select v-model="ticketForm.kitchen_font_size" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md shadow-sm">
+                                            <option value="small">Pequeño</option>
+                                            <option value="normal">Normal</option>
+                                            <option value="large">Grande</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Non-Kitchen Categories -->
+                            <div>
+                                <InputLabel value="Categorías que NO van a cocina" />
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    <span v-for="(cat, idx) in ticketForm.non_kitchen_categories" :key="idx" class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-sm text-gray-700 dark:text-gray-300">
+                                        {{ cat }}
+                                        <button type="button" @click="removeNonKitchenCategory(idx)" class="text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                                    </span>
+                                </div>
+                                <div class="mt-2 flex gap-2">
+                                    <TextInput v-model="newNonKitchenCategory" type="text" class="flex-1" placeholder="Nueva categoría..." @keyup.enter="addNonKitchenCategory" />
+                                    <button type="button" @click="addNonKitchenCategory" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">Agregar</button>
+                                </div>
+                            </div>
+                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <BaseButton variant="primary" type="button" @click="saveTicketSettings" :disabled="ticketProcessing">{{ ticketProcessing ? 'Guardando...' : 'Guardar Tickets' }}</BaseButton>
+                            </div>
+                        </div>
+                    </BaseCard>
+                </div>
+
+                <!-- Orders Tab -->
+                <div v-show="activeTab === 'orders'">
+                    <BaseCard>
+                        <div class="p-4 md:p-6 space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Configuración de Pedidos</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Personaliza el comportamiento de los pedidos</p>
+                            </div>
+                            <!-- Order Numbering -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                                    Numeración de Pedidos
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div><InputLabel value="Prefijo" /><TextInput v-model="orderForm.order_number_prefix" type="text" class="mt-1 block w-full" placeholder="ORD-" /></div>
+                                    <div><InputLabel value="Dígitos" /><TextInput v-model="orderForm.order_number_padding" type="number" min="1" max="10" class="mt-1 block w-full" /></div>
+                                    <div><InputLabel value="Reiniciar" /><select v-model="orderForm.order_number_reset" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md shadow-sm"><option value="never">Nunca</option><option value="daily">Diario</option><option value="monthly">Mensual</option><option value="yearly">Anual</option></select></div>
+                                </div>
+                            </div>
+                            <!-- Service Types -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                    Tipos de Servicio
+                                </h4>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.allow_dine_in" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Comer aquí</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.allow_takeout" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Para llevar</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.allow_delivery" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Delivery</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.allow_scheduled" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Programados</span></label>
+                                </div>
+                            </div>
+                            <!-- Taxes -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"/></svg>
+                                    Impuestos
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.tax_included" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">IVA incluido en precios</span></label>
+                                    <div><InputLabel value="% IVA" /><TextInput v-model="orderForm.tax_percentage" type="number" step="0.01" min="0" max="100" class="mt-1 block w-full" /></div>
+                                    <label class="flex items-center gap-2 cursor-pointer sm:mt-6"><input type="checkbox" v-model="orderForm.show_tax_breakdown" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Desglosar en ticket</span></label>
+                                </div>
+                            </div>
+                            <!-- Tips & Requirements -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <h4 class="font-medium text-gray-900 dark:text-white mb-4">Propinas</h4>
+                                    <label class="flex items-center gap-2 cursor-pointer mb-4"><input type="checkbox" v-model="orderForm.tip_enabled" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Habilitar propinas</span></label>
+                                    <div v-if="orderForm.tip_enabled"><InputLabel value="Tiempo prep. (min)" /><TextInput v-model="orderForm.default_prep_time_minutes" type="number" min="1" class="mt-1 block w-full" /></div>
+                                </div>
+                                <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <h4 class="font-medium text-gray-900 dark:text-white mb-4">Requisitos</h4>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.require_customer_name" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Nombre obligatorio</span></label>
+                                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.require_customer_phone" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Teléfono obligatorio</span></label>
+                                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="orderForm.allow_notes_per_item" class="w-4 h-4 text-purple-600 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:ring-purple-500" /><span class="text-sm text-gray-700 dark:text-gray-300">Notas por ítem</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Amounts -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div><InputLabel value="Monto mínimo" /><TextInput v-model="orderForm.min_order_amount" type="number" step="0.01" min="0" class="mt-1 block w-full" /></div>
+                                <div><InputLabel value="Mínimo delivery" /><TextInput v-model="orderForm.delivery_min_amount" type="number" step="0.01" min="0" class="mt-1 block w-full" /></div>
+                                <div><InputLabel value="Cargo delivery" /><TextInput v-model="orderForm.delivery_fee" type="number" step="0.01" min="0" class="mt-1 block w-full" /></div>
+                            </div>
+                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <BaseButton variant="primary" type="button" @click="saveOrderSettings" :disabled="orderProcessing">{{ orderProcessing ? 'Guardando...' : 'Guardar Pedidos' }}</BaseButton>
                             </div>
                         </div>
                     </BaseCard>

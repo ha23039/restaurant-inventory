@@ -367,6 +367,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('financial')->name('financial.
 Route::middleware(['auth', 'role:admin'])->prefix('settings')->name('settings.')->group(function () {
     Route::get('/business', [App\Http\Controllers\SettingsController::class, 'index'])->name('business');
     Route::post('/business', [App\Http\Controllers\SettingsController::class, 'update'])->name('update');
+
+    // Payment Methods
+    Route::post('/payment-methods', [App\Http\Controllers\SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
+    Route::delete('/payment-methods/{paymentMethod}', [App\Http\Controllers\SettingsController::class, 'deletePaymentMethod'])->name('payment-methods.destroy');
+
+    // Printer Settings
+    Route::post('/printers', [App\Http\Controllers\SettingsController::class, 'updatePrinterSettings'])->name('printers.update');
+
+    // Ticket Settings
+    Route::post('/tickets', [App\Http\Controllers\SettingsController::class, 'updateTicketSettings'])->name('tickets.update');
+
+    // Order Settings
+    Route::post('/orders', [App\Http\Controllers\SettingsController::class, 'updateOrderSettings'])->name('orders.update');
 });
 
 /*
