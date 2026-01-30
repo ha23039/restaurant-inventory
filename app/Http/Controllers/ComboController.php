@@ -26,6 +26,8 @@ class ComboController extends Controller
         return Inertia::render('Combos/Index', [
             'combos' => $combos,
             'filters' => $filters,
+            'menuItems' => $this->getAvailableMenuItems(),
+            'simpleProducts' => $this->getAvailableSimpleProducts(),
         ]);
     }
 
@@ -205,9 +207,11 @@ class ComboController extends Controller
     private function getAvailableMenuItems()
     {
         return MenuItem::where('is_available', true)
-            ->with(['variants' => function ($q) {
-                $q->where('is_available', true);
-            }])
+            ->with([
+                'variants' => function ($q) {
+                    $q->where('is_available', true);
+                }
+            ])
             ->orderBy('name')
             ->get(['id', 'name', 'price', 'image_path', 'has_variants']);
     }
@@ -218,9 +222,12 @@ class ComboController extends Controller
     private function getAvailableSimpleProducts()
     {
         return SimpleProduct::where('is_available', true)
-            ->with(['variants' => function ($q) {
-                $q->where('is_available', true);
-            }, 'product.category'])
+            ->with([
+                'variants' => function ($q) {
+                    $q->where('is_available', true);
+                },
+                'product.category'
+            ])
             ->orderBy('name')
             ->get(['id', 'name', 'description', 'sale_price', 'image_path', 'category', 'allows_variants', 'product_id']);
     }

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\MenuItem;
+use App\Models\SimpleProduct;
 use App\Repositories\Contracts\CashFlowRepositoryInterface;
 use App\Repositories\Contracts\ComboRepositoryInterface;
 use App\Repositories\Contracts\MenuItemRepositoryInterface;
@@ -24,6 +26,7 @@ use App\Models\SaleReturn;
 use App\Observers\ProductObserver;
 use App\Observers\SaleObserver;
 use App\Observers\SaleReturnObserver;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -50,6 +53,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Registrar morph map para relaciones polimórficas
+        Relation::morphMap([
+            'menu_item' => MenuItem::class,
+            'simple_product' => SimpleProduct::class,
+        ]);
+
         Vite::prefetch(concurrency: 3);
 
         // Establecer timezone dinámicamente desde BusinessSettings

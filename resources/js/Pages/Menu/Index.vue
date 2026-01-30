@@ -87,12 +87,36 @@
                             </svg>
                         </div>
                     </Link>
+
+                    <!-- Combos -->
+                    <Link
+                        v-if="route().has('combos.index')"
+                        :href="route('combos.index')"
+                        class="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/30 border-2 border-amber-200 dark:border-amber-700 rounded-lg p-6 hover:shadow-lg dark:hover:shadow-amber-900/20 transition-all transform hover:-translate-y-1"
+                    >
+                        <div class="flex items-center mb-4">
+                            <div class="w-16 h-16 bg-amber-500 dark:bg-amber-600 rounded-full flex items-center justify-center">
+                                <!-- Heroicon: squares-plus (combo icon) -->
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold text-amber-900 dark:text-amber-100 mb-2">Combos</h3>
+                        <p class="text-sm text-amber-700 dark:text-amber-300 mb-4">Paquetes de productos con opciones personalizables</p>
+                        <div class="flex items-center text-amber-600 dark:text-amber-400 font-medium">
+                            <span>Ver combos</span>
+                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                    </Link>
                 </div>
 
                 <!-- Info Section -->
                 <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gestión de Menú del Restaurante</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-900 dark:text-gray-200 mb-2">Platillos del Menú</h4>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -111,11 +135,17 @@
                                 Productos individuales vendibles vinculados directamente al inventario. Ej: bebidas embotelladas, snacks. Se deduce 1:1 del stock base.
                             </p>
                         </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 dark:text-gray-200 mb-2">Combos</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Paquetes de productos con items fijos y opciones personalizables. El inventario se deduce según cada componente del combo.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Quick Stats -->
-                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
@@ -129,7 +159,7 @@
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Platillos</div>
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.total_items || 0 }}</div>
-                                <div class="text-xs text-gray-500 mt-1">{{ stats?.with_recipes || 0 }} con receta</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ stats?.with_recipes || 0 }} con receta</div>
                             </div>
                         </div>
                     </div>
@@ -148,7 +178,24 @@
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Recetas Definidas</div>
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.total_recipes || 0 }}</div>
-                                <div class="text-xs text-gray-500 mt-1">{{ stats?.total_simple_products || 0 }} productos simples</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ stats?.total_simple_products || 0 }} productos simples</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Combos</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.total_combos || 0 }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ stats?.available_combos || 0 }} disponibles</div>
                             </div>
                         </div>
                     </div>
@@ -165,7 +212,7 @@
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Disponibles</div>
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.available_items || 0 }}</div>
-                                <div class="text-xs text-gray-500 mt-1">{{ stats?.total_items ? ((stats.available_items / stats.total_items) * 100).toFixed(0) : 0 }}% del total</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ stats?.total_items ? ((stats.available_items / stats.total_items) * 100).toFixed(0) : 0 }}% del total</div>
                             </div>
                         </div>
                     </div>

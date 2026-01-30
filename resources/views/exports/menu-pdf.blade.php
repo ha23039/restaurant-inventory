@@ -455,6 +455,72 @@
         @endif
     </div>
 
+    @if($options['include_combos'] && $combos->count() > 0)
+        <div class="divider"></div>
+
+        <!-- Combos Section -->
+        <h2 class="menu-title">Combos Especiales</h2>
+
+        <div class="single-column">
+            @foreach($combos as $combo)
+                <div class="menu-item-wide" style="border-left-color: #f59e0b;">
+                    @php
+                        $comboImagePath = null;
+                        if ($options['include_images'] && $combo->image_path) {
+                            $relativePath = str_replace('/storage/', '', $combo->image_path);
+                            $absolutePath = storage_path('app/public/' . $relativePath);
+                            if (file_exists($absolutePath)) {
+                                $comboImagePath = $absolutePath;
+                            }
+                        }
+                    @endphp
+
+                    <div class="item-header">
+                        <div class="item-name-container">
+                            <div class="item-name">
+                                {{ $combo->name }}
+                                <span class="service-badge" style="background: #f59e0b;">Combo</span>
+                            </div>
+                        </div>
+                        @if($options['include_prices'])
+                            <div class="item-price-container">
+                                <span class="item-price" style="color: #f59e0b;">${{ number_format($combo->base_price, 2) }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if($comboImagePath)
+                        <img src="{{ $comboImagePath }}" class="item-image" alt="{{ $combo->name }}">
+                    @endif
+
+                    @if($options['include_descriptions'] && $combo->description)
+                        <div class="item-description">{{ $combo->description }}</div>
+                    @endif
+
+                    {{-- Mostrar componentes del combo --}}
+                    @if($combo->components->count() > 0)
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+                            <div style="font-size: 9px; color: #718096; font-weight: 600; margin-bottom: 4px;">Incluye:</div>
+                            @foreach($combo->components as $component)
+                                <div style="font-size: 9px; color: #4a5568; margin-left: 8px;">
+                                    @if($component->component_type === 'fixed')
+                                        • {{ $component->sellable->name ?? 'Item' }}
+                                        @if($component->quantity > 1) (x{{ $component->quantity }}) @endif
+                                    @else
+                                        • Elige:
+                                        @foreach($component->options as $idx => $option)
+                                            {{ $option->sellable->name ?? 'Opción' }}@if(!$loop->last), @endif
+                                        @endforeach
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="divider"></div>
 
     <!-- Footer -->

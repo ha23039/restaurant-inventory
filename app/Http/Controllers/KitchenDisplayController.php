@@ -26,6 +26,7 @@ class KitchenDisplayController extends Controller
             'sale.saleItems.simpleProduct',
             'sale.saleItems.menuItemVariant.menuItem',
             'sale.saleItems.simpleProductVariant.simpleProduct',
+            'sale.saleItems.combo',
             'sale.table'
         ])
             ->whereHas('sale') // Solo órdenes con venta válida (no eliminada)
@@ -61,7 +62,7 @@ class KitchenDisplayController extends Controller
     }
 
     /**
-     * Obtener nombre del item (soporta menu, variant, simple, simple_variant, free)
+     * Obtener nombre del item (soporta menu, variant, simple, simple_variant, combo, free)
      */
     private function getItemName($item): string
     {
@@ -79,6 +80,8 @@ class KitchenDisplayController extends Controller
             return $item->menuItem->name;
         } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
             return $item->simpleProduct->name;
+        } elseif ($item->product_type === 'combo' && $item->combo) {
+            return $item->combo->name;
         } elseif ($item->product_type === 'free' && $item->free_sale_name) {
             return $item->free_sale_name;
         }

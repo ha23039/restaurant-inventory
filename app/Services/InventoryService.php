@@ -377,6 +377,102 @@ class InventoryService
     }
 
     /**
+     * Restaurar inventario de combo (usado en devoluciones)
+     */
+    public function restoreComboStock(SaleItem $saleItem): void
+    {
+        $combo = \App\Models\Combo::with([
+            'components.sellable.recipes.product',
+            'components.sellable.product',
+            'components.options.sellable.recipes.product',
+            'components.options.sellable.product'
+        ])->find($saleItem->combo_id);
+
+        if (!$combo) {
+            return;
+        }
+
+        $selections = $saleItem->combo_selections ?? [];
+
+        foreach ($combo->components as $component) {
+            // Determinar qué producto restaurar
+            $sellable = null;
+
+            if ($component->component_type === 'fixed') {
+                $sellable = $component->sellable;
+            } else {
+                $selection = $selections[$component->id] ?? null;
+                if ($selection && $selection['optionId']) {
+                    $option = $component->options->firstWhere('id', $selection['optionId']);
+                    if ($option) {
+                        $sellable = $option->sellable;
+                    }
+                }
+            }
+
+            if (!$sellable) {
+                continue;
+            }
+
+            $quantityMultiplier = $component->quantity * $saleItem->quantity;
+
+            if ($sellable instanceof \App\Models\MenuItem) {
+                // Restaurar ingredientes del menu item
+                foreach ($sellable->recipes as $recipe) {
+                    if (!$recipe->product) continue;
+
+                    $quantityToRestore = $recipe->quantity_needed * $quantityMultiplier;
+
+                    InventoryMovement::create([
+                        'product_id' => $recipe->product_id,
+                        'user_id' => auth()->id(),
+                        'movement_type' => 'entrada',
+                        'quantity' => $quantityToRestore,
+                        'unit_cost' => $recipe->product->unit_cost,
+                        'total_cost' => $quantityToRestore * $recipe->product->unit_cost,
+                        'reason' => 'devolucion',
+                        'notes' => "Devolución Combo: {$combo->name} - {$sellable->name} x{$quantityMultiplier} - Ticket #{$saleItem->sale->sale_number}",
+                        'movement_date' => now()->toDateString(),
+                    ]);
+
+                    $this->productRepository->updateStock(
+                        $recipe->product_id,
+                        $recipe->product->current_stock + $quantityToRestore
+                    );
+                }
+            } elseif ($sellable instanceof \App\Models\SimpleProduct) {
+                if ($sellable->product) {
+                    $quantityToRestore = $sellable->cost_per_unit * $quantityMultiplier;
+
+                    InventoryMovement::create([
+                        'product_id' => $sellable->product_id,
+                        'user_id' => auth()->id(),
+                        'movement_type' => 'entrada',
+                        'quantity' => $quantityToRestore,
+                        'unit_cost' => $sellable->product->unit_cost,
+                        'total_cost' => $quantityToRestore * $sellable->product->unit_cost,
+                        'reason' => 'devolucion',
+                        'notes' => "Devolución Combo: {$combo->name} - {$sellable->name} x{$quantityMultiplier} - Ticket #{$saleItem->sale->sale_number}",
+                        'movement_date' => now()->toDateString(),
+                    ]);
+
+                    $this->productRepository->updateStock(
+                        $sellable->product_id,
+                        $sellable->product->current_stock + $quantityToRestore
+                    );
+                }
+            }
+
+            Log::info('Stock restaurado para componente de combo', [
+                'combo_id' => $combo->id,
+                'component_id' => $component->id,
+                'sellable_type' => get_class($sellable),
+                'sale_id' => $saleItem->sale_id,
+            ]);
+        }
+    }
+
+    /**
      * Obtener productos con stock bajo
      */
     public function getLowStockProducts()

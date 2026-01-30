@@ -2,18 +2,46 @@
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ComboFormSlideOver from '@/Components/ComboFormSlideOver.vue';
 import { useToast } from 'vue-toastification';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
     combos: Object,
     filters: Object,
+    menuItems: {
+        type: Array,
+        default: () => []
+    },
+    simpleProducts: {
+        type: Array,
+        default: () => []
+    },
 });
 
 const toast = useToast();
 const { confirm } = useConfirmDialog();
 
+// SlideOver state
+const showFormSlideOver = ref(false);
+const editingCombo = ref(null);
+
 const search = ref(props.filters?.search || '');
+
+const openCreateSlideOver = () => {
+    editingCombo.value = null;
+    showFormSlideOver.value = true;
+};
+
+const openEditSlideOver = (combo) => {
+    editingCombo.value = combo;
+    showFormSlideOver.value = true;
+};
+
+const closeSlideOver = () => {
+    showFormSlideOver.value = false;
+    editingCombo.value = null;
+};
 
 const handleSearch = () => {
     router.get(route('combos.index'), {
@@ -93,15 +121,15 @@ const formatCurrency = (value) => {
                         <p class="text-sm text-gray-500 dark:text-gray-400">Gestiona tus combos y promociones</p>
                     </div>
                 </div>
-                <Link
-                    :href="route('combos.create')"
+                <button
+                    @click="openCreateSlideOver"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                     Nuevo Combo
-                </Link>
+                </button>
             </div>
         </template>
 
@@ -246,15 +274,15 @@ const formatCurrency = (value) => {
                                 </div>
 
                                 <div class="flex items-center gap-2">
-                                    <Link
-                                        :href="route('combos.edit', combo.id)"
+                                    <button
+                                        @click="openEditSlideOver(combo)"
                                         class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                         title="Editar"
                                     >
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                    </Link>
+                                    </button>
                                     <button
                                         @click="deleteCombo(combo)"
                                         class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
@@ -282,15 +310,15 @@ const formatCurrency = (value) => {
                         <p class="text-gray-500 dark:text-gray-400 mb-6">
                             Crea tu primer combo para ofrecer promociones a tus clientes
                         </p>
-                        <Link
-                            :href="route('combos.create')"
+                        <button
+                            @click="openCreateSlideOver"
                             class="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Crear Combo
-                        </Link>
+                        </button>
                     </div>
 
                     <!-- Paginación -->
@@ -320,4 +348,13 @@ const formatCurrency = (value) => {
             </div>
         </div>
     </AdminLayout>
+
+    <!-- Combo Form SlideOver -->
+    <ComboFormSlideOver
+        :show="showFormSlideOver"
+        :combo="editingCombo"
+        :menu-items="menuItems"
+        :simple-products="simpleProducts"
+        @close="closeSlideOver"
+    />
 </template>

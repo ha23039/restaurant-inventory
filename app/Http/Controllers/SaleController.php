@@ -15,13 +15,14 @@ class SaleController extends Controller
     {
         $this->authorize('viewAny', Sale::class);
 
-        // 🔄 ACTUALIZADO: Incluir devoluciones, mesa y variantes en la consulta
+        // 🔄 ACTUALIZADO: Incluir devoluciones, mesa, variantes y combos en la consulta
         $query = Sale::with([
             'user',
             'table',
             'saleItems.menuItem',
             'saleItems.simpleProduct',
             'saleItems.menuItemVariant',  // 🆕 Variantes
+            'saleItems.combo',  // 🆕 Combos
             'completedReturns',  // 🔄 NUEVA RELACIÓN
         ]);
 
@@ -135,6 +136,7 @@ class SaleController extends Controller
                     'simpleProduct:id,name,description,sale_price,category',
                     'menuItemVariant:id,menu_item_id,variant_name,price,attributes',  // 🆕 Variantes
                     'menuItemVariant.menuItem:id,name',  // 🆕 Platillo padre de la variante
+                    'combo:id,name,description,base_price',  // 🆕 Combos
                 ]);
             },
             'completedReturns.returnItems.saleItem', // 🔄 NUEVA: Cargar devoluciones completas

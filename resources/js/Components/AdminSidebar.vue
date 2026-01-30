@@ -145,6 +145,16 @@
                 >
                     Menú
                 </NavItem>
+
+                <NavItem
+                    v-if="route().has('combos.index')"
+                    :href="route('combos.index')"
+                    :active="route().current('combos.*')"
+                    :collapsed="isCollapsed"
+                    icon="combo"
+                >
+                    Combos
+                </NavItem>
             </template>
 
             <!-- Kitchen Display (Admin + Chef + Cajero) -->

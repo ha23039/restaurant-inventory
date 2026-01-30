@@ -211,6 +211,12 @@ class ReportController extends Controller
             return $freeName ?? 'Venta libre';
         }
 
+        // Combos
+        if ($item->product_type === 'combo' && $item->combo_id) {
+            $combo = \App\Models\Combo::find($item->combo_id);
+            return $combo ? $combo->name : 'Combo eliminado';
+        }
+
         return 'Producto desconocido';
     }
 
@@ -237,6 +243,11 @@ class ReportController extends Controller
             return 'Venta libre';
         }
 
+        // Combos
+        if ($item->product_type === 'combo') {
+            return 'Combo';
+        }
+
         return 'Sin categoría';
     }
 
@@ -246,6 +257,7 @@ class ReportController extends Controller
             'menu' => 'Platillo',
             'simple' => 'Producto',
             'variant' => 'Variante',
+            'combo' => 'Combo',
             'free' => 'Venta libre',
             default => 'Otro',
         };

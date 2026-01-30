@@ -278,6 +278,8 @@ Route::middleware(['auth', 'role:admin,chef'])->prefix('carta')->name('carta.')-
             'with_recipes' => \App\Models\MenuItem::has('recipes')->count(),
             'total_recipes' => \App\Models\Recipe::count(),
             'total_simple_products' => \App\Models\SimpleProduct::count(),
+            'total_combos' => \App\Models\Combo::count(),
+            'available_combos' => \App\Models\Combo::where('is_available', true)->count(),
         ];
 
         return Inertia::render('Menu/Index', [

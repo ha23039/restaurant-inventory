@@ -84,6 +84,7 @@ class ReturnController extends Controller
                 'user:id,name',
                 'saleItems.menuItem:id,name,description',
                 'saleItems.simpleProduct:id,name,description',
+                'saleItems.combo:id,name,description',
                 'completedReturns', // NUEVA: Cargar devoluciones
             ])->findOrFail($saleId);
 
@@ -176,6 +177,7 @@ class ReturnController extends Controller
                 'user:id,name',
                 'saleItems.menuItem:id,name,description',
                 'saleItems.simpleProduct:id,name,description',
+                'saleItems.combo:id,name,description',
                 'completedReturns',
             ])
                 ->where('status', 'completada');
@@ -358,6 +360,7 @@ class ReturnController extends Controller
             'processedByUser:id,name',
             'returnItems.saleItem.menuItem:id,name,description',
             'returnItems.saleItem.simpleProduct:id,name,description',
+            'returnItems.saleItem.combo:id,name,description',
         ]);
 
         return Inertia::render('Returns/Show', [
@@ -422,6 +425,12 @@ class ReturnController extends Controller
                 \Log::info("PRODUCTO SIMPLE detectado: {$this->getItemName($saleItem)}");
                 $this->restoreSimpleProductInventory($returnItem);
                 \Log::info('Producto simple restaurado al inventario físico');
+
+            } elseif ($saleItem->product_type === 'combo') {
+                // COMBOS: Registrar pérdida operativa (los componentes ya fueron preparados/consumidos)
+                \Log::info("COMBO detectado: {$this->getItemName($saleItem)}");
+                $this->recordComboOperationalLoss($returnItem);
+                \Log::info('Pérdida operativa de combo registrada');
             }
 
             $returnItem->markInventoryRestored();
@@ -566,6 +575,63 @@ class ReturnController extends Controller
     }
 
     /**
+     * LÓGICA REALISTA: Registro de pérdida operativa para combos
+     *
+     * Cuando un cliente devuelve un combo ya preparado:
+     * - NO podemos recuperar los ingredientes de los componentes
+     * - Registramos como "pérdida operativa" para contabilidad
+     */
+    private function recordComboOperationalLoss(SaleReturnItem $returnItem)
+    {
+        $saleItem = $returnItem->saleItem;
+        $combo = $saleItem->combo;
+
+        if (!$combo) {
+            \Log::warning("No se encontró el combo para el sale_item: {$saleItem->id}");
+            return;
+        }
+
+        // Buscar o crear un producto especial para pérdidas operativas de combos
+        $lossProduct = \App\Models\Product::firstOrCreate(
+            ['name' => 'Pérdidas Operativas - Combos'],
+            [
+                'category_id' => 1,
+                'description' => 'Producto virtual para registrar pérdidas operativas de combos devueltos. Los componentes no pueden recuperarse.',
+                'unit_type' => 'unidad',
+                'unit_cost' => 0,
+                'current_stock' => 0,
+                'min_stock' => 0,
+                'max_stock' => 0,
+            ]
+        );
+
+        // Crear movimiento de inventario como "pérdida operativa"
+        InventoryMovement::create([
+            'product_id' => $lossProduct->id,
+            'user_id' => auth()->id(),
+            'movement_type' => 'salida',
+            'quantity' => $returnItem->quantity_returned,
+            'unit_cost' => $returnItem->unit_price,
+            'total_cost' => $returnItem->total_price,
+            'reason' => 'perdida_operativa',
+            'notes' => "PÉRDIDA OPERATIVA COMBO: {$combo->name} (Qty: {$returnItem->quantity_returned}) devuelto.
+                        Return #{$returnItem->saleReturn->return_number}.
+                        IMPORTANTE: Combo ya preparado no puede restaurarse al inventario.
+                        Los componentes utilizados se consideran pérdida total.",
+            'movement_date' => now()->toDateString(),
+        ]);
+
+        // Log detallado para auditoria
+        \Log::info('PÉRDIDA OPERATIVA COMBO registrada:', [
+            'combo' => $combo->name,
+            'cantidad' => $returnItem->quantity_returned,
+            'valor_perdido' => $returnItem->total_price,
+            'razon' => 'Combo preparado no recuperable',
+            'return_number' => $returnItem->saleReturn->return_number,
+        ]);
+    }
+
+    /**
      * 🆔 Helper: Obtener nombre del item
      */
     private function getItemName($saleItem): string
@@ -574,6 +640,8 @@ class ReturnController extends Controller
             return $saleItem->menuItem->name;
         } elseif ($saleItem->product_type === 'simple' && $saleItem->simpleProduct) {
             return $saleItem->simpleProduct->name;
+        } elseif ($saleItem->product_type === 'combo' && $saleItem->combo) {
+            return $saleItem->combo->name;
         }
 
         return 'Producto desconocido';
@@ -657,12 +725,14 @@ class ReturnController extends Controller
         $returnItems = SaleReturnItem::whereHas('saleReturn', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('return_date', [$startDate, $endDate])
                 ->where('status', 'completed');
-        })->with(['saleItem.menuItem', 'saleItem.simpleProduct'])->get();
+        })->with(['saleItem.menuItem', 'saleItem.simpleProduct', 'saleItem.combo'])->get();
 
         $menuReturns = 0;
         $menuValue = 0;
         $simpleReturns = 0;
         $simpleValue = 0;
+        $comboReturns = 0;
+        $comboValue = 0;
 
         foreach ($returnItems as $item) {
             if ($item->saleItem->product_type === 'menu') {
@@ -671,6 +741,9 @@ class ReturnController extends Controller
             } elseif ($item->saleItem->product_type === 'simple') {
                 $simpleReturns += $item->quantity_returned;
                 $simpleValue += $item->total_price;
+            } elseif ($item->saleItem->product_type === 'combo') {
+                $comboReturns += $item->quantity_returned;
+                $comboValue += $item->total_price;
             }
         }
 
@@ -686,6 +759,12 @@ class ReturnController extends Controller
                 'value' => $simpleValue,
                 'type' => 'Productos Simples (Recuperables)',
                 'icon' => '🥤',
+            ],
+            'combos' => [
+                'count' => $comboReturns,
+                'value' => $comboValue,
+                'type' => 'Combos (Pérdida Total)',
+                'icon' => '📦',
             ],
         ];
     }

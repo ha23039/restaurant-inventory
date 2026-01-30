@@ -79,8 +79,17 @@ class ThermalTicketService
             foreach ($sale->saleItems as $item) {
                 if ($this->requiresKitchen($item)) {
                     $this->printer->setTextSize(1, 2);
-                    $this->printer->text("{$item->quantity}x {$item->menu_item_name}\n");
+                    $productName = $this->getProductName($item);
+                    $this->printer->text("{$item->quantity}x {$productName}\n");
                     $this->printer->setTextSize(1, 1);
+
+                    // Si es combo, mostrar componentes
+                    if ($item->product_type === 'combo') {
+                        $comboDetails = $this->getComboComponentsForTicket($item);
+                        if ($comboDetails) {
+                            $this->printer->text($comboDetails . "\n");
+                        }
+                    }
 
                     // Notas especiales del item
                     if ($item->notes) {
@@ -268,6 +277,14 @@ class ThermalTicketService
                 if ($this->requiresKitchen($item)) {
                     $productName = $this->getProductName($item);
                     $content .= "{$item->quantity}x {$productName}\n";
+
+                    // Si es combo, mostrar componentes
+                    if ($item->product_type === 'combo') {
+                        $comboDetails = $this->getComboComponentsForTicket($item);
+                        if ($comboDetails) {
+                            $content .= $comboDetails . "\n";
+                        }
+                    }
 
                     // Notas especiales del item
                     if (isset($item->notes) && $item->notes) {
@@ -580,6 +597,11 @@ class ThermalTicketService
      */
     private function requiresKitchen($item): bool
     {
+        // Combos siempre van a cocina (contienen items preparados)
+        if ($item->product_type === 'combo') {
+            return true;
+        }
+
         // Obtener categorías que NO van a cocina desde configuración
         $nonKitchenCategories = $this->ticketSettings['non_kitchen_categories'] ?? [];
 
@@ -638,10 +660,51 @@ class ThermalTicketService
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
         } elseif ($item->product_type === 'simple' && isset($item->simpleProduct)) {
             return $item->simpleProduct->name;
+        } elseif ($item->product_type === 'combo' && isset($item->combo)) {
+            return $item->combo->name;
         } elseif ($item->product_type === 'free' && $item->free_sale_name) {
             return $item->free_sale_name;
         }
 
         return "Producto #{$item->id}";
+    }
+
+    /**
+     * 🔧 OBTENER DETALLES DE COMPONENTES DE COMBO PARA TICKET
+     */
+    private function getComboComponentsForTicket($item): string
+    {
+        if ($item->product_type !== 'combo' || !$item->combo_selections) {
+            return '';
+        }
+
+        $details = [];
+        $selections = $item->combo_selections;
+
+        // Cargar combo con componentes si no está cargado
+        $combo = $item->combo;
+        if (!$combo) {
+            return '';
+        }
+
+        $combo->load(['components.sellable', 'components.options.sellable']);
+
+        foreach ($combo->components as $component) {
+            if ($component->component_type === 'fixed') {
+                // Componente fijo
+                $details[] = "  + {$component->sellable->name}";
+            } else {
+                // Componente de elección - buscar selección del cliente
+                $selection = $selections[$component->id] ?? null;
+                if ($selection && isset($selection['optionId'])) {
+                    $option = $component->options->firstWhere('id', $selection['optionId']);
+                    if ($option && $option->sellable) {
+                        $details[] = "  + {$option->sellable->name}";
+                    }
+                }
+            }
+        }
+
+        return implode("\n", $details);
     }
 }
