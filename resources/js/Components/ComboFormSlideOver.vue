@@ -50,7 +50,7 @@ const processing = ref(false);
 
 const isEditMode = computed(() => props.combo !== null);
 
-// Combinar productos para selección
+// Combinar productos para selección con key único
 const allProducts = computed(() => {
     const items = [];
 
@@ -58,6 +58,8 @@ const allProducts = computed(() => {
         items.push({
             id: item.id,
             type: 'menu_item',
+            // Key único para identificar el producto: tipo-id
+            uniqueKey: `menu_item-${item.id}`,
             name: item.name,
             price: item.price,
             image: item.image_path,
@@ -70,6 +72,7 @@ const allProducts = computed(() => {
         items.push({
             id: product.id,
             type: 'simple_product',
+            uniqueKey: `simple_product-${product.id}`,
             name: product.name,
             price: product.sale_price,
             image: product.image_path,
@@ -80,6 +83,19 @@ const allProducts = computed(() => {
 
     return items;
 });
+
+// Helper para parsear la key única y obtener tipo e id
+const parseProductKey = (key) => {
+    if (!key) return { type: '', id: '' };
+    const [type, id] = key.split('-');
+    return { type: type || '', id: id ? parseInt(id) : '' };
+};
+
+// Helper para crear key desde tipo e id
+const makeProductKey = (type, id) => {
+    if (!type || !id) return '';
+    return `${type}-${id}`;
+};
 
 // Agrupar productos por categoría
 const productsByCategory = computed(() => {
@@ -540,13 +556,17 @@ const formatCurrency = (value) => {
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Producto *</label>
                                 <select
-                                    v-model="component.sellable_id"
-                                    @change="component.sellable_type = allProducts.find(p => p.id === parseInt(component.sellable_id))?.type || ''"
+                                    :value="makeProductKey(component.sellable_type, component.sellable_id)"
+                                    @change="(e) => {
+                                        const parsed = parseProductKey(e.target.value);
+                                        component.sellable_type = parsed.type;
+                                        component.sellable_id = parsed.id;
+                                    }"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     <option value="">Seleccionar producto...</option>
                                     <optgroup v-for="(products, category) in productsByCategory" :key="category" :label="category">
-                                        <option v-for="product in products" :key="`${product.type}-${product.id}`" :value="product.id">
+                                        <option v-for="product in products" :key="product.uniqueKey" :value="product.uniqueKey">
                                             {{ product.name }} - {{ formatCurrency(product.price) }}
                                         </option>
                                     </optgroup>
@@ -612,13 +632,17 @@ const formatCurrency = (value) => {
                                         class="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg"
                                     >
                                         <select
-                                            v-model="option.sellable_id"
-                                            @change="option.sellable_type = allProducts.find(p => p.id === parseInt(option.sellable_id))?.type || ''"
+                                            :value="makeProductKey(option.sellable_type, option.sellable_id)"
+                                            @change="(e) => {
+                                                const parsed = parseProductKey(e.target.value);
+                                                option.sellable_type = parsed.type;
+                                                option.sellable_id = parsed.id;
+                                            }"
                                             class="flex-1 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                                         >
                                             <option value="">Seleccionar...</option>
                                             <optgroup v-for="(products, category) in productsByCategory" :key="category" :label="category">
-                                                <option v-for="product in products" :key="`${product.type}-${product.id}`" :value="product.id">
+                                                <option v-for="product in products" :key="product.uniqueKey" :value="product.uniqueKey">
                                                     {{ product.name }}
                                                 </option>
                                             </optgroup>

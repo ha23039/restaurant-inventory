@@ -193,26 +193,35 @@ class ComboRepository extends BaseRepository implements ComboRepositoryInterface
     protected function saveComponents(Combo $combo, array $components): void
     {
         foreach ($components as $index => $componentData) {
+            // Convertir strings vacíos a null para campos polimórficos
+            $sellableType = !empty($componentData['sellable_type']) ? $componentData['sellable_type'] : null;
+            $sellableId = !empty($componentData['sellable_id']) ? (int) $componentData['sellable_id'] : null;
+
             $component = ComboComponent::create([
                 'combo_id' => $combo->id,
                 'component_type' => $componentData['component_type'],
-                'name' => $componentData['name'] ?? null,
+                'name' => !empty($componentData['name']) ? $componentData['name'] : null,
                 'quantity' => $componentData['quantity'] ?? 1,
-                'is_required' => $componentData['is_required'] ?? true,
-                'sellable_type' => $componentData['sellable_type'] ?? null,
-                'sellable_id' => $componentData['sellable_id'] ?? null,
+                'is_required' => filter_var($componentData['is_required'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'sellable_type' => $sellableType,
+                'sellable_id' => $sellableId,
                 'sort_order' => $index,
             ]);
 
             // Guardar opciones para componentes choice
             if ($componentData['component_type'] === 'choice' && !empty($componentData['options'])) {
                 foreach ($componentData['options'] as $optIndex => $optionData) {
+                    // Validar que la opción tiene los datos requeridos
+                    if (empty($optionData['sellable_type']) || empty($optionData['sellable_id'])) {
+                        continue;
+                    }
+
                     ComboComponentOption::create([
                         'combo_component_id' => $component->id,
                         'sellable_type' => $optionData['sellable_type'],
-                        'sellable_id' => $optionData['sellable_id'],
-                        'price_adjustment' => $optionData['price_adjustment'] ?? 0,
-                        'is_default' => $optionData['is_default'] ?? false,
+                        'sellable_id' => (int) $optionData['sellable_id'],
+                        'price_adjustment' => (float) ($optionData['price_adjustment'] ?? 0),
+                        'is_default' => filter_var($optionData['is_default'] ?? false, FILTER_VALIDATE_BOOLEAN),
                         'sort_order' => $optIndex,
                     ]);
                 }

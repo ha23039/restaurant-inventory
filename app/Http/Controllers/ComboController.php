@@ -171,6 +171,20 @@ class ComboController extends Controller
      */
     private function validateComboRequest(Request $request, bool $isUpdate = false): array
     {
+        // Si components viene como JSON string (desde FormData), parsearlo
+        if ($request->has('components') && is_string($request->components)) {
+            $request->merge([
+                'components' => json_decode($request->components, true) ?? []
+            ]);
+        }
+
+        // Convertir strings '1'/'0' a booleanos (FormData envía strings)
+        $request->merge([
+            'is_available' => filter_var($request->is_available, FILTER_VALIDATE_BOOLEAN),
+            'show_in_menu' => filter_var($request->show_in_menu, FILTER_VALIDATE_BOOLEAN),
+            'show_in_pos' => filter_var($request->show_in_pos, FILTER_VALIDATE_BOOLEAN),
+        ]);
+
         $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
