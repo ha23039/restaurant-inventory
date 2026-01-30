@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SimpleProduct;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SimpleProductController extends Controller
@@ -132,6 +133,7 @@ class SimpleProductController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'category' => 'required|string|max:100',
             'is_available' => 'boolean',
             'allows_variants' => 'boolean',
@@ -150,6 +152,13 @@ class SimpleProductController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('simple-products', 'public');
+            $validated['image_path'] = '/storage/' . $path;
+        }
+        unset($validated['image']);
 
         SimpleProduct::create($validated);
 
@@ -170,6 +179,8 @@ class SimpleProductController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'remove_image' => 'nullable|boolean',
             'category' => 'required|string|max:100',
             'is_available' => 'boolean',
             'allows_variants' => 'boolean',
@@ -188,6 +199,25 @@ class SimpleProductController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        // Handle image removal
+        if ($request->boolean('remove_image') && $simpleProduct->image_path) {
+            $oldPath = str_replace('/storage/', '', $simpleProduct->image_path);
+            Storage::disk('public')->delete($oldPath);
+            $validated['image_path'] = null;
+        }
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image
+            if ($simpleProduct->image_path) {
+                $oldPath = str_replace('/storage/', '', $simpleProduct->image_path);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('image')->store('simple-products', 'public');
+            $validated['image_path'] = '/storage/' . $path;
+        }
+        unset($validated['image'], $validated['remove_image']);
 
         $simpleProduct->update($validated);
 

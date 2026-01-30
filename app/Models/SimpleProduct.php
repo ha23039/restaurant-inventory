@@ -13,6 +13,7 @@ class SimpleProduct extends Model
         'product_id',
         'name',
         'description',
+        'image_path',
         'sale_price',
         'cost_per_unit',
         'is_available',

@@ -252,14 +252,22 @@ const getStockBadgeClass = (product) => {
                                     <!-- Product Name -->
                                     <td class="px-6 py-4">
                                         <div class="flex items-center">
-                                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <span class="text-blue-600 dark:text-blue-400 text-lg">📦</span>
+                                            <div class="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                                                <img
+                                                    v-if="product.image_path"
+                                                    :src="product.image_path"
+                                                    :alt="product.name"
+                                                    class="w-full h-full object-cover"
+                                                />
+                                                <div v-else class="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900">
+                                                    <span class="text-blue-600 dark:text-blue-400 text-lg">📦</span>
+                                                </div>
                                             </div>
                                             <div class="ml-4">
                                                 <div class="text-sm font-medium text-gray-900 dark:text-white">
                                                     {{ product.name }}
                                                 </div>
-                                                <div v-if="product.description" class="text-sm text-gray-500 dark:text-gray-400">
+                                                <div v-if="product.description" class="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
                                                     {{ product.description }}
                                                 </div>
                                             </div>

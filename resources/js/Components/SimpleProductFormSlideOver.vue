@@ -29,12 +29,17 @@ const form = ref({
     product_id: '',
     name: '',
     description: '',
+    image: null,
     sale_price: '',
     cost_per_unit: '',
     category: '',
     is_available: true,
     allows_variants: false,
 });
+
+// Image handling
+const imagePreview = ref(null);
+const imageInput = ref(null);
 
 const initialFormState = ref(null);
 const hasChanges = ref(false);
@@ -59,12 +64,15 @@ watch(() => props.product, (newProduct) => {
             product_id: newProduct.product_id || '',
             name: newProduct.name || '',
             description: newProduct.description || '',
+            image: null,
             sale_price: newProduct.sale_price || '',
             cost_per_unit: newProduct.cost_per_unit || '',
             category: newProduct.category || '',
             is_available: newProduct.is_available !== undefined ? newProduct.is_available : true,
             allows_variants: newProduct.allows_variants !== undefined ? newProduct.allows_variants : false,
         };
+        // Set image preview from existing product
+        imagePreview.value = newProduct.image_path || null;
         selectedProduct.value = props.products.find(p => p.id === newProduct.product_id);
         
         // Inicializar híbrido de categorías en modo edición
@@ -168,6 +176,7 @@ const resetForm = () => {
         product_id: '',
         name: '',
         description: '',
+        image: null,
         sale_price: '',
         cost_per_unit: '',
         category: '',
@@ -180,6 +189,29 @@ const resetForm = () => {
     // Reset híbrido de categorías
     categorySelection.value = '';
     customCategory.value = '';
+    // Reset image
+    imagePreview.value = null;
+    if (imageInput.value) {
+        imageInput.value.value = '';
+    }
+};
+
+const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        form.value.image = file;
+        imagePreview.value = URL.createObjectURL(file);
+        hasChanges.value = true;
+    }
+};
+
+const removeImage = () => {
+    form.value.image = null;
+    imagePreview.value = null;
+    if (imageInput.value) {
+        imageInput.value.value = '';
+    }
+    hasChanges.value = true;
 };
 
 const handleClose = async () => {
@@ -239,21 +271,38 @@ const handleSubmit = () => {
         ? route('simple-products.update', props.product.id)
         : route('simple-products.store');
 
-    const method = isEditMode.value ? 'put' : 'post';
+    // Use FormData to support file upload
+    const formData = new FormData();
+    formData.append('name', form.value.name.trim());
+    formData.append('description', form.value.description?.trim() || '');
+    formData.append('category', form.value.category);
+    formData.append('is_available', form.value.is_available ? '1' : '0');
+    formData.append('allows_variants', form.value.allows_variants ? '1' : '0');
 
-    const data = {
-        name: form.value.name.trim(),
-        description: form.value.description?.trim() || null,
-        category: form.value.category,
-        is_available: form.value.is_available,
-        allows_variants: form.value.allows_variants,
-        // Solo enviar estos campos si el producto NO tiene variantes
-        product_id: form.value.allows_variants ? null : parseInt(form.value.product_id),
-        sale_price: form.value.sale_price ? parseFloat(form.value.sale_price) : null,
-        cost_per_unit: form.value.allows_variants ? null : parseFloat(form.value.cost_per_unit),
-    };
+    // Solo enviar estos campos si el producto NO tiene variantes
+    if (!form.value.allows_variants) {
+        formData.append('product_id', form.value.product_id);
+        formData.append('sale_price', form.value.sale_price);
+        formData.append('cost_per_unit', form.value.cost_per_unit);
+    }
 
-    router[method](url, data, {
+    // Handle image
+    if (form.value.image) {
+        formData.append('image', form.value.image);
+    }
+
+    // If editing and image was removed (preview is null but product had image)
+    if (isEditMode.value && !imagePreview.value && props.product?.image_path) {
+        formData.append('remove_image', '1');
+    }
+
+    // For PUT requests, we need to use POST with _method override
+    if (isEditMode.value) {
+        formData.append('_method', 'PUT');
+    }
+
+    router.post(url, formData, {
+        forceFormData: true,
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -414,6 +463,53 @@ const formatQuantity = (quantity) => {
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                     placeholder="Descripción opcional del producto..."
                 ></textarea>
+            </div>
+
+            <!-- Imagen del Producto -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Imagen del Producto
+                </label>
+                <div class="flex items-start space-x-4">
+                    <!-- Preview -->
+                    <div class="flex-shrink-0">
+                        <div v-if="imagePreview" class="relative">
+                            <img
+                                :src="imagePreview"
+                                class="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
+                                alt="Preview"
+                            />
+                            <button
+                                type="button"
+                                @click="removeImage"
+                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div v-else class="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Upload Button -->
+                    <div class="flex-1">
+                        <input
+                            ref="imageInput"
+                            type="file"
+                            @change="handleImageChange"
+                            accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                            class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/50 file:text-blue-700 dark:file:text-blue-200 hover:file:bg-blue-100 dark:hover:file:bg-blue-800/50 cursor-pointer"
+                        />
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            JPG, PNG, GIF, WEBP hasta 2MB. Se mostrará en el menú digital.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- Precio de Venta (opcional si tiene variantes) -->
