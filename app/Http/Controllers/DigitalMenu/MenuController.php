@@ -8,10 +8,16 @@ use App\Models\Category;
 use App\Models\MenuItem;
 use App\Models\SimpleProduct;
 use App\Models\Table;
+use App\Services\ComboService;
 use Inertia\Inertia;
 
 class MenuController extends Controller
 {
+    public function __construct(
+        private ComboService $comboService
+    ) {
+    }
+
     /**
      * Display the digital menu
      */
@@ -103,6 +109,9 @@ class MenuController extends Controller
 
         $categories = Category::orderBy('name')->get();
 
+        // Get available combos using ComboService
+        $combos = $this->comboService->getCombosForMenu();
+
         // Get tables for dine-in (disponibles y ocupadas - pueden recibir múltiples pedidos)
         $availableTables = Table::whereIn('status', ['disponible', 'ocupada'])
             ->where('is_active', true)
@@ -126,6 +135,7 @@ class MenuController extends Controller
         return Inertia::render('DigitalMenu/Index', [
             'menuItems' => $menuItems->values(),
             'simpleProducts' => $simpleProducts->values(),
+            'combos' => $combos->values(),
             'categories' => $categories,
             'availableTables' => $availableTables,
             'settings' => [

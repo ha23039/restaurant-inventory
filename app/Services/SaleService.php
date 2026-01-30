@@ -184,8 +184,8 @@ class SaleService
             $productType = $item['product_type'] ?? 'menu';
             $quantity = $item['quantity'];
 
-            // Saltar verificación para ventas libres (no afectan inventario)
-            if ($productType === 'free') {
+            // Saltar verificación para ventas libres y combos (combos verifican disponibilidad por componente)
+            if ($productType === 'free' || $productType === 'combo') {
                 continue;
             }
 
@@ -258,6 +258,15 @@ class SaleService
                 $saleItemData['menu_item_id'] = null;
                 $saleItemData['menu_item_variant_id'] = null;
                 $saleItemData['simple_product_id'] = null;
+            } elseif ($productType === 'combo') {
+                // Para combos
+                $saleItemData['combo_id'] = $item['id'];
+                $saleItemData['combo_selections'] = $item['combo_selections'] ?? null;
+                $saleItemData['unit_price'] = $item['unit_price'];
+                $saleItemData['total_price'] = $item['quantity'] * $item['unit_price'];
+                $saleItemData['menu_item_id'] = null;
+                $saleItemData['menu_item_variant_id'] = null;
+                $saleItemData['simple_product_id'] = null;
             } else {
                 // Para productos regulares (menu, variant, simple)
                 $saleItemData['menu_item_id'] = $productType === 'menu' ? $item['id'] : null;
@@ -269,13 +278,16 @@ class SaleService
 
             $saleItem = SaleItem::create($saleItemData);
 
-            // Deducir inventario solo para productos regulares (no para ventas libres)
+            // Deducir inventario solo para productos regulares (no para ventas libres ni combos por ahora)
             if ($productType === 'menu') {
                 $this->inventoryService->deductMenuItemStock($saleItem);
             } elseif ($productType === 'variant') {
                 $this->inventoryService->deductMenuItemVariantStock($saleItem);
             } elseif ($productType === 'simple') {
                 $this->inventoryService->deductSimpleProductStock($saleItem);
+            } elseif ($productType === 'combo') {
+                // Para combos, deducir inventario por cada componente
+                $this->inventoryService->deductComboStock($saleItem);
             }
 
             Log::info('Item procesado', [
@@ -283,6 +295,7 @@ class SaleService
                 'product_type' => $productType,
                 'quantity' => $item['quantity'],
                 'is_free_sale' => $productType === 'free',
+                'is_combo' => $productType === 'combo',
             ]);
         }
     }
@@ -330,6 +343,7 @@ class SaleService
             'saleItems.menuItem',
             'saleItems.simpleProduct',
             'saleItems.menuItemVariant.menuItem',  // Variantes con platillo padre
+            'saleItems.combo',  // Combos
             'table',
             'user'
         ])

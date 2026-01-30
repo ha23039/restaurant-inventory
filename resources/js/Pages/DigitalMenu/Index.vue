@@ -6,6 +6,7 @@ import DigitalMenuLayout from '@/Layouts/DigitalMenuLayout.vue';
 import ProductCard from './Components/ProductCard.vue';
 import CartSlideOver from './Components/CartSlideOver.vue';
 import VariantSlideOver from './Components/VariantSlideOver.vue';
+import ComboSlideOver from './Components/ComboSlideOver.vue';
 import CheckoutSlideOver from './Components/CheckoutSlideOver.vue';
 import OrderConfirmationSlideOver from './Components/OrderConfirmationSlideOver.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -13,6 +14,7 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 const props = defineProps({
     menuItems: Array,
     simpleProducts: Array,
+    combos: Array,
     categories: Array,
     settings: Object,
     availableTables: Array,
@@ -25,7 +27,9 @@ const showCart = ref(false);
 const showVariantModal = ref(false);
 const showCheckout = ref(false);
 const showConfirmation = ref(false);
+const showComboModal = ref(false);
 const selectedProduct = ref(null);
+const selectedCombo = ref(null);
 const orderData = ref(null);
 const pendingOrders = ref([]);
 
@@ -116,6 +120,7 @@ const normalizeCategoryKey = (category) => {
 
 const getCategoryTitle = (key) => {
     const titles = {
+        'combos': 'Combos',
         'menu': 'Platillos',
         'bebidas': 'Bebidas',
         'extras': 'Extras',
@@ -129,8 +134,17 @@ const getCategoryTitle = (key) => {
 // Agrupar productos por categoría (como el POS)
 const groupedProducts = computed(() => {
     const groups = {
+        combos: { title: 'Combos', items: [], count: 0 },
         menu: { title: 'Platillos', items: [], count: 0 }
     };
+
+    // Combos van primero
+    if (props.combos?.length > 0) {
+        props.combos.forEach(combo => {
+            groups.combos.items.push({ ...combo, product_type: 'combo', price: combo.base_price });
+            groups.combos.count++;
+        });
+    }
 
     // Menu items van al grupo 'menu'
     props.menuItems.forEach(item => {
@@ -141,7 +155,7 @@ const groupedProducts = computed(() => {
     // Simple products se agrupan por su categoría
     props.simpleProducts.forEach(product => {
         const categoryKey = normalizeCategoryKey(product.category_name);
-        
+
         if (!groups[categoryKey]) {
             groups[categoryKey] = {
                 title: getCategoryTitle(categoryKey),
@@ -149,7 +163,7 @@ const groupedProducts = computed(() => {
                 count: 0
             };
         }
-        
+
         groups[categoryKey].items.push({
             ...product,
             product_type: 'simple',
@@ -160,15 +174,20 @@ const groupedProducts = computed(() => {
 
     // Filtrar grupos vacíos y ordenar
     const sortedGroups = {};
-    
-    // Menu primero si tiene items
+
+    // Combos primero si hay
+    if (groups.combos.count > 0) {
+        sortedGroups.combos = groups.combos;
+    }
+
+    // Menu segundo si tiene items
     if (groups.menu.count > 0) {
         sortedGroups.menu = groups.menu;
     }
-    
+
     // Resto alfabéticamente
     Object.keys(groups)
-        .filter(key => key !== 'menu' && groups[key].count > 0)
+        .filter(key => key !== 'menu' && key !== 'combos' && groups[key].count > 0)
         .sort()
         .forEach(key => {
             sortedGroups[key] = groups[key];
@@ -248,6 +267,18 @@ const selectVariant = (product) => {
 const addVariantToCart = (variantItem) => {
     addToCart(variantItem);
     showVariantModal.value = false;
+};
+
+// Combo handlers
+const selectCombo = (combo) => {
+    selectedCombo.value = combo;
+    showComboModal.value = true;
+};
+
+const addComboToCart = (comboItem) => {
+    // Los combos se agregan como items únicos con sus selecciones
+    // No combinamos combos con las mismas selecciones para simplicidad
+    cart.value.push({ ...comboItem });
 };
 
 // Actualizar variantes en el carrito (MODO EDITAR - reemplaza en lugar de sumar)
@@ -437,6 +468,7 @@ const handleConfirmationClose = () => {
                 :type="product.product_type"
                 @add-to-cart="addToCart"
                 @select-variant="selectVariant"
+                @select-combo="selectCombo"
             />
         </div>
 
@@ -492,6 +524,14 @@ const handleConfirmationClose = () => {
             @close="showVariantModal = false"
             @select="addVariantToCart"
             @update-variants="updateVariantsInCart"
+        />
+
+        <!-- Combo SlideOver -->
+        <ComboSlideOver
+            :show="showComboModal"
+            :combo="selectedCombo"
+            @close="showComboModal = false"
+            @add-to-cart="addComboToCart"
         />
 
         <!-- Cart SlideOver -->

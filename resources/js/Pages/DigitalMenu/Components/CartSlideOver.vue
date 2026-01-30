@@ -154,9 +154,36 @@ const decrementQuantity = (index) => {
                         <!-- Product Info -->
                         <div class="flex-1 min-w-0">
                             <div class="flex items-start justify-between gap-2 mb-2">
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-                                    {{ item.name }}
-                                </h3>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                                            {{ item.name }}
+                                        </h3>
+                                        <!-- Badge de combo -->
+                                        <span v-if="item.product_type === 'combo'" class="flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                                            Combo
+                                        </span>
+                                    </div>
+                                    <!-- Detalles del combo -->
+                                    <div v-if="item.product_type === 'combo' && item.components_detail?.length" class="mt-1 space-y-0.5">
+                                        <p
+                                            v-for="(comp, idx) in item.components_detail"
+                                            :key="idx"
+                                            class="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1"
+                                        >
+                                            <svg v-if="comp.type === 'fixed'" class="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <svg v-else class="w-3 h-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                            </svg>
+                                            <span class="truncate">
+                                                <span v-if="comp.componentName" class="font-medium">{{ comp.componentName }}:</span>
+                                                {{ comp.name }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
                                 <button
                                     @click="emit('remove-item', index)"
                                     class="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"

@@ -207,6 +207,108 @@ class InventoryService
     }
 
     /**
+     * Deducir inventario para combo
+     */
+    public function deductComboStock(SaleItem $saleItem): void
+    {
+        $combo = \App\Models\Combo::with([
+            'components.sellable.recipes.product',
+            'components.sellable.product',
+            'components.options.sellable.recipes.product',
+            'components.options.sellable.product'
+        ])->find($saleItem->combo_id);
+
+        if (!$combo) {
+            return;
+        }
+
+        $selections = $saleItem->combo_selections ?? [];
+
+        foreach ($combo->components as $component) {
+            // Determinar qué producto deducir
+            $sellable = null;
+            $variantId = null;
+
+            if ($component->component_type === 'fixed') {
+                // Componente fijo: usar el producto asociado
+                $sellable = $component->sellable;
+            } else {
+                // Componente de elección: buscar la selección del cliente
+                $selection = $selections[$component->id] ?? null;
+                if ($selection && $selection['optionId']) {
+                    $option = $component->options->firstWhere('id', $selection['optionId']);
+                    if ($option) {
+                        $sellable = $option->sellable;
+                        $variantId = $selection['variantId'] ?? null;
+                    }
+                }
+            }
+
+            if (!$sellable) {
+                continue;
+            }
+
+            // Deducir inventario según el tipo de producto
+            $quantityMultiplier = $component->quantity * $saleItem->quantity;
+
+            if ($sellable instanceof \App\Models\MenuItem) {
+                // Deducir ingredientes del menu item
+                foreach ($sellable->recipes as $recipe) {
+                    if (!$recipe->product) continue;
+
+                    $quantityNeeded = $recipe->quantity_needed * $quantityMultiplier;
+
+                    InventoryMovement::create([
+                        'product_id' => $recipe->product_id,
+                        'user_id' => $saleItem->sale->user_id,
+                        'movement_type' => 'salida',
+                        'quantity' => $quantityNeeded,
+                        'unit_cost' => $recipe->product->unit_cost,
+                        'total_cost' => $quantityNeeded * $recipe->product->unit_cost,
+                        'reason' => 'venta_automatica',
+                        'notes' => "Combo: {$combo->name} - {$sellable->name} x{$quantityMultiplier} - Ticket #{$saleItem->sale->sale_number}",
+                        'movement_date' => now()->toDateString(),
+                    ]);
+
+                    $this->productRepository->updateStock(
+                        $recipe->product_id,
+                        $recipe->product->current_stock - $quantityNeeded
+                    );
+                }
+            } elseif ($sellable instanceof \App\Models\SimpleProduct) {
+                // Deducir del producto base
+                if ($sellable->product) {
+                    $quantityNeeded = $sellable->cost_per_unit * $quantityMultiplier;
+
+                    InventoryMovement::create([
+                        'product_id' => $sellable->product_id,
+                        'user_id' => $saleItem->sale->user_id,
+                        'movement_type' => 'salida',
+                        'quantity' => $quantityNeeded,
+                        'unit_cost' => $sellable->product->unit_cost,
+                        'total_cost' => $quantityNeeded * $sellable->product->unit_cost,
+                        'reason' => 'venta_automatica',
+                        'notes' => "Combo: {$combo->name} - {$sellable->name} x{$quantityMultiplier} - Ticket #{$saleItem->sale->sale_number}",
+                        'movement_date' => now()->toDateString(),
+                    ]);
+
+                    $this->productRepository->updateStock(
+                        $sellable->product_id,
+                        $sellable->product->current_stock - $quantityNeeded
+                    );
+                }
+            }
+
+            Log::info('Stock deducido para componente de combo', [
+                'combo_id' => $combo->id,
+                'component_id' => $component->id,
+                'sellable_type' => get_class($sellable),
+                'sale_id' => $saleItem->sale_id,
+            ]);
+        }
+    }
+
+    /**
      * Restaurar inventario (usado en devoluciones)
      */
     public function restoreMenuItemStock(SaleItem $saleItem): void

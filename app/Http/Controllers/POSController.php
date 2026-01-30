@@ -7,6 +7,7 @@ use App\Http\Resources\MenuItemResource;
 use App\Http\Resources\SimpleProductResource;
 use App\Models\PaymentMethod;
 use App\Repositories\Contracts\SimpleProductRepositoryInterface;
+use App\Services\ComboService;
 use App\Services\MenuItemService;
 use App\Services\SaleService;
 use Illuminate\Http\Request;
@@ -17,7 +18,8 @@ class POSController extends Controller
     public function __construct(
         private MenuItemService $menuItemService,
         private SimpleProductRepositoryInterface $simpleProductRepository,
-        private SaleService $saleService
+        private SaleService $saleService,
+        private ComboService $comboService
     ) {
     }
 
@@ -89,9 +91,13 @@ class POSController extends Controller
             ->orderBy('table_number')
             ->get(['id', 'table_number', 'name', 'capacity', 'status', 'current_sale_id']);
 
+        // Obtener combos disponibles para el POS
+        $combos = $this->comboService->getCombosForPos();
+
         return Inertia::render('Sales/POS', [
             'menu_items' => MenuItemResource::collection($menuItems),
             'simple_products' => SimpleProductResource::collection($simpleProducts),
+            'combos' => $combos->values(),
             'pending_sales' => $pendingSales,
             'available_tables' => $availableTables,
             'payment_methods' => PaymentMethod::getActive(),

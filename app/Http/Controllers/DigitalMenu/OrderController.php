@@ -4,6 +4,7 @@ namespace App\Http\Controllers\DigitalMenu;
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessSettings;
+use App\Models\Combo;
 use App\Models\DigitalCustomer;
 use App\Models\MenuItem;
 use App\Models\MenuItemVariant;
@@ -28,9 +29,12 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:menu,simple,variant,simple_variant',
+            'items.*.type' => 'required|in:menu,simple,variant,simple_variant,combo',
             'items.*.id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'nullable|numeric|min:0', // Para combos con ajustes de precio
+            'items.*.selections' => 'nullable|array', // Selecciones del combo
+            'items.*.components_detail' => 'nullable|array', // Detalle de componentes
             'delivery_method' => 'required|in:pickup,delivery,dine_in',
             'customer_address' => 'required_if:delivery_method,delivery|nullable|string|max:500',
             'customer_notes' => 'nullable|string|max:500',
@@ -70,12 +74,21 @@ class OrderController extends Controller
                     throw new \Exception("Producto no encontrado");
                 }
 
-                // Check stock availability
-                if ($product->available_quantity < $item['quantity']) {
-                    throw new \Exception("Stock insuficiente para: " . $product->name);
+                // Para combos, verificar disponibilidad del combo
+                if ($item['type'] === 'combo') {
+                    if (!$product->is_available || !$product->is_fully_available) {
+                        throw new \Exception("Combo no disponible: " . $product->name);
+                    }
+                    // El precio viene del frontend con ajustes incluidos
+                    $unitPrice = isset($item['price']) ? (float) $item['price'] : (float) $product->base_price;
+                } else {
+                    // Check stock availability para productos normales
+                    if ($product->available_quantity < $item['quantity']) {
+                        throw new \Exception("Stock insuficiente para: " . $product->name);
+                    }
+                    $unitPrice = $this->getProductPrice($product, $item['type']);
                 }
 
-                $unitPrice = $this->getProductPrice($product, $item['type']);
                 $totalPrice = $unitPrice * $item['quantity'];
                 $subtotal += $totalPrice;
 
@@ -85,6 +98,9 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $unitPrice,
                     'total_price' => $totalPrice,
+                    // Para combos, guardar selecciones y detalles
+                    'selections' => $item['selections'] ?? null,
+                    'components_detail' => $item['components_detail'] ?? null,
                 ];
             }
 
@@ -132,17 +148,28 @@ class OrderController extends Controller
 
             // Create sale items
             foreach ($itemsData as $itemData) {
-                SaleItem::create([
+                $saleItemData = [
                     'sale_id' => $sale->id,
                     'product_type' => $itemData['type'],
                     'menu_item_id' => $itemData['type'] === 'menu' ? $itemData['product']->id : null,
                     'menu_item_variant_id' => $itemData['type'] === 'variant' ? $itemData['product']->id : null,
                     'simple_product_id' => $itemData['type'] === 'simple' ? $itemData['product']->id : null,
                     'simple_product_variant_id' => $itemData['type'] === 'simple_variant' ? $itemData['product']->id : null,
+                    'combo_id' => $itemData['type'] === 'combo' ? $itemData['product']->id : null,
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'total_price' => $itemData['total_price'],
-                ]);
+                ];
+
+                // Para combos, guardar las selecciones como JSON
+                if ($itemData['type'] === 'combo') {
+                    $saleItemData['combo_selections'] = json_encode([
+                        'selections' => $itemData['selections'],
+                        'components_detail' => $itemData['components_detail'],
+                    ]);
+                }
+
+                SaleItem::create($saleItemData);
             }
 
             // Crear orden de cocina para que aparezca en Kitchen Display
@@ -222,6 +249,7 @@ class OrderController extends Controller
             'variant' => MenuItemVariant::find($id),
             'simple' => SimpleProduct::find($id),
             'simple_variant' => SimpleProductVariant::find($id),
+            'combo' => Combo::with(['components.sellable', 'components.options.sellable'])->find($id),
             default => null,
         };
     }
@@ -236,6 +264,7 @@ class OrderController extends Controller
             'variant' => (float) $product->price,
             'simple' => (float) $product->sale_price,
             'simple_variant' => (float) $product->price,
+            'combo' => (float) $product->base_price,
             default => 0,
         };
     }
@@ -297,6 +326,15 @@ class OrderController extends Controller
                 default => $item['product']->name,
             };
             $lines[] = "- {$item['quantity']}x {$name} (\${$item['total_price']})";
+
+            // Para combos, mostrar los componentes seleccionados
+            if ($item['type'] === 'combo' && !empty($item['components_detail'])) {
+                foreach ($item['components_detail'] as $comp) {
+                    if ($comp['type'] === 'choice' && isset($comp['componentName'])) {
+                        $lines[] = "    {$comp['componentName']}: {$comp['name']}";
+                    }
+                }
+            }
         }
 
         $lines[] = "";

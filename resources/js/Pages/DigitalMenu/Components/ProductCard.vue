@@ -12,23 +12,39 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['add-to-cart', 'select-variant']);
+const emit = defineEmits(['add-to-cart', 'select-variant', 'select-combo']);
 
-const price = computed(() => props.product.price || props.product.sale_price);
+const isCombo = computed(() => props.type === 'combo');
+const price = computed(() => props.product.price || props.product.sale_price || props.product.base_price);
 const hasImage = computed(() => props.product.image_path && props.product.image_path !== '');
+
+// Verificar si tiene elecciones (para combos)
+const hasChoices = computed(() => {
+    if (!isCombo.value) return false;
+    return props.product.components?.some(c => c.type === 'choice') || false;
+});
+
+// Contar componentes del combo
+const comboComponentsCount = computed(() => {
+    if (!isCombo.value) return 0;
+    return props.product.components?.length || 0;
+});
 
 // Verificar disponibilidad - productos con variantes están disponibles si tienen variantes
 const hasVariants = computed(() => {
+    if (isCombo.value) return false;
     return (props.product.has_variants && props.product.variants?.length > 0) ||
            (props.product.allows_variants && props.product.variants?.length > 0);
 });
 
 const isAvailable = computed(() => {
+    if (isCombo.value) return true; // Combos siempre disponibles (ya filtrados en backend)
     if (hasVariants.value) return true; // Productos con variantes siempre están disponibles para ver
     return props.product.available_quantity > 0;
 });
 
 const stockStatus = computed(() => {
+    if (isCombo.value) return null; // No mostrar stock para combos
     if (hasVariants.value) return null; // No mostrar stock para productos con variantes
     if (!isAvailable.value) return { text: 'Agotado', color: 'red' };
     if (props.product.available_quantity <= 5) return { text: 'Pocas unidades', color: 'yellow' };
@@ -37,6 +53,12 @@ const stockStatus = computed(() => {
 
 const handleClick = () => {
     if (!isAvailable.value) return;
+
+    // Si es un combo, siempre abrir el selector
+    if (isCombo.value) {
+        emit('select-combo', props.product);
+        return;
+    }
 
     if (hasVariants.value) {
         emit('select-variant', props.product);
@@ -94,8 +116,18 @@ const handleClick = () => {
                 </span>
             </div>
 
+            <!-- Combo Badge -->
+            <div v-if="isCombo" class="absolute top-2 left-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Combo
+                </span>
+            </div>
+
             <!-- Variants Badge -->
-            <div v-if="hasVariants" class="absolute top-2 left-2">
+            <div v-else-if="hasVariants" class="absolute top-2 left-2">
                 <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-purple-500 text-white">
                     {{ product.variants.length }} opciones
                 </span>
@@ -123,7 +155,7 @@ const handleClick = () => {
                     v-if="isAvailable"
                     class="text-xs font-medium text-white px-3 py-1.5 rounded-lg brand-button"
                 >
-                    {{ hasVariants ? 'Ver opciones' : '+ Agregar' }}
+                    {{ isCombo ? 'Personalizar' : hasVariants ? 'Ver opciones' : '+ Agregar' }}
                 </span>
             </div>
         </div>

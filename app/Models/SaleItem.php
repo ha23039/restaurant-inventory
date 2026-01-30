@@ -15,6 +15,8 @@ class SaleItem extends Model
         'menu_item_variant_id',
         'simple_product_id',
         'simple_product_variant_id',
+        'combo_id',
+        'combo_selections',
         'free_sale_name',
         'free_sale_price',
         'quantity',
@@ -26,6 +28,7 @@ class SaleItem extends Model
     protected $casts = [
         'unit_price' => 'decimal:2',
         'total_price' => 'decimal:2',
+        'combo_selections' => 'array',
     ];
 
     // Relaciones
@@ -57,7 +60,12 @@ class SaleItem extends Model
         return $this->belongsTo(SimpleProductVariant::class);
     }
 
-    // Accessor para obtener el producto (sea del menú, variante o simple)
+    public function combo()
+    {
+        return $this->belongsTo(Combo::class);
+    }
+
+    // Accessor para obtener el producto (sea del menú, variante, simple o combo)
     public function getProductAttribute()
     {
         return match ($this->product_type) {
@@ -65,6 +73,7 @@ class SaleItem extends Model
             'simple_variant' => $this->simpleProductVariant,
             'menu' => $this->menuItem,
             'simple' => $this->simpleProduct,
+            'combo' => $this->combo,
             default => $this->simpleProduct,
         };
     }
@@ -78,7 +87,20 @@ class SaleItem extends Model
             'simple_variant' => $this->simpleProductVariant?->variant_name,
             'menu' => $this->menuItem?->name,
             'simple' => $this->simpleProduct?->name,
+            'combo' => $this->combo?->name,
             default => $this->simpleProduct?->name,
         };
+    }
+
+    /**
+     * Obtener detalles de los componentes del combo (para display)
+     */
+    public function getComboComponentsDetailAttribute(): array
+    {
+        if ($this->product_type !== 'combo' || !$this->combo_selections) {
+            return [];
+        }
+
+        return $this->combo_selections['components_detail'] ?? [];
     }
 }

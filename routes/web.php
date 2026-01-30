@@ -333,6 +333,28 @@ Route::middleware(['auth', 'role:admin,almacenero'])->prefix('simple-products')-
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para COMBOS (Admin + Chef)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,chef'])->prefix('combos')->name('combos.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ComboController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\ComboController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\ComboController::class, 'store'])->name('store');
+    Route::get('/{combo}/edit', [App\Http\Controllers\ComboController::class, 'edit'])->name('edit');
+    Route::put('/{combo}', [App\Http\Controllers\ComboController::class, 'update'])->name('update');
+    Route::delete('/{combo}', [App\Http\Controllers\ComboController::class, 'destroy'])->name('destroy');
+
+    // Acciones especiales
+    Route::post('/{combo}/duplicate', [App\Http\Controllers\ComboController::class, 'duplicate'])->name('duplicate');
+    Route::patch('/{combo}/toggle-availability', [App\Http\Controllers\ComboController::class, 'toggleAvailability'])->name('toggle-availability');
+
+    // API para obtener datos del combo (usado en menú digital y POS)
+    Route::get('/{combo}/data', [App\Http\Controllers\ComboController::class, 'show'])->name('show');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para FLUJO DE CAJA (Admin solamente)
 |--------------------------------------------------------------------------
 */

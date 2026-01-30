@@ -244,6 +244,9 @@ const createOrder = async () => {
                 variant_id: item.variant_id || null,
                 quantity: item.quantity,
                 price: item.price,
+                // Para combos, incluir las selecciones
+                selections: item.product_type === 'combo' ? item.selections : null,
+                components_detail: item.product_type === 'combo' ? item.components_detail : null,
             })),
             delivery_method: deliveryMethod.value,
             customer_notes: customerNotes.value.trim(),
@@ -323,6 +326,15 @@ const sendWhatsAppToRestaurant = (sale) => {
             message += ` (${item.variant_name})`;
         }
         message += `\n   x${item.quantity} - $${itemTotal}\n`;
+
+        // Si es un combo, mostrar los componentes seleccionados
+        if (item.product_type === 'combo' && item.components_detail?.length) {
+            item.components_detail.forEach(comp => {
+                if (comp.type === 'choice') {
+                    message += `      └ ${comp.componentName}: ${comp.name}\n`;
+                }
+            });
+        }
     });
 
     message += `━━━━━━━━━━━━━━━━\n`;

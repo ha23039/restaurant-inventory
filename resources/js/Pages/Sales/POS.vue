@@ -5,6 +5,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FreeSaleSlideOver from '@/Components/FreeSaleSlideOver.vue';
 import ProductVariantSlideOver from '@/Components/ProductVariantSlideOver.vue';
+import ComboSelectionSlideOver from '@/Components/ComboSelectionSlideOver.vue';
 import CartSlideOver from '@/Components/CartSlideOver.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { useToast } from 'vue-toastification';
@@ -14,6 +15,7 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 const props = defineProps({
     menu_items: Object,
     simple_products: Object,
+    combos: Array,
     pending_sales: Array,
     available_tables: Array,
     payment_methods: Array
@@ -65,6 +67,10 @@ const freeSaleTotal = ref('');
 // VARIANTES DE PRODUCTOS
 const showVariantSlideOver = ref(false);
 const selectedMenuItemForVariants = ref(null);
+
+// COMBOS
+const showComboSlideOver = ref(false);
+const selectedCombo = ref(null);
 
 // ORDEN ACTIVA (Venta pendiente)
 const selectedExistingSale = ref(null);
@@ -164,6 +170,7 @@ const getCategoryTitle = (key) => {
         'entradas': 'Entradas',
         'platos-fuertes': 'Platos Fuertes',
         'condimentos': 'Condimentos',
+        'combos': 'Combos',
         'otros': 'Otros'
     };
 
@@ -181,7 +188,10 @@ const availableCategories = computed(() => {
         }
     });
 
-    return ['menu', ...Array.from(categories).sort()];
+    // Agregar categoría de combos si hay combos disponibles
+    const hasCombos = (props.combos || []).length > 0;
+
+    return ['menu', ...(hasCombos ? ['combos'] : []), ...Array.from(categories).sort()];
 });
 
 const groupedProducts = computed(() => {
@@ -197,6 +207,15 @@ const groupedProducts = computed(() => {
         is_in_stock: item.is_in_stock !== undefined ? item.is_in_stock : (item.available_quantity > 0)
     }));
 
+    // Mapear combos
+    const comboProducts = (props.combos || []).map(combo => ({
+        ...combo,
+        product_type: 'combo',
+        price: combo.base_price,
+        is_in_stock: true, // Los combos siempre están disponibles si están activos
+        available_quantity: 999
+    }));
+
     // Filtrar por búsqueda y categoría
     const allProducts = [...menuProducts, ...simpleProducts].filter(product => {
         const matchesSearch = !searchTerm.value ||
@@ -208,6 +227,8 @@ const groupedProducts = computed(() => {
         if (!searchTerm.value && selectedCategory.value) {
             if (selectedCategory.value === 'menu') {
                 matchesCategory = product.product_type === 'menu';
+            } else if (selectedCategory.value === 'combos') {
+                matchesCategory = false; // Los combos se filtran aparte
             } else {
                 // Normalizar la categoría del producto para comparar
                 const normalizedProductCategory = normalizeCategoryKey(product.category);
@@ -218,10 +239,21 @@ const groupedProducts = computed(() => {
         return matchesSearch && matchesCategory;
     });
 
+    // Filtrar combos por búsqueda
+    const filteredCombos = comboProducts.filter(combo => {
+        return !searchTerm.value ||
+            combo.name.toLowerCase().includes(searchTerm.value.toLowerCase());
+    });
+
     // Agrupar por categorías - dinámicamente con normalización
     const groups = {
-        menu: { title: 'Platillos del Menú', items: [] },
+        menu: { title: 'Platillos del Menu', items: [] },
     };
+
+    // Agregar grupo de combos si hay combos
+    if (filteredCombos.length > 0) {
+        groups.combos = { title: 'Combos', items: filteredCombos };
+    }
 
     allProducts.forEach(product => {
         let categoryKey;
@@ -244,14 +276,17 @@ const groupedProducts = computed(() => {
         groups[categoryKey].items.push(product);
     });
 
-    // Ordenar grupos: menú primero, luego alfabéticamente
+    // Ordenar grupos: menú primero, combos segundo, luego alfabéticamente
     const sortedGroups = {};
     if (groups.menu && groups.menu.items.length > 0) {
         sortedGroups.menu = groups.menu;
     }
+    if (groups.combos && groups.combos.items.length > 0) {
+        sortedGroups.combos = groups.combos;
+    }
 
     Object.keys(groups)
-        .filter(key => key !== 'menu')
+        .filter(key => key !== 'menu' && key !== 'combos')
         .sort()
         .forEach(key => {
             if (groups[key].items.length > 0) {
@@ -313,13 +348,15 @@ const changeBillBreakdown = computed(() => {
     return breakdown;
 });
 
-// Helper: Obtener nombre de item de venta (soporta menu, simple, variant, free)
+// Helper: Obtener nombre de item de venta (soporta menu, simple, variant, free, combo)
 const getSaleItemName = (item) => {
     if (item.product_type === 'variant' && item.menu_item_variant) {
         // Para variantes, mostrar nombre del platillo padre + nombre de variante
         const parentName = item.menu_item_variant.menu_item?.name || '';
         const variantName = item.menu_item_variant.variant_name;
         return parentName ? `${parentName} - ${variantName}` : variantName;
+    } else if (item.product_type === 'combo' && item.combo) {
+        return item.combo.name;
     } else if (item.menu_item?.name) {
         return item.menu_item.name;
     } else if (item.simple_product?.name) {
@@ -332,6 +369,12 @@ const getSaleItemName = (item) => {
 
 // 6. MÉTODOS DEL CARRITO CON PERSISTENCIA
 const addToCart = (product) => {
+    // Si es un combo, abrir el slideover de selección de combo
+    if (product.product_type === 'combo') {
+        selectCombo(product);
+        return;
+    }
+
     // Si el producto tiene variantes, abrir slideover de selección
     if (product.has_variants && product.variants && product.variants.length > 0) {
         selectedMenuItemForVariants.value = product;
@@ -449,6 +492,47 @@ const addFreeSaleToCart = (freeSaleData) => {
     });
     showNotification(`${freeSaleData.name} agregado al carrito`, 'success');
     saveCartToStorage();
+};
+
+// Seleccionar un combo para personalizar
+const selectCombo = (combo) => {
+    // Si el combo no tiene componentes de elección, agregarlo directamente
+    const hasChoices = combo.components?.some(c => c.component_type === 'choice');
+    if (!hasChoices) {
+        addComboToCart({
+            id: combo.id,
+            name: combo.name,
+            price: parseFloat(combo.base_price),
+            quantity: 1,
+            product_type: 'combo',
+            available_quantity: 999,
+            selections: {},
+            components_detail: combo.components?.filter(c => c.component_type === 'fixed').map(c => ({
+                type: 'fixed',
+                name: c.sellable?.name || c.name,
+                quantity: c.quantity
+            })) || []
+        });
+        return;
+    }
+
+    selectedCombo.value = combo;
+    showComboSlideOver.value = true;
+};
+
+// Agregar combo al carrito
+const addComboToCart = (comboItem) => {
+    // Generar un ID único para este combo con sus selecciones
+    const comboCartId = `combo-${comboItem.id}-${Date.now()}`;
+
+    cartItems.value.push({
+        ...comboItem,
+        cartId: comboCartId,
+    });
+
+    showNotification(`${comboItem.name} agregado al carrito`, 'success');
+    saveCartToStorage();
+    showComboSlideOver.value = false;
 };
 
 const incrementQuantity = (index) => {
@@ -662,8 +746,13 @@ const processSale = (action = 'complete') => {
                 itemData.name = item.name;
                 itemData.price = item.price;
                 itemData.category = item.category;
+            } else if (item.product_type === 'combo') {
+                // Para combos, incluir id y selecciones
+                itemData.id = item.id;
+                itemData.combo_selections = item.selections || {};
+                itemData.components_detail = item.components_detail || [];
             } else {
-                // Para items regulares (menu/simple), incluir id
+                // Para items regulares (menu/simple/variant), incluir id
                 itemData.id = item.id;
             }
 
@@ -1213,9 +1302,19 @@ onBeforeUnmount(() => {
                                     >
                                         <!-- Badge de disponibilidad -->
                                         <div class="absolute top-2 right-2">
+                                            <!-- Combos -->
+                                            <span
+                                                v-if="item.product_type === 'combo'"
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                </svg>
+                                                Combo
+                                            </span>
                                             <!-- Productos con variantes -->
                                             <span
-                                                v-if="item.has_variants || item.allows_variants"
+                                                v-else-if="item.has_variants || item.allows_variants"
                                                 class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
                                             >
                                                 Variantes
@@ -1259,17 +1358,51 @@ onBeforeUnmount(() => {
                                             <!-- Información para productos simples -->
                                             <div class="mt-2" v-else-if="item.product_type === 'simple'">
                                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                    Categoría: {{ item.category }}
+                                                    Categoria: {{ item.category }}
                                                 </p>
+                                            </div>
+
+                                            <!-- Información para combos -->
+                                            <div class="mt-2" v-else-if="item.product_type === 'combo'">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Incluye:</p>
+                                                <div class="flex flex-wrap gap-1">
+                                                    <span
+                                                        v-for="component in (item.components || []).slice(0, 3)"
+                                                        :key="component.id"
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs"
+                                                        :class="component.component_type === 'fixed'
+                                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                            : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'"
+                                                    >
+                                                        {{ component.sellable?.name || component.name || 'Opcion' }}
+                                                    </span>
+                                                    <span
+                                                        v-if="(item.components || []).length > 3"
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
+                                                    >
+                                                        +{{ (item.components || []).length - 3 }} mas
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             <div class="flex justify-between items-center mt-4">
                                                 <span class="text-2xl font-bold text-green-600 dark:text-green-400">
                                                     ${{ formatPrice(item.price) }}
                                                 </span>
+                                                <!-- Combos -->
+                                                <button
+                                                    v-if="item.product_type === 'combo'"
+                                                    @click.stop="addToCart(item)"
+                                                    class="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    {{ item.components?.some(c => c.component_type === 'choice') ? 'Personalizar' : 'Agregar' }}
+                                                </button>
                                                 <!-- Productos con variantes -->
                                                 <button
-                                                    v-if="item.has_variants || item.allows_variants"
+                                                    v-else-if="item.has_variants || item.allows_variants"
                                                     @click.stop="addToCart(item)"
                                                     class="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
                                                 >
@@ -1380,9 +1513,23 @@ onBeforeUnmount(() => {
                                         <div class="flex-1">
                                             <h4 class="font-medium text-gray-900 dark:text-white">{{ item.name }}</h4>
                                             <p class="text-sm text-gray-600 dark:text-gray-400">${{ formatPrice(item.price) }} c/u</p>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                                                {{ item.product_type === 'menu' ? 'Platillo' : 'Individual' }}
+                                            <span
+                                                class="text-xs px-2 py-1 rounded"
+                                                :class="item.product_type === 'combo'
+                                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
+                                            >
+                                                {{ item.product_type === 'combo' ? 'Combo' : item.product_type === 'menu' ? 'Platillo' : item.product_type === 'variant' ? 'Variante' : item.product_type === 'free' ? 'Libre' : 'Individual' }}
                                             </span>
+                                            <!-- Mostrar componentes del combo -->
+                                            <div v-if="item.product_type === 'combo' && item.components_detail?.length > 0" class="mt-1 space-y-0.5">
+                                                <p v-for="(comp, idx) in item.components_detail.slice(0, 3)" :key="idx" class="text-xs text-gray-500 dark:text-gray-400">
+                                                    - {{ comp.name }}
+                                                </p>
+                                                <p v-if="item.components_detail.length > 3" class="text-xs text-gray-400">
+                                                    +{{ item.components_detail.length - 3 }} mas...
+                                                </p>
+                                            </div>
                                         </div>
                                         
                                         <div class="flex items-center space-x-2">
@@ -1847,6 +1994,14 @@ onBeforeUnmount(() => {
         @close="showVariantSlideOver = false"
         @select="addVariantToCart"
         @update-variants="handleUpdateVariants"
+    />
+
+    <!-- Combo Selection SlideOver -->
+    <ComboSelectionSlideOver
+        :show="showComboSlideOver"
+        :combo="selectedCombo"
+        @close="showComboSlideOver = false"
+        @add-to-cart="addComboToCart"
     />
 
     <!-- Confirm Dialog -->
