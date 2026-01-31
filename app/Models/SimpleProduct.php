@@ -17,6 +17,8 @@ class SimpleProduct extends Model
         'sale_price',
         'cost_per_unit',
         'is_available',
+        'show_in_digital_menu',
+        'available_in_combos',
         'allows_variants',
         'category',
     ];
@@ -25,6 +27,8 @@ class SimpleProduct extends Model
         'sale_price' => 'decimal:2',
         'cost_per_unit' => 'decimal:3',
         'is_available' => 'boolean',
+        'show_in_digital_menu' => 'boolean',
+        'available_in_combos' => 'boolean',
         'allows_variants' => 'boolean',
     ];
 
@@ -84,5 +88,23 @@ class SimpleProduct extends Model
     public function scopeByCategory($query, $category)
     {
         return $query->where('category', $category);
+    }
+
+    /**
+     * Scope para productos visibles en menú digital
+     */
+    public function scopeForDigitalMenu($query)
+    {
+        return $query->where('is_available', true)
+                     ->where('show_in_digital_menu', true);
+    }
+
+    /**
+     * Scope para productos disponibles en combos
+     */
+    public function scopeAvailableForCombos($query)
+    {
+        return $query->where('is_available', true)
+                     ->where('available_in_combos', true);
     }
 }

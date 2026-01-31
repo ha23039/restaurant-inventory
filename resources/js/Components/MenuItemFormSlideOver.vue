@@ -28,6 +28,8 @@ const form = ref({
     is_available: true,
     is_service: false,
     has_variants: false,
+    show_in_digital_menu: true,
+    available_in_combos: true,
 });
 
 const initialFormState = ref(null);
@@ -57,6 +59,8 @@ watch(() => props.menuItem, (newItem) => {
             is_available: newItem.is_available !== undefined ? newItem.is_available : true,
             is_service: newItem.is_service !== undefined ? newItem.is_service : false,
             has_variants: newItem.has_variants !== undefined ? newItem.has_variants : false,
+            show_in_digital_menu: newItem.show_in_digital_menu !== undefined ? newItem.show_in_digital_menu : true,
+            available_in_combos: newItem.available_in_combos !== undefined ? newItem.available_in_combos : true,
         };
         // Guardar estado inicial
         initialFormState.value = JSON.parse(JSON.stringify(form.value));
@@ -90,6 +94,8 @@ const resetForm = () => {
         is_available: true,
         is_service: false,
         has_variants: false,
+        show_in_digital_menu: true,
+        available_in_combos: true,
     };
     initialFormState.value = null;
     hasChanges.value = false;
@@ -168,6 +174,8 @@ const handleSubmit = () => {
         data.append('is_available', form.value.is_available ? '1' : '0');
         data.append('is_service', form.value.is_service ? '1' : '0');
         data.append('has_variants', form.value.has_variants ? '1' : '0');
+        data.append('show_in_digital_menu', form.value.show_in_digital_menu ? '1' : '0');
+        data.append('available_in_combos', form.value.available_in_combos ? '1' : '0');
         data.append('image', imageFile.value);
         if (isEditMode.value) {
             data.append('_method', 'PUT');
@@ -404,6 +412,53 @@ const handleSubmit = () => {
                         </label>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             Habilita opciones como tipo de masa, relleno, tamaño, etc.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Separador visual -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                        Visibilidad
+                    </p>
+                </div>
+
+                <!-- Mostrar en Menú Digital -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input
+                            v-model="form.show_in_digital_menu"
+                            id="show_in_digital_menu"
+                            type="checkbox"
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:border-gray-600"
+                        />
+                    </div>
+                    <div class="ml-3">
+                        <label for="show_in_digital_menu" class="font-medium text-gray-700 dark:text-gray-300">
+                            Mostrar en Menú Digital
+                        </label>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            Visible para clientes en el menú digital (QR)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Disponible en Combos -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input
+                            v-model="form.available_in_combos"
+                            id="available_in_combos"
+                            type="checkbox"
+                            class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded dark:border-gray-600"
+                        />
+                    </div>
+                    <div class="ml-3">
+                        <label for="available_in_combos" class="font-medium text-gray-700 dark:text-gray-300">
+                            Puede usarse en Combos
+                        </label>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            Disponible como componente al crear combos
                         </p>
                     </div>
                 </div>

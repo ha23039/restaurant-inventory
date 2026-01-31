@@ -137,6 +137,8 @@ class SimpleProductController extends Controller
             'category' => 'required|string|max:100',
             'is_available' => 'boolean',
             'allows_variants' => 'boolean',
+            'show_in_digital_menu' => 'boolean',
+            'available_in_combos' => 'boolean',
         ];
 
         if ($allowsVariants) {
@@ -184,6 +186,8 @@ class SimpleProductController extends Controller
             'category' => 'required|string|max:100',
             'is_available' => 'boolean',
             'allows_variants' => 'boolean',
+            'show_in_digital_menu' => 'boolean',
+            'available_in_combos' => 'boolean',
         ];
 
         if ($allowsVariants) {

@@ -75,6 +75,8 @@ class MenuItemController extends Controller
             'is_available' => 'boolean',
             'is_service' => 'boolean',
             'has_variants' => 'boolean',
+            'show_in_digital_menu' => 'boolean',
+            'available_in_combos' => 'boolean',
         ]);
 
         // Handle file upload
@@ -119,6 +121,8 @@ class MenuItemController extends Controller
             'is_available' => 'boolean',
             'is_service' => 'boolean',
             'has_variants' => 'boolean',
+            'show_in_digital_menu' => 'boolean',
+            'available_in_combos' => 'boolean',
         ]);
 
         // Handle file upload

@@ -35,6 +35,8 @@ const form = ref({
     category: '',
     is_available: true,
     allows_variants: false,
+    show_in_digital_menu: true,
+    available_in_combos: true,
 });
 
 // Image handling
@@ -70,6 +72,8 @@ watch(() => props.product, (newProduct) => {
             category: newProduct.category || '',
             is_available: newProduct.is_available !== undefined ? newProduct.is_available : true,
             allows_variants: newProduct.allows_variants !== undefined ? newProduct.allows_variants : false,
+            show_in_digital_menu: newProduct.show_in_digital_menu !== undefined ? newProduct.show_in_digital_menu : true,
+            available_in_combos: newProduct.available_in_combos !== undefined ? newProduct.available_in_combos : true,
         };
         // Set image preview from existing product
         imagePreview.value = newProduct.image_path || null;
@@ -182,6 +186,8 @@ const resetForm = () => {
         category: '',
         is_available: true,
         allows_variants: false,
+        show_in_digital_menu: true,
+        available_in_combos: true,
     };
     selectedProduct.value = null;
     initialFormState.value = null;
@@ -278,6 +284,8 @@ const handleSubmit = () => {
     formData.append('category', form.value.category);
     formData.append('is_available', form.value.is_available ? '1' : '0');
     formData.append('allows_variants', form.value.allows_variants ? '1' : '0');
+    formData.append('show_in_digital_menu', form.value.show_in_digital_menu ? '1' : '0');
+    formData.append('available_in_combos', form.value.available_in_combos ? '1' : '0');
 
     // Solo enviar estos campos si el producto NO tiene variantes
     if (!form.value.allows_variants) {
@@ -399,6 +407,66 @@ const formatQuantity = (quantity) => {
                         :class="form.allows_variants ? 'translate-x-5' : 'translate-x-0'"
                     />
                 </button>
+            </div>
+
+            <!-- Visibilidad Section -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                    Visibilidad
+                </p>
+                <div class="space-y-3">
+                    <!-- Toggle Menú Digital -->
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="form.show_in_digital_menu ? 'bg-blue-100 dark:bg-blue-900' : 'bg-gray-200 dark:bg-gray-700'">
+                                <svg class="w-4 h-4" :class="form.show_in_digital_menu ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Menú Digital</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Visible para clientes (QR)</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            @click="form.show_in_digital_menu = !form.show_in_digital_menu"
+                            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            :class="form.show_in_digital_menu ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'"
+                        >
+                            <span
+                                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                :class="form.show_in_digital_menu ? 'translate-x-4' : 'translate-x-0'"
+                            />
+                        </button>
+                    </div>
+
+                    <!-- Toggle Disponible en Combos -->
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="form.available_in_combos ? 'bg-purple-100 dark:bg-purple-900' : 'bg-gray-200 dark:bg-gray-700'">
+                                <svg class="w-4 h-4" :class="form.available_in_combos ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Disponible en Combos</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Puede usarse como componente</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            @click="form.available_in_combos = !form.available_in_combos"
+                            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            :class="form.available_in_combos ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'"
+                        >
+                            <span
+                                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                :class="form.available_in_combos ? 'translate-x-4' : 'translate-x-0'"
+                            />
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Info: Producto con Variantes -->

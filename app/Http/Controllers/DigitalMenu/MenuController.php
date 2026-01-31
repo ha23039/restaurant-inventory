@@ -32,8 +32,16 @@ class MenuController extends Controller
         }
 
         // Get available menu items with stock
-        $menuItems = MenuItem::where('is_available', true)
-            ->where('is_service', false)
+        // Filter by show_in_digital_menu if the column exists
+        $menuItemsQuery = MenuItem::where('is_available', true)
+            ->where('is_service', false);
+
+        // Only filter by show_in_digital_menu if the column exists
+        if (\Schema::hasColumn('menu_items', 'show_in_digital_menu')) {
+            $menuItemsQuery->where('show_in_digital_menu', true);
+        }
+
+        $menuItems = $menuItemsQuery
             ->with(['recipes.product', 'variants.recipes.product'])
             ->get()
             ->filter(fn($item) => $item->available_quantity > 0)
@@ -62,7 +70,14 @@ class MenuController extends Controller
             });
 
         // Get available simple products with stock
-        $simpleProducts = SimpleProduct::where('is_available', true)
+        // Filter by show_in_digital_menu if the column exists
+        $simpleProductsQuery = SimpleProduct::where('is_available', true);
+
+        if (\Schema::hasColumn('simple_products', 'show_in_digital_menu')) {
+            $simpleProductsQuery->where('show_in_digital_menu', true);
+        }
+
+        $simpleProducts = $simpleProductsQuery
             ->with(['product', 'product.category', 'variants.recipes.product'])
             ->get()
             ->filter(function ($product) {

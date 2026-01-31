@@ -216,12 +216,18 @@ class ComboController extends Controller
     }
 
     /**
-     * Helper: Get available menu items.
+     * Helper: Get available menu items for combos.
      */
     private function getAvailableMenuItems()
     {
-        return MenuItem::where('is_available', true)
-            ->with([
+        $query = MenuItem::where('is_available', true);
+
+        // Only filter by available_in_combos if the column exists
+        if (\Schema::hasColumn('menu_items', 'available_in_combos')) {
+            $query->where('available_in_combos', true);
+        }
+
+        return $query->with([
                 'variants' => function ($q) {
                     $q->where('is_available', true);
                 }
@@ -231,12 +237,18 @@ class ComboController extends Controller
     }
 
     /**
-     * Helper: Get available simple products.
+     * Helper: Get available simple products for combos.
      */
     private function getAvailableSimpleProducts()
     {
-        return SimpleProduct::where('is_available', true)
-            ->with([
+        $query = SimpleProduct::where('is_available', true);
+
+        // Only filter by available_in_combos if the column exists
+        if (\Schema::hasColumn('simple_products', 'available_in_combos')) {
+            $query->where('available_in_combos', true);
+        }
+
+        return $query->with([
                 'variants' => function ($q) {
                     $q->where('is_available', true);
                 },

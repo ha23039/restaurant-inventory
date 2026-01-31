@@ -138,6 +138,7 @@ watch(() => props.combo, (newCombo) => {
                 is_required: comp.is_required ?? true,
                 sellable_type: comp.sellable_type || '',
                 sellable_id: comp.sellable_id || '',
+                default_variant_id: comp.default_variant_id || null,
                 options: comp.options?.map(opt => ({
                     id: opt.id,
                     sellable_type: opt.sellable_type,
@@ -210,6 +211,40 @@ const removeImage = () => {
     }
 };
 
+// Obtener variantes de un producto dado su type e id
+const getProductVariants = (sellable_type, sellable_id) => {
+    if (!sellable_type || !sellable_id) return [];
+
+    if (sellable_type === 'menu_item') {
+        const item = props.menuItems?.find(i => i.id === parseInt(sellable_id));
+        return item?.variants || [];
+    }
+
+    if (sellable_type === 'simple_product') {
+        const product = props.simpleProducts?.find(p => p.id === parseInt(sellable_id));
+        return product?.variants || [];
+    }
+
+    return [];
+};
+
+// Verificar si un producto tiene variantes
+const productHasVariants = (sellable_type, sellable_id) => {
+    if (!sellable_type || !sellable_id) return false;
+
+    if (sellable_type === 'menu_item') {
+        const item = props.menuItems?.find(i => i.id === parseInt(sellable_id));
+        return item?.has_variants && item?.variants?.length > 0;
+    }
+
+    if (sellable_type === 'simple_product') {
+        const product = props.simpleProducts?.find(p => p.id === parseInt(sellable_id));
+        return product?.allows_variants && product?.variants?.length > 0;
+    }
+
+    return false;
+};
+
 // Agregar componente
 const addComponent = (type) => {
     form.value.components.push({
@@ -219,6 +254,7 @@ const addComponent = (type) => {
         is_required: true,
         sellable_type: '',
         sellable_id: '',
+        default_variant_id: null,
         options: [],
     });
 };
@@ -552,34 +588,72 @@ const formatCurrency = (value) => {
                         </div>
 
                         <!-- Componente FIJO -->
-                        <div v-if="component.component_type === 'fixed'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Producto *</label>
-                                <select
-                                    :value="makeProductKey(component.sellable_type, component.sellable_id)"
-                                    @change="(e) => {
-                                        const parsed = parseProductKey(e.target.value);
-                                        component.sellable_type = parsed.type;
-                                        component.sellable_id = parsed.id;
-                                    }"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
-                                >
-                                    <option value="">Seleccionar producto...</option>
-                                    <optgroup v-for="(products, category) in productsByCategory" :key="category" :label="category">
-                                        <option v-for="product in products" :key="product.uniqueKey" :value="product.uniqueKey">
-                                            {{ product.name }} - {{ formatCurrency(product.price) }}
-                                        </option>
-                                    </optgroup>
-                                </select>
+                        <div v-if="component.component_type === 'fixed'" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Producto *</label>
+                                    <select
+                                        :value="makeProductKey(component.sellable_type, component.sellable_id)"
+                                        @change="(e) => {
+                                            const parsed = parseProductKey(e.target.value);
+                                            component.sellable_type = parsed.type;
+                                            component.sellable_id = parsed.id;
+                                            component.default_variant_id = null;
+                                        }"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                                    >
+                                        <option value="">Seleccionar producto...</option>
+                                        <optgroup v-for="(products, category) in productsByCategory" :key="category" :label="category">
+                                            <option v-for="product in products" :key="product.uniqueKey" :value="product.uniqueKey">
+                                                {{ product.name }} - {{ formatCurrency(product.price) }}
+                                                <template v-if="product.has_variants"> (con variantes)</template>
+                                            </option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cantidad</label>
+                                    <input
+                                        v-model="component.quantity"
+                                        type="number"
+                                        min="1"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cantidad</label>
-                                <input
-                                    v-model="component.quantity"
-                                    type="number"
-                                    min="1"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
-                                />
+
+                            <!-- Selector de Variante (solo si el producto tiene variantes) -->
+                            <div v-if="productHasVariants(component.sellable_type, component.sellable_id)" class="bg-green-100/50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                                <label class="block text-sm font-medium text-green-800 dark:text-green-300 mb-2">
+                                    <svg class="inline w-4 h-4 mr-1 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                                    </svg>
+                                    Variante incluida en el combo
+                                </label>
+                                <select
+                                    v-model="component.default_variant_id"
+                                    class="w-full px-3 py-2 border border-green-300 dark:border-green-700 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white text-sm"
+                                >
+                                    <option :value="null">Sin variante específica (cliente elige)</option>
+                                    <option
+                                        v-for="variant in getProductVariants(component.sellable_type, component.sellable_id)"
+                                        :key="variant.id"
+                                        :value="variant.id"
+                                    >
+                                        {{ variant.variant_name || variant.name }}
+                                        <template v-if="variant.price_adjustment && variant.price_adjustment != 0">
+                                            ({{ variant.price_adjustment > 0 ? '+' : '' }}{{ formatCurrency(variant.price_adjustment) }})
+                                        </template>
+                                    </option>
+                                </select>
+                                <p class="text-xs text-green-700 dark:text-green-400 mt-1">
+                                    <template v-if="component.default_variant_id">
+                                        Esta variante se incluirá automáticamente en el combo.
+                                    </template>
+                                    <template v-else>
+                                        El cliente podrá elegir la variante al ordenar.
+                                    </template>
+                                </p>
                             </div>
                         </div>
 

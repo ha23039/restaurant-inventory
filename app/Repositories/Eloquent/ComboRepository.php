@@ -197,6 +197,12 @@ class ComboRepository extends BaseRepository implements ComboRepositoryInterface
             $sellableType = !empty($componentData['sellable_type']) ? $componentData['sellable_type'] : null;
             $sellableId = !empty($componentData['sellable_id']) ? (int) $componentData['sellable_id'] : null;
 
+            // Variante por defecto para componentes fijos
+            $defaultVariantId = null;
+            if ($componentData['component_type'] === 'fixed' && !empty($componentData['default_variant_id'])) {
+                $defaultVariantId = (int) $componentData['default_variant_id'];
+            }
+
             $component = ComboComponent::create([
                 'combo_id' => $combo->id,
                 'component_type' => $componentData['component_type'],
@@ -205,6 +211,7 @@ class ComboRepository extends BaseRepository implements ComboRepositoryInterface
                 'is_required' => filter_var($componentData['is_required'] ?? true, FILTER_VALIDATE_BOOLEAN),
                 'sellable_type' => $sellableType,
                 'sellable_id' => $sellableId,
+                'default_variant_id' => $defaultVariantId,
                 'sort_order' => $index,
             ]);
 

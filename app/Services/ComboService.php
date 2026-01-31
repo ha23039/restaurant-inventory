@@ -4,9 +4,10 @@ namespace App\Services;
 
 use App\Models\Combo;
 use App\Repositories\Contracts\ComboRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class ComboService
@@ -19,7 +20,7 @@ class ComboService
     /**
      * Obtener combos disponibles
      */
-    public function getAvailableCombos(): Collection
+    public function getAvailableCombos(): EloquentCollection
     {
         return $this->comboRepository->getAvailable();
     }
@@ -41,7 +42,81 @@ class ComboService
      */
     public function getCombosForPos(): Collection
     {
-        return $this->comboRepository->getForPos();
+        $combos = $this->comboRepository->getForPos();
+
+        return $combos->map(function ($combo) {
+            return $this->formatComboForPos($combo);
+        });
+    }
+
+    /**
+     * Formatear combo para el POS
+     */
+    protected function formatComboForPos(Combo $combo): array
+    {
+        return [
+            'id' => $combo->id,
+            'name' => $combo->name,
+            'description' => $combo->description,
+            'image_path' => $combo->image_path,
+            'base_price' => $combo->base_price,
+            'category' => $combo->category,
+            'is_available' => $combo->is_available,
+            'components' => $combo->components->map(function ($component) {
+                $data = [
+                    'id' => $component->id,
+                    'component_type' => $component->component_type,
+                    'name' => $component->name,
+                    'quantity' => $component->quantity,
+                    'is_required' => $component->is_required,
+                    'sellable_type' => $component->sellable_type,
+                    'sellable_id' => $component->sellable_id,
+                    'sellable' => $component->sellable ? [
+                        'id' => $component->sellable->id,
+                        'name' => $component->sellable->name,
+                        'image_path' => $component->sellable->image_path ?? null,
+                        'has_variants' => $component->sellable->has_variants ?? $component->sellable->allows_variants ?? false,
+                        'variants' => ($component->sellable->variants ?? collect())->map(fn($v) => [
+                            'id' => $v->id,
+                            'variant_name' => $v->variant_name ?? $v->name,
+                            'name' => $v->variant_name ?? $v->name,
+                            'price' => $v->price ?? null,
+                            'is_available' => $v->is_available ?? true,
+                        ])->values()->toArray(),
+                    ] : null,
+                    'options' => [],
+                ];
+
+                // Si es choice, agregar opciones
+                if ($component->component_type === 'choice') {
+                    $data['options'] = $component->options->map(function ($option) {
+                        return [
+                            'id' => $option->id,
+                            'sellable_type' => $option->sellable_type,
+                            'sellable_id' => $option->sellable_id,
+                            'price_adjustment' => (float) $option->price_adjustment,
+                            'is_default' => $option->is_default,
+                            'sellable' => $option->sellable ? [
+                                'id' => $option->sellable->id,
+                                'name' => $option->sellable->name,
+                                'image_path' => $option->sellable->image_path ?? null,
+                                'has_variants' => $option->sellable->has_variants ?? $option->sellable->allows_variants ?? false,
+                                'allows_variants' => $option->sellable->allows_variants ?? false,
+                                'variants' => ($option->sellable->variants ?? collect())->map(fn($v) => [
+                                    'id' => $v->id,
+                                    'variant_name' => $v->variant_name ?? $v->name,
+                                    'name' => $v->variant_name ?? $v->name,
+                                    'price' => $v->price ?? null,
+                                    'is_available' => $v->is_available ?? true,
+                                ])->values()->toArray(),
+                            ] : null,
+                        ];
+                    })->toArray();
+                }
+
+                return $data;
+            })->toArray(),
+        ];
     }
 
     /**
@@ -171,7 +246,7 @@ class ComboService
     /**
      * Buscar combos
      */
-    public function search(string $query): Collection
+    public function search(string $query): EloquentCollection
     {
         return $this->comboRepository->search($query);
     }

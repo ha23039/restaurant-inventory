@@ -17,12 +17,14 @@ class ComboComponent extends Model
         'is_required',
         'sellable_type',
         'sellable_id',
+        'default_variant_id',
         'sort_order',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'is_required' => 'boolean',
+        'default_variant_id' => 'integer',
         'sort_order' => 'integer',
     ];
 
@@ -76,6 +78,32 @@ class ComboComponent extends Model
     }
 
     /**
+     * Relación con la variante por defecto (si aplica)
+     */
+    public function defaultVariant()
+    {
+        // La variante puede ser MenuItemVariant o SimpleProductVariant
+        // según el sellable_type
+        if ($this->sellable_type === 'menu_item' && $this->default_variant_id) {
+            return $this->belongsTo(MenuItemVariant::class, 'default_variant_id');
+        }
+
+        if ($this->sellable_type === 'simple_product' && $this->default_variant_id) {
+            return $this->belongsTo(SimpleProductVariant::class, 'default_variant_id');
+        }
+
+        return null;
+    }
+
+    /**
+     * Verificar si tiene variante por defecto configurada
+     */
+    public function hasDefaultVariant(): bool
+    {
+        return $this->isFixed() && !empty($this->default_variant_id);
+    }
+
+    /**
      * Obtener el nombre del producto (para componentes fijos)
      */
     public function getProductNameAttribute(): ?string
@@ -84,7 +112,39 @@ class ComboComponent extends Model
             return null;
         }
 
-        return $this->sellable->name ?? null;
+        $name = $this->sellable->name ?? null;
+
+        // Si tiene variante por defecto, incluir el nombre de la variante
+        if ($this->default_variant_id) {
+            $variantName = $this->getDefaultVariantName();
+            if ($variantName) {
+                $name .= ' - ' . $variantName;
+            }
+        }
+
+        return $name;
+    }
+
+    /**
+     * Obtener nombre de la variante por defecto
+     */
+    public function getDefaultVariantName(): ?string
+    {
+        if (!$this->default_variant_id) {
+            return null;
+        }
+
+        if ($this->sellable_type === 'menu_item') {
+            $variant = MenuItemVariant::find($this->default_variant_id);
+            return $variant?->variant_name;
+        }
+
+        if ($this->sellable_type === 'simple_product') {
+            $variant = SimpleProductVariant::find($this->default_variant_id);
+            return $variant?->variant_name ?? $variant?->name;
+        }
+
+        return null;
     }
 
     /**
