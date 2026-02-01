@@ -406,13 +406,14 @@
                                                 <span
                                                     class="inline-flex items-center justify-center w-10 h-10 rounded-full"
                                                     :class="{
-                                                        'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400': item.product_type === 'menu',
+                                                        'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400': item.product_type === 'menu' || item.product_type === 'variant',
                                                         'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400': item.product_type === 'simple',
-                                                        'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400': item.product_type === 'free'
+                                                        'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400': item.product_type === 'free',
+                                                        'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400': item.product_type === 'combo'
                                                     }"
                                                 >
                                                     <component
-                                                        :is="item.product_type === 'menu' ? icons.menu : item.product_type === 'simple' ? icons.product : icons.add"
+                                                        :is="item.product_type === 'menu' || item.product_type === 'variant' ? icons.menu : item.product_type === 'simple' ? icons.product : item.product_type === 'combo' ? icons.menu : icons.add"
                                                         class="w-5 h-5"
                                                     />
                                                 </span>
@@ -431,12 +432,13 @@
                                                     <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                                         :class="{
-                                                            'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300': item.product_type === 'menu',
+                                                            'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300': item.product_type === 'menu' || item.product_type === 'variant',
                                                             'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300': item.product_type === 'simple',
-                                                            'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300': item.product_type === 'free'
+                                                            'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300': item.product_type === 'free',
+                                                            'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300': item.product_type === 'combo'
                                                         }"
                                                     >
-                                                        {{ item.product_type === 'menu' ? 'Platillo del Menú' : item.product_type === 'simple' ? 'Producto Individual' : 'Venta Libre' }}
+                                                        {{ item.product_type === 'combo' ? 'Combo' : item.product_type === 'variant' ? 'Variante' : item.product_type === 'menu' ? 'Platillo del Menú' : item.product_type === 'simple' ? 'Producto Individual' : 'Venta Libre' }}
                                                     </span>
 
                                                     <span
@@ -467,6 +469,34 @@
                                                                 ({{ (recipe.quantity_needed * item.quantity).toFixed(2) }} {{ recipe.product?.unit_type || 'unidades' }})
                                                             </span>
                                                         </span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Componentes del combo -->
+                                                <div v-if="item.product_type === 'combo' && item.components_detail?.length" class="mt-2">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contenido del combo:</p>
+                                                    <div class="space-y-1">
+                                                        <div
+                                                            v-for="(comp, idx) in item.components_detail"
+                                                            :key="idx"
+                                                            class="flex items-center gap-2 text-xs"
+                                                        >
+                                                            <span
+                                                                class="inline-flex items-center justify-center w-4 h-4 rounded-full"
+                                                                :class="comp.type === 'fixed' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'"
+                                                            >
+                                                                <svg v-if="comp.type === 'fixed'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                                <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                                                </svg>
+                                                            </span>
+                                                            <span class="text-gray-700 dark:text-gray-300">
+                                                                <span v-if="comp.componentName" class="font-medium">{{ comp.componentName }}:</span>
+                                                                {{ comp.name }}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -920,25 +950,31 @@ const formatTime = (date) => {
 const getProductName = (item) => {
     if (item.product_type === 'free' && item.free_sale) {
         return item.free_sale.name;
+    } else if (item.product_type === 'combo' && item.combo) {
+        return item.combo.name;
+    } else if (item.product_type === 'variant' && item.menu_item_variant) {
+        const parentName = item.menu_item_variant.menu_item?.name || '';
+        return parentName ? `${parentName} - ${item.menu_item_variant.variant_name}` : item.menu_item_variant.variant_name;
     } else if (item.product_type === 'menu' && item.menu_item) {
-        // Check if item has a variant
-        if (item.menu_item_variant) {
-            return `${item.menu_item.name} - ${item.menu_item_variant.variant_name || item.menu_item_variant.name}`;
-        }
         return item.menu_item.name;
     } else if (item.product_type === 'simple' && item.simple_product) {
         return item.simple_product.name;
     }
-    // Fallback: check variant_name in product_name or item itself
+    // Fallback: use product_name if available
+    if (item.product_name) {
+        return item.product_name;
+    }
     if (item.variant_name) {
         return `${item.product_name || 'Producto'} - ${item.variant_name}`;
     }
-    return item.product_name || 'Producto no identificado';
+    return 'Producto';
 };
 
 const getProductDescription = (item) => {
     if (item.product_type === 'free') {
-        return null; // Las ventas libres no tienen descripción adicional
+        return null;
+    } else if (item.product_type === 'combo' && item.combo) {
+        return item.combo.description;
     } else if (item.product_type === 'menu' && item.menu_item) {
         return item.menu_item.description;
     } else if (item.product_type === 'simple' && item.simple_product) {

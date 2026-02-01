@@ -199,16 +199,43 @@ onUnmounted(() => {
                     <div
                         v-for="(item, index) in sale.items"
                         :key="index"
-                        class="flex items-center justify-between py-2"
+                        class="py-2"
                     >
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                {{ item.quantity }}x {{ item.name }}
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ item.quantity }}x {{ item.name }}
+                                    </p>
+                                    <span
+                                        v-if="item.product_type === 'combo'"
+                                        class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                                    >
+                                        Combo
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                ${{ parseFloat(item.total_price).toFixed(2) }}
                             </p>
                         </div>
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                            ${{ parseFloat(item.total_price).toFixed(2) }}
-                        </p>
+                        <!-- Detalles del combo -->
+                        <div v-if="item.product_type === 'combo' && item.components_detail?.length" class="mt-1.5 ml-4 space-y-0.5">
+                            <p
+                                v-for="(comp, idx) in item.components_detail"
+                                :key="idx"
+                                class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"
+                            >
+                                <svg v-if="comp.type === 'fixed'" class="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <svg v-else class="w-3 h-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                </svg>
+                                <span v-if="comp.componentName" class="font-medium">{{ comp.componentName }}:</span>
+                                {{ comp.name }}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

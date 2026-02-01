@@ -250,6 +250,21 @@ class SaleController extends Controller
                     ];
                     $parentName = $item->menuItemVariant->menuItem ? $item->menuItemVariant->menuItem->name : '';
                     $baseItem['product_name'] = $parentName . ' - ' . $item->menuItemVariant->variant_name;
+                } elseif ($item->product_type === 'combo' && $item->combo) {
+                    // 🆕 Combos
+                    $comboSelections = is_string($item->combo_selections)
+                        ? json_decode($item->combo_selections, true)
+                        : $item->combo_selections;
+
+                    $baseItem['combo'] = [
+                        'id' => $item->combo->id,
+                        'name' => $item->combo->name,
+                        'description' => $item->combo->description,
+                        'base_price' => floatval($item->combo->base_price),
+                    ];
+                    $baseItem['combo_selections'] = $comboSelections;
+                    $baseItem['components_detail'] = $comboSelections['components_detail'] ?? [];
+                    $baseItem['product_name'] = $item->combo->name;
                 }
 
                 return $baseItem;

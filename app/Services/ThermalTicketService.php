@@ -678,10 +678,28 @@ class ThermalTicketService
             return '';
         }
 
-        $details = [];
-        $selections = $item->combo_selections;
+        $comboSelections = is_string($item->combo_selections)
+            ? json_decode($item->combo_selections, true)
+            : $item->combo_selections;
 
-        // Cargar combo con componentes si no está cargado
+        // Usar components_detail si está disponible (más directo)
+        if (!empty($comboSelections['components_detail'])) {
+            $details = [];
+            foreach ($comboSelections['components_detail'] as $comp) {
+                $prefix = $comp['type'] === 'fixed' ? '+' : '>';
+                $name = $comp['name'] ?? 'Componente';
+                if (!empty($comp['componentName']) && $comp['type'] === 'choice') {
+                    $details[] = "  {$prefix} {$comp['componentName']}: {$name}";
+                } else {
+                    $details[] = "  {$prefix} {$name}";
+                }
+            }
+            return implode("\n", $details);
+        }
+
+        // Fallback: usar selections y cargar desde BD
+        $selections = $comboSelections['selections'] ?? $comboSelections;
+
         $combo = $item->combo;
         if (!$combo) {
             return '';
@@ -689,17 +707,19 @@ class ThermalTicketService
 
         $combo->load(['components.sellable', 'components.options.sellable']);
 
+        $details = [];
         foreach ($combo->components as $component) {
             if ($component->component_type === 'fixed') {
-                // Componente fijo
-                $details[] = "  + {$component->sellable->name}";
+                $details[] = "  + " . ($component->sellable?->name ?? $component->name ?? 'Producto');
             } else {
-                // Componente de elección - buscar selección del cliente
-                $selection = $selections[$component->id] ?? null;
+                $componentId = (string) $component->id;
+                $selection = $selections[$componentId] ?? $selections[$component->id] ?? null;
                 if ($selection && isset($selection['optionId'])) {
                     $option = $component->options->firstWhere('id', $selection['optionId']);
                     if ($option && $option->sellable) {
-                        $details[] = "  + {$option->sellable->name}";
+                        $variantName = $selection['variantName'] ?? '';
+                        $name = $option->sellable->name . ($variantName ? " ({$variantName})" : '');
+                        $details[] = "  > {$component->name}: {$name}";
                     }
                 }
             }

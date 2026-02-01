@@ -19,6 +19,7 @@ class OrderTrackingController extends Controller
                 'saleItems.menuItem',
                 'saleItems.menuItemVariant.menuItem',
                 'saleItems.simpleProduct',
+                'saleItems.combo',
                 'digitalCustomer',
                 'table',
                 'kitchenOrderState', // Incluir estado de cocina
@@ -42,17 +43,29 @@ class OrderTrackingController extends Controller
                 'created_at' => $sale->created_at,
                 'items' => $sale->saleItems->map(function ($item) {
                     $name = match ($item->product_type) {
-                        'menu' => $item->menuItem->name,
-                        'variant' => $item->menuItemVariant->menuItem->name . ' - ' . $item->menuItemVariant->variant_name,
-                        'simple' => $item->simpleProduct->name,
-                        default => 'Producto desconocido',
+                        'menu' => $item->menuItem?->name ?? 'Platillo',
+                        'variant' => ($item->menuItemVariant?->menuItem?->name ?? '') . ' - ' . ($item->menuItemVariant?->variant_name ?? ''),
+                        'simple' => $item->simpleProduct?->name ?? 'Producto',
+                        'combo' => $item->combo?->name ?? 'Combo',
+                        default => 'Producto',
                     };
+
+                    // Para combos, agregar detalle de componentes
+                    $componentsDetail = [];
+                    if ($item->product_type === 'combo' && $item->combo_selections) {
+                        $selections = is_string($item->combo_selections)
+                            ? json_decode($item->combo_selections, true)
+                            : $item->combo_selections;
+                        $componentsDetail = $selections['components_detail'] ?? [];
+                    }
 
                     return [
                         'name' => $name,
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'total_price' => $item->total_price,
+                        'product_type' => $item->product_type,
+                        'components_detail' => $componentsDetail,
                     ];
                 }),
                 'delivery_method' => $sale->delivery_method,

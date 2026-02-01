@@ -214,7 +214,7 @@ const handleSubmit = () => {
         @backdrop-click="handleBackdropClick"
         :title="isEditMode ? 'Editar Platillo' : 'Nuevo Platillo'"
         subtitle="Completa la información del platillo del menú"
-        size="md"
+        size="lg"
     >
         <div class="space-y-6">
             <!-- Nombre -->

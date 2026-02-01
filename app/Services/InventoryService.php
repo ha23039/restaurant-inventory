@@ -212,10 +212,8 @@ class InventoryService
     public function deductComboStock(SaleItem $saleItem): void
     {
         $combo = \App\Models\Combo::with([
-            'components.sellable.recipes.product',
-            'components.sellable.product',
-            'components.options.sellable.recipes.product',
-            'components.options.sellable.product'
+            'components.sellable',
+            'components.options.sellable',
         ])->find($saleItem->combo_id);
 
         if (!$combo) {
@@ -252,6 +250,9 @@ class InventoryService
             $quantityMultiplier = $component->quantity * $saleItem->quantity;
 
             if ($sellable instanceof \App\Models\MenuItem) {
+                // Cargar recetas con productos para MenuItem
+                $sellable->load('recipes.product');
+
                 // Deducir ingredientes del menu item
                 foreach ($sellable->recipes as $recipe) {
                     if (!$recipe->product) continue;
@@ -276,6 +277,9 @@ class InventoryService
                     );
                 }
             } elseif ($sellable instanceof \App\Models\SimpleProduct) {
+                // Cargar producto base para SimpleProduct
+                $sellable->load('product');
+
                 // Deducir del producto base
                 if ($sellable->product) {
                     $quantityNeeded = $sellable->cost_per_unit * $quantityMultiplier;
@@ -382,10 +386,8 @@ class InventoryService
     public function restoreComboStock(SaleItem $saleItem): void
     {
         $combo = \App\Models\Combo::with([
-            'components.sellable.recipes.product',
-            'components.sellable.product',
-            'components.options.sellable.recipes.product',
-            'components.options.sellable.product'
+            'components.sellable',
+            'components.options.sellable',
         ])->find($saleItem->combo_id);
 
         if (!$combo) {
@@ -417,6 +419,9 @@ class InventoryService
             $quantityMultiplier = $component->quantity * $saleItem->quantity;
 
             if ($sellable instanceof \App\Models\MenuItem) {
+                // Cargar recetas con productos para MenuItem
+                $sellable->load('recipes.product');
+
                 // Restaurar ingredientes del menu item
                 foreach ($sellable->recipes as $recipe) {
                     if (!$recipe->product) continue;
@@ -441,6 +446,9 @@ class InventoryService
                     );
                 }
             } elseif ($sellable instanceof \App\Models\SimpleProduct) {
+                // Cargar producto base para SimpleProduct
+                $sellable->load('product');
+
                 if ($sellable->product) {
                     $quantityToRestore = $sellable->cost_per_unit * $quantityMultiplier;
 
