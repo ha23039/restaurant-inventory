@@ -161,12 +161,12 @@ class OrderController extends Controller
                     'total_price' => $itemData['total_price'],
                 ];
 
-                // Para combos, guardar las selecciones como JSON
+                // Para combos, guardar las selecciones (sin json_encode, el modelo tiene cast 'array')
                 if ($itemData['type'] === 'combo') {
-                    $saleItemData['combo_selections'] = json_encode([
+                    $saleItemData['combo_selections'] = [
                         'selections' => $itemData['selections'],
                         'components_detail' => $itemData['components_detail'],
-                    ]);
+                    ];
                 }
 
                 SaleItem::create($saleItemData);
@@ -176,7 +176,7 @@ class OrderController extends Controller
             KitchenOrderState::create([
                 'sale_id' => $sale->id,
                 'status' => 'nueva',
-                'priority' => 1, // Prioridad normal para órdenes digitales
+                'priority' => 0, // Prioridad normal (igual que POS) para ordenamiento FIFO
             ]);
 
             // Update customer stats
@@ -204,6 +204,17 @@ class OrderController extends Controller
             }
 
             DB::commit();
+
+            // Recargar la venta con todas las relaciones para los tickets
+            $sale = Sale::with([
+                'saleItems.menuItem',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+                'table',
+            ])->find($sale->id);
 
             // Imprimir ticket de cocina
             try {

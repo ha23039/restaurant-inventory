@@ -27,14 +27,19 @@ class KitchenDisplayController extends Controller
             'sale.saleItems.menuItemVariant.menuItem',
             'sale.saleItems.simpleProductVariant.simpleProduct',
             'sale.saleItems.combo',
-            'sale.table'
+            'sale.table',
         ])
             ->whereHas('sale') // Solo órdenes con venta válida (no eliminada)
             ->active() // Solo órdenes no entregadas
-            ->orderByPriority() // Por prioridad y luego por fecha
+            ->orderByDesc('priority') // Mayor prioridad primero
+            ->orderBy('created_at', 'asc') // Más antiguas primero (FIFO)
             ->get()
-            ->filter(fn($order) => $order->sale !== null) // Doble verificación
             ->map(function ($order) {
+                // Saltar si la venta fue eliminada
+                if (!$order->sale) {
+                    return null;
+                }
+
                 return [
                     'id' => $order->id,
                     'sale_id' => $order->sale_id,
@@ -49,14 +54,25 @@ class KitchenDisplayController extends Controller
                     'customer_name' => $order->sale->customer_name,
                     'notes' => $order->sale->notes,
                     'items' => $order->sale->saleItems->map(function ($item) {
-                        return [
+                        $itemData = [
                             'quantity' => $item->quantity,
                             'name' => $this->getItemName($item),
+                            'product_type' => $item->product_type,
                         ];
+
+                        // Para combos, incluir detalles de componentes
+                        if ($item->product_type === 'combo' && $item->combo_selections) {
+                            $selections = is_string($item->combo_selections)
+                                ? json_decode($item->combo_selections, true)
+                                : $item->combo_selections;
+                            $itemData['components_detail'] = $selections['components_detail'] ?? [];
+                        }
+
+                        return $itemData;
                     }),
                     'created_at' => $order->created_at->format('H:i'),
                 ];
-            })->values();
+            })->filter()->values(); // filter() remueve nulls, values() reindexa
 
         return response()->json($orders);
     }
@@ -70,11 +86,13 @@ class KitchenDisplayController extends Controller
             // Para variantes de menú, mostrar nombre del platillo padre + nombre de variante
             $parentName = $item->menuItemVariant->menuItem->name ?? '';
             $variantName = $item->menuItemVariant->variant_name;
+
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
         } elseif ($item->product_type === 'simple_variant' && $item->simpleProductVariant) {
             // Para variantes de productos simples
             $parentName = $item->simpleProductVariant->simpleProduct->name ?? '';
             $variantName = $item->simpleProductVariant->variant_name;
+
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
         } elseif ($item->product_type === 'menu' && $item->menuItem) {
             return $item->menuItem->name;
@@ -133,7 +151,7 @@ class KitchenDisplayController extends Controller
      */
     private function mapKitchenStatusToSaleStatus(string $kitchenStatus): string
     {
-        return match($kitchenStatus) {
+        return match ($kitchenStatus) {
             'entregada' => 'completada',
             'nueva', 'preparando', 'lista' => 'pendiente',
             default => 'pendiente',

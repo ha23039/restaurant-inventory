@@ -23,7 +23,14 @@ class TicketController extends Controller
     public function printKitchenOrder(Sale $sale)
     {
         try {
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
+            $sale->load([
+                'saleItems.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+            ]);
             // Verificar que la venta existe y está completada
             if ($sale->status !== 'completada') {
                 return back()->withErrors([
@@ -80,7 +87,14 @@ class TicketController extends Controller
     public function printCustomerReceipt(Sale $sale)
     {
         try {
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
+            $sale->load([
+                'saleItems.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+            ]);
             // Verificar que la venta existe
             if ($sale->status === 'cancelada') {
                 return back()->withErrors([
@@ -384,7 +398,14 @@ class TicketController extends Controller
     {
         try {
             // 🔧 CARGAR RELACIONES NECESARIAS
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
+            $sale->load([
+                'saleItems.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+            ]);
 
             // Generar contenido de la comanda
             $content = $this->generateKitchenPreview($sale);
@@ -415,7 +436,14 @@ class TicketController extends Controller
     {
         try {
             // 🔧 CARGAR RELACIONES NECESARIAS
-            $sale->load(['saleItems.menuItem', 'saleItems.simpleProduct', 'saleItems.menuItemVariant.menuItem', 'user']);
+            $sale->load([
+                'saleItems.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+            ]);
 
             // Generar contenido del ticket
             $content = $this->generateCustomerPreview($sale);
@@ -545,6 +573,21 @@ class TicketController extends Controller
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
         } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
             return $item->simpleProduct->name;
+        } elseif ($item->product_type === 'simple_variant' && $item->simpleProductVariant) {
+            // Para variantes de productos simples
+            $parentName = $item->simpleProductVariant->simpleProduct->name ?? '';
+            $variantName = $item->simpleProductVariant->variant_name;
+            return $parentName ? "{$parentName} - {$variantName}" : $variantName;
+        } elseif ($item->product_type === 'combo') {
+            // Para combos
+            if ($item->combo) {
+                return $item->combo->name;
+            }
+            // Fallback: cargar combo por ID si no está cargado
+            if ($item->combo_id) {
+                $combo = \App\Models\Combo::find($item->combo_id);
+                return $combo ? $combo->name : "Combo #{$item->combo_id}";
+            }
         } elseif ($item->product_type === 'free' && $item->free_sale_name) {
             return $item->free_sale_name;
         }

@@ -259,9 +259,13 @@ class SaleService
                 $saleItemData['menu_item_variant_id'] = null;
                 $saleItemData['simple_product_id'] = null;
             } elseif ($productType === 'combo') {
-                // Para combos
+                // Para combos - guardar selecciones y detalles de componentes juntos
+                $comboSelections = [
+                    'selections' => $item['combo_selections'] ?? [],
+                    'components_detail' => $item['components_detail'] ?? [],
+                ];
                 $saleItemData['combo_id'] = $item['id'];
-                $saleItemData['combo_selections'] = $item['combo_selections'] ?? null;
+                $saleItemData['combo_selections'] = $comboSelections;
                 $saleItemData['unit_price'] = $item['unit_price'];
                 $saleItemData['total_price'] = $item['quantity'] * $item['unit_price'];
                 $saleItemData['menu_item_id'] = null;
@@ -434,12 +438,12 @@ class SaleService
             $this->cashFlowService->recordSaleIncome($sale);
 
             // Imprimir tickets (cocina y cliente) si están configurados
-            if (config('thermal_printer.auto_print_kitchen')) {
-                app(\App\Services\ThermalTicketService::class)->printKitchenOrder($sale);
+            if (config('thermal_printer.tickets.auto_print_kitchen')) {
+                app(\App\Services\ThermalTicketService::class)->generateKitchenOrder($sale);
             }
 
-            if (config('thermal_printer.auto_print_customer')) {
-                app(\App\Services\ThermalTicketService::class)->printCustomerReceipt($sale);
+            if (config('thermal_printer.tickets.auto_print_customer')) {
+                app(\App\Services\ThermalTicketService::class)->generateCustomerReceipt($sale);
             }
 
             // Liberar mesa si estaba asignada

@@ -46,9 +46,21 @@ class ThermalTicketService
     public function generateKitchenOrder(Sale $sale): bool
     {
         try {
+            // Cargar relaciones necesarias incluyendo combos y variantes
+            $sale->load([
+                'saleItems.menuItem',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+                'table',
+            ]);
+
             // Verificar si la impresora está habilitada (desde BD o .env)
             if (!$this->kitchenPrinterConfig['enabled']) {
                 \Log::info('Impresora de cocina deshabilitada, saltando impresión');
+
                 return true; // Silenciosamente salir si está deshabilitada
             }
 
@@ -70,9 +82,9 @@ class ThermalTicketService
             // Información de la orden
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->text("COMANDA #{$sale->sale_number}\n");
-            $this->printer->text('Fecha: ' . Carbon::parse($sale->created_at)->format('d/m/Y H:i') . "\n");
+            $this->printer->text('Fecha: '.Carbon::parse($sale->created_at)->format('d/m/Y H:i')."\n");
             $this->printer->text("Cajero: {$sale->user->name}\n");
-            $this->printer->text('Mesa: ' . ($sale->table_number ?? 'Para llevar') . "\n");
+            $this->printer->text('Mesa: '.($sale->table_number ?? 'Para llevar')."\n");
             $this->printer->text("--------------------------------\n");
 
             // Items de la orden - SOLO LO QUE SE COCINA
@@ -87,7 +99,7 @@ class ThermalTicketService
                     if ($item->product_type === 'combo') {
                         $comboDetails = $this->getComboComponentsForTicket($item);
                         if ($comboDetails) {
-                            $this->printer->text($comboDetails . "\n");
+                            $this->printer->text($comboDetails."\n");
                         }
                     }
 
@@ -114,7 +126,7 @@ class ThermalTicketService
             $this->printer->setTextSize(1, 2);
             $this->printer->text("⚠️  PRIORIDAD: {$priority}\n");
             $this->printer->setTextSize(1, 1);
-            $this->printer->text('Hora de orden: ' . Carbon::now()->format('H:i') . "\n");
+            $this->printer->text('Hora de orden: '.Carbon::now()->format('H:i')."\n");
 
             $this->printer->text("================================\n");
             $this->printer->cut();
@@ -123,7 +135,7 @@ class ThermalTicketService
             return true;
 
         } catch (Exception $e) {
-            \Log::error('Error generando comanda de cocina: ' . $e->getMessage());
+            \Log::error('Error generando comanda de cocina: '.$e->getMessage());
 
             // 🚀 FALLBACK EN DESARROLLO: Intentar simular
             if (app()->environment(['local', 'development'])) {
@@ -140,9 +152,21 @@ class ThermalTicketService
     public function generateCustomerReceipt(Sale $sale): bool
     {
         try {
+            // Cargar relaciones necesarias incluyendo combos y variantes
+            $sale->load([
+                'saleItems.menuItem',
+                'saleItems.menuItemVariant.menuItem',
+                'saleItems.simpleProduct',
+                'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo',
+                'user',
+                'table',
+            ]);
+
             // Verificar si la impresora está habilitada (desde BD o .env)
             if (!$this->customerPrinterConfig['enabled']) {
                 \Log::info('Impresora de cliente deshabilitada, saltando impresión');
+
                 return true; // Silenciosamente salir si está deshabilitada
             }
 
@@ -166,7 +190,7 @@ class ThermalTicketService
             // Información del ticket
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->text("Ticket: #{$sale->sale_number}\n");
-            $this->printer->text('Fecha: ' . Carbon::parse($sale->created_at)->format('d/m/Y H:i') . "\n");
+            $this->printer->text('Fecha: '.Carbon::parse($sale->created_at)->format('d/m/Y H:i')."\n");
             $this->printer->text("Cajero: {$sale->user->name}\n");
             if ($sale->customer_name) {
                 $this->printer->text("Cliente: {$sale->customer_name}\n");
@@ -182,7 +206,7 @@ class ThermalTicketService
                     substr($item->menu_item_name, 0, 20),
                     number_format($item->subtotal, 2)
                 );
-                $this->printer->text($line . "\n");
+                $this->printer->text($line."\n");
 
                 // Notas del item
                 if ($item->notes) {
@@ -237,7 +261,7 @@ class ThermalTicketService
             return true;
 
         } catch (Exception $e) {
-            \Log::error('Error generando ticket de cliente: ' . $e->getMessage());
+            \Log::error('Error generando ticket de cliente: '.$e->getMessage());
 
             // 🚀 FALLBACK EN DESARROLLO: Intentar simular
             if (app()->environment(['local', 'development'])) {
@@ -261,13 +285,13 @@ class ThermalTicketService
                 mkdir($ticketPath, 0755, true);
             }
 
-            $fileName = 'kitchen_' . $sale->sale_number . '_' . time() . '.txt';
-            $filePath = $ticketPath . $fileName;
+            $fileName = 'kitchen_'.$sale->sale_number.'_'.time().'.txt';
+            $filePath = $ticketPath.$fileName;
 
             $content = "🍔 COMANDA DE COCINA (SIMULACIÓN)\n";
             $content .= "================================\n";
             $content .= "COMANDA #{$sale->sale_number}\n";
-            $content .= 'Fecha: ' . Carbon::parse($sale->created_at)->format('d/m/Y H:i') . "\n";
+            $content .= 'Fecha: '.Carbon::parse($sale->created_at)->format('d/m/Y H:i')."\n";
             $content .= "Cajero: {$sale->user->name}\n";
             $content .= "Mesa: Para llevar\n";
             $content .= "--------------------------------\n";
@@ -282,7 +306,7 @@ class ThermalTicketService
                     if ($item->product_type === 'combo') {
                         $comboDetails = $this->getComboComponentsForTicket($item);
                         if ($comboDetails) {
-                            $content .= $comboDetails . "\n";
+                            $content .= $comboDetails."\n";
                         }
                     }
 
@@ -294,8 +318,8 @@ class ThermalTicketService
             }
 
             $content .= "--------------------------------\n";
-            $content .= '⚠️  PRIORIDAD: ' . $this->calculatePriority($sale) . "\n";
-            $content .= 'Hora de orden: ' . Carbon::now()->format('H:i') . "\n";
+            $content .= '⚠️  PRIORIDAD: '.$this->calculatePriority($sale)."\n";
+            $content .= 'Hora de orden: '.Carbon::now()->format('H:i')."\n";
             $content .= "================================\n";
             $content .= "📝 ARCHIVO SIMULADO EN DESARROLLO\n";
             $content .= "📂 Guardado en: {$fileName}\n";
@@ -311,7 +335,7 @@ class ThermalTicketService
             return true;
 
         } catch (Exception $e) {
-            \Log::error('Error simulando comanda de cocina: ' . $e->getMessage());
+            \Log::error('Error simulando comanda de cocina: '.$e->getMessage());
 
             return false;
         }
@@ -330,8 +354,8 @@ class ThermalTicketService
                 mkdir($ticketPath, 0755, true);
             }
 
-            $fileName = 'customer_' . $sale->sale_number . '_' . time() . '.txt';
-            $filePath = $ticketPath . $fileName;
+            $fileName = 'customer_'.$sale->sale_number.'_'.time().'.txt';
+            $filePath = $ticketPath.$fileName;
 
             $content = "🧾 TICKET DE CLIENTE (SIMULACIÓN)\n";
             $content .= "================================\n";
@@ -340,7 +364,7 @@ class ThermalTicketService
             $content .= "Tel: {$this->config['restaurant']['phone']}\n";
             $content .= "================================\n";
             $content .= "Ticket: #{$sale->sale_number}\n";
-            $content .= 'Fecha: ' . Carbon::parse($sale->created_at)->format('d/m/Y H:i') . "\n";
+            $content .= 'Fecha: '.Carbon::parse($sale->created_at)->format('d/m/Y H:i')."\n";
             $content .= "Cajero: {$sale->user->name}\n";
             $content .= "--------------------------------\n";
 
@@ -353,7 +377,7 @@ class ThermalTicketService
                     substr($productName, 0, 20),
                     number_format($item->unit_price * $item->quantity, 2)
                 );
-                $content .= $line . "\n";
+                $content .= $line."\n";
             }
 
             $content .= "--------------------------------\n";
@@ -388,7 +412,7 @@ class ThermalTicketService
             return true;
 
         } catch (Exception $e) {
-            \Log::error('Error simulando ticket de cliente: ' . $e->getMessage());
+            \Log::error('Error simulando ticket de cliente: '.$e->getMessage());
 
             return false;
         }
@@ -424,7 +448,7 @@ class ThermalTicketService
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->text("Devolución: #{$return->return_number}\n");
             $this->printer->text("Venta Original: #{$return->sale->sale_number}\n");
-            $this->printer->text('Fecha: ' . Carbon::parse($return->return_date)->format('d/m/Y H:i') . "\n");
+            $this->printer->text('Fecha: '.Carbon::parse($return->return_date)->format('d/m/Y H:i')."\n");
             $this->printer->text("Procesado por: {$return->processedByUser->name}\n");
             $this->printer->text("--------------------------------\n");
 
@@ -436,7 +460,7 @@ class ThermalTicketService
                     substr($item->menu_item_name, 0, 20),
                     number_format($item->subtotal, 2)
                 );
-                $this->printer->text($line . "\n");
+                $this->printer->text($line."\n");
             }
 
             $this->printer->text("--------------------------------\n");
@@ -461,7 +485,7 @@ class ThermalTicketService
             return true;
 
         } catch (Exception $e) {
-            \Log::error('Error generando ticket de devolución: ' . $e->getMessage());
+            \Log::error('Error generando ticket de devolución: '.$e->getMessage());
 
             // 🚀 FALLBACK EN DESARROLLO
             if (app()->environment(['local', 'development'])) {
@@ -484,14 +508,14 @@ class ThermalTicketService
                 mkdir($ticketPath, 0755, true);
             }
 
-            $fileName = 'return_' . $return->return_number . '_' . time() . '.txt';
-            $filePath = $ticketPath . $fileName;
+            $fileName = 'return_'.$return->return_number.'_'.time().'.txt';
+            $filePath = $ticketPath.$fileName;
 
             $content = "🔄 TICKET DE DEVOLUCIÓN (SIMULACIÓN)\n";
             $content .= "================================\n";
             $content .= "Devolución: #{$return->return_number}\n";
             $content .= "Venta Original: #{$return->sale->sale_number}\n";
-            $content .= 'Fecha: ' . Carbon::parse($return->return_date)->format('d/m/Y H:i') . "\n";
+            $content .= 'Fecha: '.Carbon::parse($return->return_date)->format('d/m/Y H:i')."\n";
             $content .= "--------------------------------\n";
             $content .= sprintf("%-24s -$%s\n", 'TOTAL DEVUELTO:', number_format($return->total_returned, 2));
             $content .= sprintf("%-24s %s\n", 'Reembolso:', ucfirst($return->refund_method));
@@ -509,7 +533,7 @@ class ThermalTicketService
             return true;
 
         } catch (Exception $e) {
-            \Log::error('Error simulando ticket de devolución: ' . $e->getMessage());
+            \Log::error('Error simulando ticket de devolución: '.$e->getMessage());
 
             return false;
         }
@@ -531,7 +555,7 @@ class ThermalTicketService
             }
         } else {
             // Archivo temporal en desarrollo
-            $connector = new FilePrintConnector(storage_path('app/tickets/kitchen_' . time() . '.txt'));
+            $connector = new FilePrintConnector(storage_path('app/tickets/kitchen_'.time().'.txt'));
         }
 
         $this->printer = new Printer($connector);
@@ -555,7 +579,7 @@ class ThermalTicketService
             }
         } else {
             // Archivo temporal en desarrollo
-            $connector = new FilePrintConnector(storage_path('app/tickets/customer_' . time() . '.txt'));
+            $connector = new FilePrintConnector(storage_path('app/tickets/customer_'.time().'.txt'));
         }
 
         $this->printer = new Printer($connector);
@@ -568,7 +592,7 @@ class ThermalTicketService
     {
         try {
             $qrData = route('sales.show', $sale->id);
-            $qrPath = storage_path('app/temp/qr_' . $sale->id . '.png');
+            $qrPath = storage_path('app/temp/qr_'.$sale->id.'.png');
 
             // Crear directorio si no existe
             $tempDir = storage_path('app/temp/');
@@ -588,7 +612,7 @@ class ThermalTicketService
             unlink($qrPath);
 
         } catch (Exception $e) {
-            \Log::warning('No se pudo generar QR: ' . $e->getMessage());
+            \Log::warning('No se pudo generar QR: '.$e->getMessage());
         }
     }
 
@@ -651,17 +675,29 @@ class ThermalTicketService
      */
     private function getProductName($item): string
     {
-        if ($item->product_type === 'menu' && isset($item->menuItem)) {
+        if ($item->product_type === 'menu' && $item->menuItem) {
             return $item->menuItem->name;
-        } elseif ($item->product_type === 'variant' && isset($item->menuItemVariant)) {
-            // Para variantes, mostrar nombre del platillo padre + nombre de variante
+        } elseif ($item->product_type === 'variant' && $item->menuItemVariant) {
+            // Para variantes de menú, mostrar nombre del platillo padre + nombre de variante
             $parentName = $item->menuItemVariant->menuItem->name ?? '';
             $variantName = $item->menuItemVariant->variant_name;
+
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
-        } elseif ($item->product_type === 'simple' && isset($item->simpleProduct)) {
+        } elseif ($item->product_type === 'simple' && $item->simpleProduct) {
             return $item->simpleProduct->name;
-        } elseif ($item->product_type === 'combo' && isset($item->combo)) {
+        } elseif ($item->product_type === 'simple_variant' && $item->simpleProductVariant) {
+            // Para variantes de productos simples
+            $parentName = $item->simpleProductVariant->simpleProduct->name ?? '';
+            $variantName = $item->simpleProductVariant->variant_name;
+
+            return $parentName ? "{$parentName} - {$variantName}" : $variantName;
+        } elseif ($item->product_type === 'combo' && $item->combo) {
             return $item->combo->name;
+        } elseif ($item->product_type === 'combo' && $item->combo_id) {
+            // Fallback: cargar combo si no está cargado
+            $combo = \App\Models\Combo::find($item->combo_id);
+
+            return $combo ? $combo->name : "Combo #{$item->combo_id}";
         } elseif ($item->product_type === 'free' && $item->free_sale_name) {
             return $item->free_sale_name;
         }
@@ -694,6 +730,7 @@ class ThermalTicketService
                     $details[] = "  {$prefix} {$name}";
                 }
             }
+
             return implode("\n", $details);
         }
 
@@ -710,7 +747,7 @@ class ThermalTicketService
         $details = [];
         foreach ($combo->components as $component) {
             if ($component->component_type === 'fixed') {
-                $details[] = "  + " . ($component->sellable?->name ?? $component->name ?? 'Producto');
+                $details[] = '  + '.($component->sellable?->name ?? $component->name ?? 'Producto');
             } else {
                 $componentId = (string) $component->id;
                 $selection = $selections[$componentId] ?? $selections[$component->id] ?? null;
@@ -718,7 +755,7 @@ class ThermalTicketService
                     $option = $component->options->firstWhere('id', $selection['optionId']);
                     if ($option && $option->sellable) {
                         $variantName = $selection['variantName'] ?? '';
-                        $name = $option->sellable->name . ($variantName ? " ({$variantName})" : '');
+                        $name = $option->sellable->name.($variantName ? " ({$variantName})" : '');
                         $details[] = "  > {$component->name}: {$name}";
                     }
                 }

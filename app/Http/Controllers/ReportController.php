@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Sale;
 use App\Models\SaleItem;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -137,6 +137,7 @@ class ReportController extends Controller
             'sale_items.menu_item_id',
             'sale_items.simple_product_id',
             'sale_items.menu_item_variant_id',
+            'sale_items.combo_id',
             'sale_items.free_sale_name',
             DB::raw('SUM(sale_items.quantity) as total_quantity'),
             DB::raw('SUM(sale_items.total_price) as total_revenue')
@@ -144,7 +145,7 @@ class ReportController extends Controller
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completada')
             ->whereBetween('sales.created_at', [$start, $end])
-            ->groupBy('sale_items.product_type', 'sale_items.menu_item_id', 'sale_items.simple_product_id', 'sale_items.menu_item_variant_id', 'sale_items.free_sale_name')
+            ->groupBy('sale_items.product_type', 'sale_items.menu_item_id', 'sale_items.simple_product_id', 'sale_items.menu_item_variant_id', 'sale_items.combo_id', 'sale_items.free_sale_name')
             ->orderByDesc('total_quantity')
             ->limit(20)
             ->get()
@@ -154,6 +155,7 @@ class ReportController extends Controller
                     'menu_item_id' => $item->menu_item_id,
                     'simple_product_id' => $item->simple_product_id,
                     'menu_item_variant_id' => $item->menu_item_variant_id,
+                    'combo_id' => $item->combo_id,
                     'name' => $this->getProductName($item),
                     'category' => $this->getProductCategory($item),
                     'type_label' => $this->getProductTypeLabel($item->product_type),
@@ -186,12 +188,14 @@ class ReportController extends Controller
         // Platillos del menú
         if ($item->product_type === 'menu' && $item->menu_item_id) {
             $menuItem = \App\Models\MenuItem::find($item->menu_item_id);
+
             return $menuItem ? $menuItem->name : 'Platillo eliminado';
         }
 
         // Productos simples
         if ($item->product_type === 'simple' && $item->simple_product_id) {
             $simpleProduct = \App\Models\SimpleProduct::find($item->simple_product_id);
+
             return $simpleProduct ? $simpleProduct->name : 'Producto eliminado';
         }
 
@@ -200,20 +204,24 @@ class ReportController extends Controller
             $variant = \App\Models\MenuItemVariant::with('menuItem')->find($item->menu_item_variant_id);
             if ($variant) {
                 $parentName = $variant->menuItem ? $variant->menuItem->name : '';
-                return $parentName . ' - ' . $variant->variant_name;
+
+                return $parentName.' - '.$variant->variant_name;
             }
+
             return 'Variante eliminada';
         }
 
         // Ventas libres
         if ($item->product_type === 'free') {
             $freeName = is_object($item) ? ($item->free_sale_name ?? null) : ($item['free_sale_name'] ?? null);
+
             return $freeName ?? 'Venta libre';
         }
 
         // Combos
         if ($item->product_type === 'combo' && $item->combo_id) {
             $combo = \App\Models\Combo::find($item->combo_id);
+
             return $combo ? $combo->name : 'Combo eliminado';
         }
 
@@ -230,6 +238,7 @@ class ReportController extends Controller
         // Productos simples - usar categoría del producto simple si existe
         if ($item->product_type === 'simple' && $item->simple_product_id) {
             $simpleProduct = \App\Models\SimpleProduct::find($item->simple_product_id);
+
             return $simpleProduct ? ($simpleProduct->category ?? 'Producto') : 'Producto';
         }
 
@@ -296,8 +305,9 @@ class ReportController extends Controller
             'menu' => "menu_{$product['menu_item_id']}",
             'simple' => "simple_{$product['simple_product_id']}",
             'variant' => "variant_{$product['menu_item_variant_id']}",
-            'free' => "free_" . md5($product['name'] ?? ''),
-            default => "unknown_" . uniqid(),
+            'combo' => "combo_{$product['combo_id']}",
+            'free' => 'free_'.md5($product['name'] ?? ''),
+            default => 'unknown_'.uniqid(),
         };
     }
 
@@ -317,6 +327,7 @@ class ReportController extends Controller
             'sale_items.menu_item_id',
             'sale_items.simple_product_id',
             'sale_items.menu_item_variant_id',
+            'sale_items.combo_id',
             'sale_items.free_sale_name',
             DB::raw('SUM(sale_items.quantity) as total_quantity'),
             DB::raw('SUM(sale_items.total_price) as total_revenue')
@@ -324,7 +335,7 @@ class ReportController extends Controller
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completada')
             ->whereBetween('sales.created_at', [$start, $end])
-            ->groupBy('sale_items.product_type', 'sale_items.menu_item_id', 'sale_items.simple_product_id', 'sale_items.menu_item_variant_id', 'sale_items.free_sale_name')
+            ->groupBy('sale_items.product_type', 'sale_items.menu_item_id', 'sale_items.simple_product_id', 'sale_items.menu_item_variant_id', 'sale_items.combo_id', 'sale_items.free_sale_name')
             ->orderBy('total_quantity')
             ->limit(5)
             ->get()
@@ -348,7 +359,7 @@ class ReportController extends Controller
             ->groupBy('date')
             ->orderBy('date')
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'date' => $item->date,
                 'total' => (float) $item->total,
                 'orders' => (int) $item->orders,
@@ -383,7 +394,7 @@ class ReportController extends Controller
             'endDate' => $dates['current_end']->format('d/m/Y'),
         ]);
 
-        $filename = 'reporte-ventas-' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'reporte-ventas-'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
     }
@@ -403,7 +414,7 @@ class ReportController extends Controller
             $previousData['top_products']
         );
 
-        $filename = 'reporte-ventas-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'reporte-ventas-'.now()->format('Y-m-d').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -414,7 +425,7 @@ class ReportController extends Controller
             $file = fopen('php://output', 'w');
 
             // UTF-8 BOM for Excel compatibility
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Headers
             fputcsv($file, ['#', 'Producto', 'Cantidad', 'Ingresos', 'Cambio %']);
@@ -426,7 +437,7 @@ class ReportController extends Controller
                     $product['name'],
                     $product['total_quantity'],
                     number_format($product['total_revenue'], 2),
-                    ($product['quantity_change'] >= 0 ? '+' : '') . $product['quantity_change'] . '%',
+                    ($product['quantity_change'] >= 0 ? '+' : '').$product['quantity_change'].'%',
                 ]);
             }
 

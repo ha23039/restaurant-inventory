@@ -206,14 +206,43 @@
                         <div
                             v-for="(item, index) in order.items"
                             :key="index"
-                            class="flex items-start space-x-2"
+                            class="space-y-1"
                         >
-                            <span class="inline-flex items-center justify-center min-w-[2rem] h-8 md:min-w-[2.25rem] md:h-9 px-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-sm md:text-base flex-shrink-0">
-                                {{ item.quantity }}x
-                            </span>
-                            <span class="text-sm md:text-base text-gray-900 dark:text-white font-medium leading-tight pt-1">
-                                {{ item.name }}
-                            </span>
+                            <div class="flex items-start space-x-2">
+                                <span class="inline-flex items-center justify-center min-w-[2rem] h-8 md:min-w-[2.25rem] md:h-9 px-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-sm md:text-base flex-shrink-0">
+                                    {{ item.quantity }}x
+                                </span>
+                                <div class="flex-1 pt-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm md:text-base text-gray-900 dark:text-white font-medium leading-tight">
+                                            {{ item.name }}
+                                        </span>
+                                        <span
+                                            v-if="item.product_type === 'combo'"
+                                            class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
+                                        >
+                                            COMBO
+                                        </span>
+                                    </div>
+                                    <!-- Detalles del combo -->
+                                    <div v-if="item.product_type === 'combo' && item.components_detail?.length" class="mt-1 ml-1 space-y-0.5">
+                                        <div
+                                            v-for="(comp, idx) in item.components_detail"
+                                            :key="idx"
+                                            class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400"
+                                        >
+                                            <svg v-if="comp.type === 'fixed'" class="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <svg v-else class="w-3 h-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                            </svg>
+                                            <span v-if="comp.componentName && comp.type === 'choice'" class="font-medium">{{ comp.componentName }}:</span>
+                                            <span>{{ comp.name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

@@ -2,16 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\CashFlow;
-use App\Models\Product;
-use App\Models\MenuItem;
-use App\Models\SimpleProduct;
 use App\Models\InventoryMovement;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\Sale;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 
 class ConsolidatedReportController extends Controller
 {
@@ -151,19 +147,19 @@ class ConsolidatedReportController extends Controller
                 'total_income' => $income->sum('amount'),
                 'total_expenses' => $expenses->sum('amount'),
                 'net_cashflow' => $income->sum('amount') - $expenses->sum('amount'),
-                'income_by_category' => $income->groupBy('category')->map(fn($items) => $items->sum('amount')),
-                'expenses_by_category' => $expenses->groupBy('category')->map(fn($items) => $items->sum('amount')),
+                'income_by_category' => $income->groupBy('category')->map(fn ($items) => $items->sum('amount')),
+                'expenses_by_category' => $expenses->groupBy('category')->map(fn ($items) => $items->sum('amount')),
             ];
         }
 
         if ($options['includeInventory'] ?? true) {
             $products = Product::with('category')->get();
-            $lowStock = $products->filter(fn($p) => $p->current_stock <= $p->min_stock);
+            $lowStock = $products->filter(fn ($p) => $p->current_stock <= $p->min_stock);
 
             $data['inventory'] = [
                 'total_products' => $products->count(),
                 'low_stock_count' => $lowStock->count(),
-                'total_inventory_value' => $products->sum(fn($p) => $p->current_stock * $p->unit_cost),
+                'total_inventory_value' => $products->sum(fn ($p) => $p->current_stock * $p->unit_cost),
                 'out_of_stock' => $products->where('current_stock', 0)->count(),
             ];
         }
@@ -237,8 +233,13 @@ class ConsolidatedReportController extends Controller
         ];
 
         $sales = Sale::whereBetween('created_at', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59'])
-            ->where('status', 'completed')
-            ->with(['saleItems.menuItem.recipes.product', 'saleItems.simpleProduct.product'])
+            ->where('status', 'completada')
+            ->with([
+                'saleItems.menuItem.recipes.product',
+                'saleItems.menuItemVariant.recipes.product',
+                'saleItems.simpleProduct.product',
+                'saleItems.combo.components.sellable',
+            ])
             ->get();
 
         $totalRevenue = $sales->sum('total_amount');
@@ -252,8 +253,23 @@ class ConsolidatedReportController extends Controller
                             $totalCost += $recipe->product->unit_cost * $recipe->quantity_needed * $item->quantity;
                         }
                     }
+                } elseif ($item->product_type === 'variant' && $item->menuItemVariant) {
+                    foreach ($item->menuItemVariant->recipes as $recipe) {
+                        if ($recipe->product) {
+                            $totalCost += $recipe->product->unit_cost * $recipe->quantity_needed * $item->quantity;
+                        }
+                    }
                 } elseif ($item->product_type === 'simple' && $item->simpleProduct && $item->simpleProduct->product) {
                     $totalCost += $item->simpleProduct->product->unit_cost * $item->simpleProduct->cost_per_unit * $item->quantity;
+                } elseif ($item->product_type === 'combo' && $item->combo) {
+                    // Para combos, calcular costo basado en componentes
+                    foreach ($item->combo->components as $component) {
+                        if ($component->sellable) {
+                            // Simplificación: usar precio base del componente como estimación de costo
+                            // En una implementación más completa, se calcularía desde las recetas
+                            $totalCost += ($component->sellable->cost ?? 0) * $item->quantity;
+                        }
+                    }
                 }
             }
         }
@@ -270,13 +286,24 @@ class ConsolidatedReportController extends Controller
 
             foreach ($sales as $sale) {
                 foreach ($sale->saleItems as $item) {
-                    $key = $item->product_type === 'menu' ? 'menu_'.$item->menu_item_id : 'simple_'.$item->simple_product_id;
+                    // Generar key único según tipo de producto
+                    $key = match ($item->product_type) {
+                        'menu' => 'menu_'.$item->menu_item_id,
+                        'variant' => 'variant_'.$item->menu_item_variant_id,
+                        'simple' => 'simple_'.$item->simple_product_id,
+                        'combo' => 'combo_'.$item->combo_id,
+                        default => 'other_'.uniqid(),
+                    };
 
                     if (!isset($productSales[$key])) {
                         $productSales[$key] = [
-                            'name' => $item->product_type === 'menu'
-                                ? ($item->menuItem->name ?? 'N/A')
-                                : ($item->simpleProduct->name ?? 'N/A'),
+                            'name' => match ($item->product_type) {
+                                'menu' => $item->menuItem->name ?? 'N/A',
+                                'variant' => ($item->menuItemVariant->menuItem->name ?? '').' - '.($item->menuItemVariant->variant_name ?? 'N/A'),
+                                'simple' => $item->simpleProduct->name ?? 'N/A',
+                                'combo' => $item->combo->name ?? 'N/A',
+                                default => 'Producto',
+                            },
                             'type' => $item->product_type,
                             'quantity_sold' => 0,
                             'revenue' => 0,
@@ -285,16 +312,29 @@ class ConsolidatedReportController extends Controller
                     }
 
                     $productSales[$key]['quantity_sold'] += $item->quantity;
-                    $productSales[$key]['revenue'] += $item->subtotal;
+                    $productSales[$key]['revenue'] += $item->total_price ?? ($item->unit_price * $item->quantity);
 
+                    // Calcular costo según tipo
                     if ($item->product_type === 'menu' && $item->menuItem) {
                         foreach ($item->menuItem->recipes as $recipe) {
                             if ($recipe->product) {
                                 $productSales[$key]['cost'] += $recipe->product->unit_cost * $recipe->quantity_needed * $item->quantity;
                             }
                         }
+                    } elseif ($item->product_type === 'variant' && $item->menuItemVariant) {
+                        foreach ($item->menuItemVariant->recipes as $recipe) {
+                            if ($recipe->product) {
+                                $productSales[$key]['cost'] += $recipe->product->unit_cost * $recipe->quantity_needed * $item->quantity;
+                            }
+                        }
                     } elseif ($item->product_type === 'simple' && $item->simpleProduct && $item->simpleProduct->product) {
                         $productSales[$key]['cost'] += $item->simpleProduct->product->unit_cost * $item->simpleProduct->cost_per_unit * $item->quantity;
+                    } elseif ($item->product_type === 'combo' && $item->combo) {
+                        foreach ($item->combo->components as $component) {
+                            if ($component->sellable) {
+                                $productSales[$key]['cost'] += ($component->sellable->cost ?? 0) * $item->quantity;
+                            }
+                        }
                     }
                 }
             }
@@ -302,6 +342,7 @@ class ConsolidatedReportController extends Controller
             $data['products'] = collect($productSales)->map(function ($product) {
                 $product['profit'] = $product['revenue'] - $product['cost'];
                 $product['margin'] = $product['revenue'] > 0 ? (($product['revenue'] - $product['cost']) / $product['revenue']) * 100 : 0;
+
                 return $product;
             })->sortByDesc('profit')->values()->all();
         }
@@ -323,11 +364,11 @@ class ConsolidatedReportController extends Controller
         if ($options['includeValues'] ?? true) {
             $data['valuation'] = [
                 'total_products' => $products->count(),
-                'total_value' => $products->sum(fn($p) => $p->current_stock * $p->unit_cost),
+                'total_value' => $products->sum(fn ($p) => $p->current_stock * $p->unit_cost),
                 'by_category' => $products->groupBy('category.name')->map(function ($items) {
                     return [
                         'count' => $items->count(),
-                        'value' => $items->sum(fn($p) => $p->current_stock * $p->unit_cost),
+                        'value' => $items->sum(fn ($p) => $p->current_stock * $p->unit_cost),
                     ];
                 }),
             ];
@@ -340,19 +381,19 @@ class ConsolidatedReportController extends Controller
 
             $data['movements'] = [
                 'total_movements' => $movements->count(),
-                'by_type' => $movements->groupBy('movement_type')->map(fn($items) => $items->count()),
-                'by_reason' => $movements->groupBy('reason')->map(fn($items) => $items->count()),
+                'by_type' => $movements->groupBy('movement_type')->map(fn ($items) => $items->count()),
+                'by_reason' => $movements->groupBy('reason')->map(fn ($items) => $items->count()),
             ];
         }
 
         if ($options['includeAlerts'] ?? true) {
-            $lowStock = $products->filter(fn($p) => $p->current_stock <= $p->min_stock);
+            $lowStock = $products->filter(fn ($p) => $p->current_stock <= $p->min_stock);
             $outOfStock = $products->where('current_stock', 0);
 
             $data['alerts'] = [
                 'low_stock_count' => $lowStock->count(),
                 'out_of_stock_count' => $outOfStock->count(),
-                'low_stock_products' => $lowStock->map(fn($p) => [
+                'low_stock_products' => $lowStock->map(fn ($p) => [
                     'name' => $p->name,
                     'current_stock' => $p->current_stock,
                     'min_stock' => $p->min_stock,
@@ -419,6 +460,7 @@ class ConsolidatedReportController extends Controller
     private function exportExecutivePdf($data, $dateFrom, $dateTo)
     {
         $pdf = Pdf::loadView('reports.executive', compact('data'));
+
         return $pdf->download('reporte_ejecutivo_'.$dateFrom.'_'.$dateTo.'.pdf');
     }
 
@@ -492,6 +534,7 @@ class ConsolidatedReportController extends Controller
     private function exportFinancialPdf($data, $dateFrom, $dateTo)
     {
         $pdf = Pdf::loadView('reports.financial', compact('data'));
+
         return $pdf->download('estado_financiero_'.$dateFrom.'_'.$dateTo.'.pdf');
     }
 
@@ -522,9 +565,16 @@ class ConsolidatedReportController extends Controller
                 fputcsv($file, ['RENTABILIDAD POR PRODUCTO']);
                 fputcsv($file, ['Producto', 'Tipo', 'Cantidad', 'Ingresos', 'Costo', 'Utilidad', 'Margen %']);
                 foreach ($data['products'] as $product) {
+                    $typeLabel = match ($product['type']) {
+                        'menu' => 'Platillo',
+                        'variant' => 'Variante',
+                        'simple' => 'Producto Simple',
+                        'combo' => 'Combo',
+                        default => 'Otro',
+                    };
                     fputcsv($file, [
                         $product['name'],
-                        $product['type'] === 'menu' ? 'Platillo' : 'Producto Simple',
+                        $typeLabel,
                         $product['quantity_sold'],
                         '$'.number_format($product['revenue'], 2),
                         '$'.number_format($product['cost'], 2),
@@ -548,6 +598,7 @@ class ConsolidatedReportController extends Controller
     private function exportProfitabilityPdf($data, $dateFrom, $dateTo)
     {
         $pdf = Pdf::loadView('reports.profitability', compact('data'));
+
         return $pdf->download('analisis_rentabilidad_'.$dateFrom.'_'.$dateTo.'.pdf');
     }
 
@@ -612,6 +663,7 @@ class ConsolidatedReportController extends Controller
     private function exportInventoryPdf($data, $dateFrom, $dateTo)
     {
         $pdf = Pdf::loadView('reports.inventory', compact('data'));
+
         return $pdf->download('inventario_valorizado_'.$dateFrom.'_'.$dateTo.'.pdf');
     }
 }
