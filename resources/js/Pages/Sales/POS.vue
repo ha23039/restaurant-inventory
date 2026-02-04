@@ -507,11 +507,21 @@ const selectCombo = (combo) => {
             product_type: 'combo',
             available_quantity: 999,
             selections: {},
-            components_detail: combo.components?.filter(c => c.component_type === 'fixed').map(c => ({
-                type: 'fixed',
-                name: c.sellable?.name || c.name,
-                quantity: c.quantity
-            })) || []
+            components_detail: combo.components?.filter(c => c.component_type === 'fixed').map(c => {
+                let name = c.sellable?.name || c.name;
+                // Incluir variante por defecto si existe
+                if (c.default_variant_id && c.default_variant) {
+                    const variantName = c.default_variant.variant_name || c.default_variant.name;
+                    if (variantName) {
+                        name += ` - ${variantName}`;
+                    }
+                }
+                return {
+                    type: 'fixed',
+                    name: name,
+                    quantity: c.quantity
+                };
+            }) || []
         });
         return;
     }

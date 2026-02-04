@@ -398,6 +398,11 @@ const handleSubmit = () => {
                 toast.error(`Componente ${i + 1}: Selecciona un producto`);
                 return;
             }
+            // Validar que si el producto tiene variantes, se seleccione una
+            if (productHasVariants(comp.sellable_type, comp.sellable_id) && !comp.default_variant_id) {
+                toast.error(`Componente ${i + 1}: Selecciona una variante para el producto`);
+                return;
+            }
         } else if (comp.component_type === 'choice') {
             if (!comp.name.trim()) {
                 toast.error(`Componente ${i + 1}: Ingresa un nombre (ej: "Bebida")`);
@@ -743,13 +748,13 @@ const formatCurrency = (value) => {
                                             <svg class="inline w-4 h-4 mr-1 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
                                             </svg>
-                                            Variante incluida en el combo
+                                            Variante incluida en el combo *
                                         </label>
                                         <select
                                             v-model="component.default_variant_id"
                                             class="w-full px-3 py-2 border border-green-300 dark:border-green-700 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white text-sm"
                                         >
-                                            <option :value="null">Sin variante específica (cliente elige)</option>
+                                            <option :value="null" disabled>-- Selecciona una variante --</option>
                                             <option
                                                 v-for="variant in getProductVariants(component.sellable_type, component.sellable_id)"
                                                 :key="variant.id"
@@ -762,12 +767,7 @@ const formatCurrency = (value) => {
                                             </option>
                                         </select>
                                         <p class="text-xs text-green-700 dark:text-green-400 mt-1">
-                                            <template v-if="component.default_variant_id">
-                                                Esta variante se incluirá automáticamente en el combo.
-                                            </template>
-                                            <template v-else>
-                                                El cliente podrá elegir la variante al ordenar.
-                                            </template>
+                                            Esta variante se incluirá automáticamente en el combo.
                                         </p>
                                     </div>
                                 </div>

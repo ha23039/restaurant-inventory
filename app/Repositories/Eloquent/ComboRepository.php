@@ -31,7 +31,7 @@ class ComboRepository extends BaseRepository implements ComboRepositoryInterface
         return $this->model
             ->forMenu()
             ->ordered()
-            ->with(['components.sellable.variants', 'components.options.sellable.variants'])
+            ->with(['components.sellable.variants', 'components.options.sellable.variants', 'components.defaultVariant'])
             ->get()
             ->filter(fn($combo) => $combo->is_fully_available);
     }
@@ -43,7 +43,8 @@ class ComboRepository extends BaseRepository implements ComboRepositoryInterface
             ->ordered()
             ->with([
                 'components.sellable.variants',
-                'components.options.sellable.variants'
+                'components.options.sellable.variants',
+                'components.defaultVariant'
             ])
             ->get()
             ->filter(fn($combo) => $combo->is_fully_available);

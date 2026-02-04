@@ -41,7 +41,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🍳 GENERAR COMANDA PARA COCINA
+     *  GENERAR COMANDA PARA COCINA
      */
     public function generateKitchenOrder(Sale $sale): bool
     {
@@ -147,7 +147,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🧾 GENERAR TICKET PARA CLIENTE
+     *  GENERAR TICKET PARA CLIENTE
      */
     public function generateCustomerReceipt(Sale $sale): bool
     {
@@ -273,7 +273,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🚀 SIMULACIÓN PARA DESARROLLO - COMANDA DE COCINA
+     *  SIMULACIÓN PARA DESARROLLO - COMANDA DE COCINA
      */
     private function simulateKitchenOrder(Sale $sale): bool
     {
@@ -342,7 +342,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🚀 SIMULACIÓN PARA DESARROLLO - TICKET DE CLIENTE
+     *  SIMULACIÓN PARA DESARROLLO - TICKET DE CLIENTE
      */
     private function simulateCustomerReceipt(Sale $sale): bool
     {
@@ -419,7 +419,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🔄 GENERAR TICKET DE DEVOLUCIÓN
+     *  GENERAR TICKET DE DEVOLUCIÓN
      */
     public function generateReturnReceipt(SaleReturn $return): bool
     {
@@ -497,7 +497,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🚀 SIMULACIÓN PARA DESARROLLO - TICKET DE DEVOLUCIÓN
+     *  SIMULACIÓN PARA DESARROLLO - TICKET DE DEVOLUCIÓN
      */
     private function simulateReturnReceipt(SaleReturn $return): bool
     {
@@ -540,7 +540,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🔌 CONECTAR A IMPRESORA DE COCINA
+     *  CONECTAR A IMPRESORA DE COCINA
      */
     private function connectToKitchenPrinter(): void
     {
@@ -562,7 +562,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🔌 CONECTAR A IMPRESORA DE CLIENTE
+     *  CONECTAR A IMPRESORA DE CLIENTE
      */
     private function connectToCustomerPrinter(): void
     {
@@ -586,7 +586,7 @@ class ThermalTicketService
     }
 
     /**
-     * 📱 GENERAR CÓDIGO QR
+     *  GENERAR CÓDIGO QR
      */
     private function generateQRCode(Sale $sale): void
     {
@@ -617,7 +617,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🍳 VERIFICAR SI ITEM REQUIERE COCINA
+     *  VERIFICAR SI ITEM REQUIERE COCINA
      */
     private function requiresKitchen($item): bool
     {
@@ -635,7 +635,7 @@ class ThermalTicketService
     }
 
     /**
-     * ⚠️ CALCULAR PRIORIDAD DE ORDEN
+     *  CALCULAR PRIORIDAD DE ORDEN
      */
     private function calculatePriority(Sale $sale): string
     {
@@ -655,7 +655,7 @@ class ThermalTicketService
     }
 
     /**
-     * 📝 OBTENER TEXTO DE RAZÓN DE DEVOLUCIÓN
+     * OBTENER TEXTO DE RAZÓN DE DEVOLUCIÓN
      */
     private function getReasonText($reason): string
     {
@@ -671,7 +671,7 @@ class ThermalTicketService
     }
 
     /**
-     * 🔧 OBTENER NOMBRE DEL PRODUCTO
+     *  OBTENER NOMBRE DEL PRODUCTO
      */
     private function getProductName($item): string
     {

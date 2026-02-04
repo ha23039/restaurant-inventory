@@ -79,20 +79,23 @@ class ComboComponent extends Model
 
     /**
      * Relación con la variante por defecto (si aplica)
+     * Nota: Siempre debe devolver una relación, nunca null
      */
     public function defaultVariant()
     {
-        // La variante puede ser MenuItemVariant o SimpleProductVariant
-        // según el sellable_type
-        if ($this->sellable_type === 'menu_item' && $this->default_variant_id) {
+        // Para menu_item, usar MenuItemVariant
+        if ($this->sellable_type === 'menu_item') {
             return $this->belongsTo(MenuItemVariant::class, 'default_variant_id');
         }
 
-        if ($this->sellable_type === 'simple_product' && $this->default_variant_id) {
+        // Para simple_product, usar SimpleProductVariant
+        if ($this->sellable_type === 'simple_product') {
             return $this->belongsTo(SimpleProductVariant::class, 'default_variant_id');
         }
 
-        return null;
+        // Fallback: relación vacía que no devuelve nada
+        return $this->belongsTo(MenuItemVariant::class, 'default_variant_id')
+            ->whereRaw('1 = 0');
     }
 
     /**

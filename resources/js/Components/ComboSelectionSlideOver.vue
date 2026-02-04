@@ -225,9 +225,18 @@ const buildComponentsDetail = () => {
     // Agregar componentes fijos
     fixedComponents.value.forEach(component => {
         if (component.sellable) {
+            let name = component.sellable.name;
+            // Incluir variante por defecto si existe
+            if (component.default_variant_id && component.default_variant) {
+                const variantName = component.default_variant.variant_name 
+                    || component.default_variant.name;
+                if (variantName) {
+                    name += ` - ${variantName}`;
+                }
+            }
             details.push({
                 type: 'fixed',
-                name: component.sellable.name,
+                name: name,
                 quantity: component.quantity,
             });
         }
