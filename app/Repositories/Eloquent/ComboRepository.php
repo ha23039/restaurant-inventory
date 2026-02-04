@@ -112,6 +112,8 @@ class ComboRepository extends BaseRepository implements ComboRepositoryInterface
             $newCombo = $original->replicate();
             $newCombo->name = $original->name . ' (copia)';
             $newCombo->is_available = false;
+            $newCombo->show_in_menu = false;
+            $newCombo->show_in_pos = false;
             $newCombo->image_path = null;
             $newCombo->save();
 
