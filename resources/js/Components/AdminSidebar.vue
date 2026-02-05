@@ -67,8 +67,17 @@
                 </NavItem>
 
                 <NavItem
+                    :href="route('orders.index')"
+                    :active="route().current('orders.*')"
+                    :collapsed="isCollapsed"
+                    icon="orders"
+                >
+                    Pedidos
+                </NavItem>
+
+                <NavItem
                     :href="route('sales.index')"
-                    :active="route().current('sales.*')"
+                    :active="route().current('sales.index') || route().current('sales.show')"
                     :collapsed="isCollapsed"
                     icon="sales"
                 >

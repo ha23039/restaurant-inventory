@@ -249,6 +249,29 @@ Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('sales')->name('
 
 /*
 |--------------------------------------------------------------------------
+| Rutas para GESTIÓN DE PEDIDOS/ORDERS (Admin + Cajero + Mesero)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('orders')->name('orders.')->group(function () {
+    // Lista de órdenes activas
+    Route::get('/', [App\Http\Controllers\OrderController::class, 'index'])->name('index');
+
+    // Buscar clientes (JSON)
+    Route::get('/customers/search', [App\Http\Controllers\OrderController::class, 'searchCustomers'])->name('customers.search');
+
+    // Detalle de orden (JSON para SlideOver)
+    Route::get('/{sale}', [App\Http\Controllers\OrderController::class, 'show'])->name('show');
+
+    // Cancelar item de una orden
+    Route::post('/{sale}/items/{item}/cancel', [App\Http\Controllers\OrderController::class, 'cancelItem'])->name('cancel-item');
+
+    // Asignar cliente a una orden
+    Route::post('/{sale}/assign-customer', [App\Http\Controllers\OrderController::class, 'assignCustomer'])->name('assign-customer');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Rutas para KITCHEN DISPLAY (Admin + Chef + Cajero + Mesero)
 |--------------------------------------------------------------------------
 */
@@ -531,7 +554,7 @@ if (app()->environment(['local', 'development'])) {
                         'size' => filesize($file),
                         'created' => date('Y-m-d H:i:s', filemtime($file)),
                     ];
-                }, glob($ticketPath.'*.txt'));
+                }, glob($ticketPath . '*.txt'));
             }
 
             return response()->json([
@@ -546,7 +569,7 @@ if (app()->environment(['local', 'development'])) {
             $deleted = 0;
 
             if (is_dir($ticketPath)) {
-                foreach (glob($ticketPath.'*.txt') as $file) {
+                foreach (glob($ticketPath . '*.txt') as $file) {
                     if (unlink($file)) {
                         $deleted++;
                     }
@@ -610,4 +633,4 @@ Route::prefix('menu')->name('digital-menu.')->group(function () {
 | con CSRF y usar el middleware API correcto
 */
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

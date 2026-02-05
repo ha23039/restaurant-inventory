@@ -23,13 +23,49 @@ class SaleItem extends Model
         'unit_price',
         'total_price',
         'product_type',
+        'cancelled_at',
+        'cancelled_by_user_id',
+        'cancellation_reason',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'total_price' => 'decimal:2',
         'combo_selections' => 'array',
+        'cancelled_at' => 'datetime',
     ];
+
+    /**
+     * Scope para items activos (no cancelados)
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('cancelled_at');
+    }
+
+    /**
+     * Scope para items cancelados
+     */
+    public function scopeCancelled($query)
+    {
+        return $query->whereNotNull('cancelled_at');
+    }
+
+    /**
+     * Usuario que canceló el item
+     */
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by_user_id');
+    }
+
+    /**
+     * Verificar si el item está cancelado
+     */
+    public function getIsCancelledAttribute(): bool
+    {
+        return $this->cancelled_at !== null;
+    }
 
     // Relaciones
     public function sale()

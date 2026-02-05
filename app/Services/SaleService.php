@@ -96,7 +96,7 @@ class SaleService
                 $this->cashFlowService->recordSaleIncome($sale);
             }
 
-            // 🍳 Crear orden de cocina automáticamente
+            //  Crear orden de cocina automáticamente
             $this->createKitchenOrder($sale);
 
             return $sale->fresh(['saleItems', 'user', 'cashFlow', 'table', 'kitchenOrderState']);
@@ -518,5 +518,90 @@ class SaleService
                 'sale_id' => $sale->id,
             ]);
         }
+    }
+
+    /**
+     * Cancelar un item de una orden
+     * Restaura inventario y recalcula totales
+     */
+    public function cancelSaleItem(SaleItem $item, ?int $userId = null, ?string $reason = null): bool
+    {
+        if ($item->is_cancelled) {
+            return false;
+        }
+
+        return DB::transaction(function () use ($item, $userId, $reason) {
+            // 1. Marcar item como cancelado
+            $item->update([
+                'cancelled_at' => now(),
+                'cancelled_by_user_id' => $userId,
+                'cancellation_reason' => $reason,
+            ]);
+
+            // 2. Restaurar inventario según tipo de producto
+            $this->restoreItemInventory($item);
+
+            // 3. Recalcular totales de la venta
+            $sale = $item->sale;
+            $this->recalculateSaleAfterCancellation($sale);
+
+            Log::info('SaleItem cancelado', [
+                'sale_item_id' => $item->id,
+                'sale_id' => $sale->id,
+                'cancelled_by' => $userId,
+                'reason' => $reason,
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Restaurar inventario del item cancelado
+     */
+    protected function restoreItemInventory(SaleItem $item): void
+    {
+        switch ($item->product_type) {
+            case 'menu':
+            case 'variant':
+                if ($item->menu_item_id) {
+                    $this->inventoryService->restoreMenuItemStock($item);
+                }
+                break;
+            case 'simple':
+            case 'simple_variant':
+                if ($item->simple_product_id || $item->simple_product_variant_id) {
+                    $this->inventoryService->restoreSimpleProductStock($item);
+                }
+                break;
+            case 'combo':
+                if ($item->combo_id) {
+                    $this->inventoryService->restoreComboStock($item);
+                }
+                break;
+        }
+    }
+
+    /**
+     * Recalcular totales de la venta después de cancelar items
+     */
+    protected function recalculateSaleAfterCancellation(Sale $sale): void
+    {
+        $activeItems = $sale->saleItems()->active()->get();
+        $newSubtotal = $activeItems->sum('total_price');
+
+        // Aplicar descuento proporcional si había
+        $originalSubtotal = $sale->saleItems()->sum('total_price');
+        $discountRatio = $originalSubtotal > 0 ? $sale->discount / $originalSubtotal : 0;
+        $newDiscount = $newSubtotal * $discountRatio;
+
+        // Calcular nuevo total
+        $newTotal = $newSubtotal - $newDiscount + $sale->tax;
+
+        $sale->update([
+            'subtotal' => $newSubtotal,
+            'discount' => $newDiscount,
+            'total' => max(0, $newTotal),
+        ]);
     }
 }
