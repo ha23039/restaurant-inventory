@@ -4,11 +4,15 @@ import { Head, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import OrderDetailSlideOver from '@/Components/OrderDetailSlideOver.vue';
+import TableSlideOver from '@/Pages/Tables/TableSlideOver.vue';
 
 const props = defineProps({
     orders: Object,
     counts: Object,
     filters: Object,
+    tables: Array,
+    tableStatistics: Object,
+    payment_methods: Array,
 });
 
 const toast = useToast();
@@ -20,12 +24,17 @@ const tabs = computed(() => [
     { key: 'local', label: 'En Local', count: props.counts?.local || 0, icon: 'home' },
     { key: 'takeaway', label: 'Para Llevar', count: props.counts?.takeaway || 0, icon: 'shopping-bag' },
     { key: 'delivery', label: 'Delivery', count: props.counts?.delivery || 0, icon: 'truck' },
+    { key: 'mesas', label: 'Mesas', count: props.counts?.mesas || 0, icon: 'table-cells' },
 ]);
 
 // SlideOver
 const showSlideOver = ref(false);
 const selectedOrder = ref(null);
 const loadingOrder = ref(false);
+
+// TableSlideOver
+const showTableSlideOver = ref(false);
+const selectedTable = ref(null);
 
 // Auto-refresh cada 30 segundos
 let refreshInterval = null;
@@ -49,7 +58,7 @@ const changeTab = (key) => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        only: ['orders', 'counts'],
+        only: ['orders', 'counts', 'tables', 'tableStatistics'],
     });
 };
 
@@ -174,6 +183,39 @@ const icons = {
     'user': 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
     'plus': 'M12 4v16m8-8H4',
     'eye': 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
+    'table-cells': 'M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125',
+};
+
+// ===== Funciones para Mesas / Tables =====
+const openTable = (table) => {
+    selectedTable.value = table;
+    showTableSlideOver.value = true;
+};
+
+const closeTableSlideOver = () => {
+    showTableSlideOver.value = false;
+    selectedTable.value = null;
+    router.reload({ only: ['orders', 'counts', 'tables', 'tableStatistics'] });
+};
+
+const getTableStatusColor = (status) => {
+    const colors = {
+        disponible: 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600',
+        ocupada: 'bg-orange-50 dark:bg-orange-900/20 border-orange-400 dark:border-orange-600',
+        reservada: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600',
+        en_limpieza: 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600',
+    };
+    return colors[status] || colors.disponible;
+};
+
+const getTableStatusTextColor = (status) => {
+    const colors = {
+        disponible: 'text-green-700 dark:text-green-400',
+        ocupada: 'text-orange-700 dark:text-orange-400',
+        reservada: 'text-yellow-700 dark:text-yellow-400',
+        en_limpieza: 'text-blue-700 dark:text-blue-400',
+    };
+    return colors[status] || colors.disponible;
 };
 </script>
 
@@ -260,18 +302,19 @@ const icons = {
                     </button>
                 </div>
 
-                <!-- Orders Grid -->
-                <div v-if="orders.data.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center">
-                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons['clipboard-list']" />
-                        </svg>
+                <!-- Orders Grid (when NOT on mesas tab) -->
+                <template v-if="activeTab !== 'mesas'">
+                    <div v-if="orders.data.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons['clipboard-list']" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No hay pedidos</h3>
+                        <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                            No hay pedidos activos en esta categoría. Los nuevos pedidos aparecerán aquí automáticamente.
+                        </p>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No hay pedidos</h3>
-                    <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                        No hay pedidos activos en esta categoría. Los nuevos pedidos aparecerán aquí automáticamente.
-                    </p>
-                </div>
 
                 <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div
@@ -382,6 +425,73 @@ const icons = {
                         </template>
                     </div>
                 </div>
+                </template>
+
+                <!-- Tables Grid (when on mesas tab) -->
+                <template v-if="activeTab === 'mesas'">
+                    <div v-if="tables && tables.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        <div
+                            v-for="table in tables"
+                            :key="table.id"
+                            @click="openTable(table)"
+                            :class="[
+                                'relative rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] overflow-hidden',
+                                getTableStatusColor(table.status)
+                            ]"
+                        >
+                            <div class="p-4 text-center">
+                                <!-- Table number -->
+                                <h3 class="text-3xl font-bold text-gray-800 dark:text-white mb-1">
+                                    {{ table.table_number }}
+                                </h3>
+                                <p v-if="table.name" class="text-sm text-gray-600 dark:text-gray-400 mb-2 truncate">
+                                    {{ table.name }}
+                                </p>
+                                
+                                <!-- Status badge -->
+                                <span :class="[
+                                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                                    getTableStatusTextColor(table.status),
+                                    table.status === 'ocupada' ? 'bg-orange-100 dark:bg-orange-900/40' : 'bg-gray-100 dark:bg-gray-700'
+                                ]">
+                                    {{ table.status_label }}
+                                </span>
+                                
+                                <!-- Pending info (if occupied) -->
+                                <div v-if="table.pending_sales_count > 0" class="mt-3 pt-3 border-t border-orange-200 dark:border-orange-800">
+                                    <p class="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                        {{ formatPrice(table.pending_total) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ table.pending_sales_count }} {{ table.pending_sales_count === 1 ? 'pedido' : 'pedidos' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty tables state -->
+                    <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons['table-cells']" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No hay mesas</h3>
+                        <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                            No hay mesas configuradas. Ve al módulo de Mesas para crear nuevas mesas.
+                        </p>
+                        <a
+                            :href="route('tables.index')"
+                            class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Ir a Mesas
+                        </a>
+                    </div>
+                </template>
             </div>
         </div>
 
@@ -393,6 +503,14 @@ const icons = {
             @close="showSlideOver = false"
             @item-cancelled="handleItemCancelled"
             @customer-updated="handleCustomerUpdated"
+        />
+
+        <!-- TableSlideOver para cobrar por mesa -->
+        <TableSlideOver
+            :show="showTableSlideOver"
+            :table="selectedTable"
+            :payment-methods="payment_methods"
+            @close="closeTableSlideOver"
         />
     </AdminLayout>
 </template>

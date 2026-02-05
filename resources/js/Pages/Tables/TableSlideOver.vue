@@ -425,22 +425,44 @@ onUnmounted(() => {
                                 </span>
                             </div>
 
-                            <!-- Items -->
                             <div class="px-4 py-3 divide-y divide-gray-100 dark:divide-gray-600">
                                 <div
                                     v-for="item in sale.items"
                                     :key="item.id"
-                                    class="py-2 flex items-center justify-between"
+                                    class="py-2"
                                 >
-                                    <div class="flex items-center">
-                                        <span class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-600 text-xs font-medium flex items-center justify-center text-gray-700 dark:text-gray-300 mr-3">
-                                            {{ item.quantity }}
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start">
+                                            <span class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-600 text-xs font-medium flex items-center justify-center text-gray-700 dark:text-gray-300 mr-3 mt-0.5 flex-shrink-0">
+                                                {{ item.quantity }}
+                                            </span>
+                                            <div>
+                                                <span :class="[
+                                                    'text-sm',
+                                                    item.is_combo ? 'font-medium text-orange-700 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300'
+                                                ]">
+                                                    {{ item.name }}
+                                                    <span v-if="item.is_combo" class="ml-1 px-1.5 py-0.5 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">
+                                                        Combo
+                                                    </span>
+                                                </span>
+                                                <!-- Componentes del combo -->
+                                                <div v-if="item.is_combo && item.combo_components" class="mt-1 pl-2 border-l-2 border-orange-200 dark:border-orange-800 space-y-0.5">
+                                                    <div 
+                                                        v-for="component in item.combo_components" 
+                                                        :key="component.id"
+                                                        class="text-xs text-gray-500 dark:text-gray-400 flex items-center"
+                                                    >
+                                                        <span class="w-4 text-center mr-1">{{ component.quantity }}x</span>
+                                                        <span>{{ component.name }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                            ${{ item.subtotal.toFixed(2) }}
                                         </span>
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ item.name }}</span>
                                     </div>
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white">
-                                        ${{ item.subtotal.toFixed(2) }}
-                                    </span>
                                 </div>
                             </div>
 

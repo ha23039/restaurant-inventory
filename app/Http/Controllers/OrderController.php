@@ -76,6 +76,44 @@ class OrderController extends Controller
 
         $counts = $this->getOrderCounts();
 
+        // Cargar datos de mesas si el tab es 'mesas' o siempre para el tab de mesas
+        $tables = [];
+        $tableStatistics = [];
+        $paymentMethods = [];
+
+        if ($type === 'mesas' || $request->has('include_tables')) {
+            $tables = \App\Models\Table::where('is_active', true)
+                ->orderBy('table_number')
+                ->get()
+                ->map(function ($table) {
+                    // Obtener ventas pendientes de esta mesa
+                    $pendingSales = Sale::where('table_id', $table->id)
+                        ->whereIn('status', ['pendiente', 'en_preparacion'])
+                        ->get();
+
+                    return [
+                        'id' => $table->id,
+                        'table_number' => $table->table_number,
+                        'name' => $table->name,
+                        'capacity' => $table->capacity,
+                        'status' => $table->status,
+                        'status_label' => $table->status_label,
+                        'is_active' => $table->is_active,
+                        'pending_sales_count' => $pendingSales->count(),
+                        'pending_total' => $pendingSales->sum('total'),
+                        'current_sale' => $table->currentSale,
+                    ];
+                });
+
+            $tableStatistics = $this->getTableStatistics();
+            $paymentMethods = \App\Models\PaymentMethod::getActive();
+        }
+
+        // Agregar conteo de mesas al counts
+        $counts['mesas'] = \App\Models\Table::where('is_active', true)
+            ->where('status', 'ocupada')
+            ->count();
+
         return Inertia::render('Orders/Index', [
             'orders' => $orders,
             'counts' => $counts,
@@ -84,6 +122,9 @@ class OrderController extends Controller
                 'status' => $status,
                 'source' => $source,
             ],
+            'tables' => $tables,
+            'tableStatistics' => $tableStatistics,
+            'payment_methods' => $paymentMethods,
         ]);
     }
 
@@ -284,6 +325,25 @@ class OrderController extends Controller
             'message' => 'Cliente actualizado correctamente',
             'customer_name' => $sale->customer_name,
         ]);
+    }
+
+    /**
+     * Obtener estadísticas de mesas
+     */
+    protected function getTableStatistics(): array
+    {
+        $tables = \App\Models\Table::where('is_active', true)->get();
+
+        return [
+            'total' => $tables->count(),
+            'available' => $tables->where('status', 'disponible')->count(),
+            'occupied' => $tables->where('status', 'ocupada')->count(),
+            'reserved' => $tables->where('status', 'reservada')->count(),
+            'cleaning' => $tables->where('status', 'en_limpieza')->count(),
+            'occupancy_rate' => $tables->count() > 0
+                ? round(($tables->where('status', 'ocupada')->count() / $tables->count()) * 100)
+                : 0,
+        ];
     }
 }
 

@@ -17,7 +17,8 @@ class TableController extends Controller
 {
     public function __construct(
         protected TableService $tableService
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of tables
@@ -194,6 +195,7 @@ class TableController extends Controller
                 'saleItems.menuItemVariant.menuItem',
                 'saleItems.simpleProduct',
                 'saleItems.simpleProductVariant.simpleProduct',
+                'saleItems.combo.components.sellable',
                 'digitalCustomer',
                 'kitchenOrderState',
             ])
@@ -214,13 +216,28 @@ class TableController extends Controller
                     'kitchen_status' => $sale->kitchenOrderState?->status ?? 'sin_estado',
                     'kitchen_color' => $this->getKitchenStatusColor($sale->kitchenOrderState?->status),
                     'items' => $sale->saleItems->map(function ($item) {
-                        return [
+                        $itemData = [
                             'id' => $item->id,
                             'name' => $this->getSaleItemName($item),
                             'quantity' => $item->quantity,
                             'unit_price' => (float) $item->unit_price,
                             'subtotal' => (float) ($item->total_price ?? $item->subtotal ?? $item->unit_price * $item->quantity),
+                            'item_type' => $item->product_type,
+                            'is_combo' => $item->product_type === 'combo',
                         ];
+
+                        // Si es combo, agregar los componentes
+                        if ($item->product_type === 'combo' && $item->combo) {
+                            $itemData['combo_components'] = $item->combo->components->map(function ($component) {
+                                return [
+                                    'id' => $component->id,
+                                    'name' => $component->sellable?->name ?? $component->name ?? 'Componente',
+                                    'quantity' => $component->quantity,
+                                ];
+                            });
+                        }
+
+                        return $itemData;
                     }),
                 ];
             });
@@ -445,7 +462,9 @@ class TableController extends Controller
      */
     private function getSaleItemName($item): string
     {
-        if ($item->product_type === 'variant' && $item->menuItemVariant) {
+        if ($item->product_type === 'combo' && $item->combo) {
+            return $item->combo->name;
+        } elseif ($item->product_type === 'variant' && $item->menuItemVariant) {
             $parentName = $item->menuItemVariant->menuItem->name ?? '';
             $variantName = $item->menuItemVariant->variant_name;
             return $parentName ? "{$parentName} - {$variantName}" : $variantName;
