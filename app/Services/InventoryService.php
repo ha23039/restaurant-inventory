@@ -165,6 +165,82 @@ class InventoryService
     }
 
     /**
+     * Verificar si hay stock suficiente para una variante de producto simple
+     */
+    public function verifySimpleProductVariantStock(int $variantId, int $quantity): void
+    {
+        $variant = \App\Models\SimpleProductVariant::with('recipes.product', 'simpleProduct')->find($variantId);
+
+        if (!$variant) {
+            throw new \Exception("Variante de producto simple no encontrada con ID: {$variantId}");
+        }
+
+        // Si la variante no tiene recetas, se considera siempre disponible
+        if ($variant->recipes->isEmpty()) {
+            return;
+        }
+
+        // Verificar stock de cada ingrediente
+        foreach ($variant->recipes as $recipe) {
+            if (!$recipe->product) {
+                throw new \Exception("Ingrediente no encontrado para variante: {$variant->variant_name}");
+            }
+
+            $quantityNeeded = $recipe->quantity_needed * $quantity;
+            $available = $recipe->product->current_stock;
+
+            if ($available < $quantityNeeded) {
+                throw new \Exception(
+                    "Stock insuficiente de {$recipe->product->name} para {$variant->variant_name}. " .
+                    "Disponible: {$available}, Requerido: {$quantityNeeded}"
+                );
+            }
+        }
+    }
+
+    /**
+     * Deducir inventario para variante de producto simple
+     */
+    public function deductSimpleProductVariantStock(SaleItem $saleItem): void
+    {
+        $variant = \App\Models\SimpleProductVariant::with('recipes.product', 'simpleProduct')->find($saleItem->simple_product_variant_id);
+
+        if (!$variant) {
+            return;
+        }
+
+        foreach ($variant->recipes as $recipe) {
+            $quantityNeeded = $recipe->quantity_needed * $saleItem->quantity;
+
+            // Crear movimiento de inventario
+            InventoryMovement::create([
+                'product_id' => $recipe->product_id,
+                'user_id' => $saleItem->sale->user_id,
+                'movement_type' => 'salida',
+                'quantity' => $quantityNeeded,
+                'unit_cost' => $recipe->product->unit_cost,
+                'total_cost' => $quantityNeeded * $recipe->product->unit_cost,
+                'reason' => 'venta_automatica',
+                'notes' => "Venta: {$variant->variant_name} x{$saleItem->quantity} - Ticket #{$saleItem->sale->sale_number}",
+                'movement_date' => now()->toDateString(),
+            ]);
+
+            // Deducir stock del producto
+            $this->productRepository->updateStock(
+                $recipe->product_id,
+                $recipe->product->current_stock - $quantityNeeded
+            );
+
+            Log::info('Stock deducido para variante de producto simple', [
+                'product_id' => $recipe->product_id,
+                'quantity' => $quantityNeeded,
+                'variant_id' => $variant->id,
+                'sale_id' => $saleItem->sale_id,
+            ]);
+        }
+    }
+
+    /**
      * Deducir inventario para variante de menu item
      */
     public function deductMenuItemVariantStock(SaleItem $saleItem): void
@@ -255,7 +331,8 @@ class InventoryService
 
                 // Deducir ingredientes del menu item
                 foreach ($sellable->recipes as $recipe) {
-                    if (!$recipe->product) continue;
+                    if (!$recipe->product)
+                        continue;
 
                     $quantityNeeded = $recipe->quantity_needed * $quantityMultiplier;
 
@@ -381,6 +458,48 @@ class InventoryService
     }
 
     /**
+     * Restaurar inventario de variante de producto simple
+     */
+    public function restoreSimpleProductVariantStock(SaleItem $saleItem): void
+    {
+        $variant = \App\Models\SimpleProductVariant::with('recipes.product')->find($saleItem->simple_product_variant_id);
+
+        if (!$variant) {
+            return;
+        }
+
+        foreach ($variant->recipes as $recipe) {
+            $quantityToRestore = $recipe->quantity_needed * $saleItem->quantity;
+
+            // Crear movimiento de inventario
+            InventoryMovement::create([
+                'product_id' => $recipe->product_id,
+                'user_id' => auth()->id(),
+                'movement_type' => 'entrada',
+                'quantity' => $quantityToRestore,
+                'unit_cost' => $recipe->product->unit_cost,
+                'total_cost' => $quantityToRestore * $recipe->product->unit_cost,
+                'reason' => 'devolucion',
+                'notes' => "Devolución: {$variant->variant_name} x{$saleItem->quantity} - Ticket #{$saleItem->sale->sale_number}",
+                'movement_date' => now()->toDateString(),
+            ]);
+
+            // Restaurar stock
+            $this->productRepository->updateStock(
+                $recipe->product_id,
+                $recipe->product->current_stock + $quantityToRestore
+            );
+
+            Log::info('Stock restaurado para variante de producto simple', [
+                'product_id' => $recipe->product_id,
+                'quantity' => $quantityToRestore,
+                'variant_id' => $variant->id,
+                'sale_id' => $saleItem->sale_id,
+            ]);
+        }
+    }
+
+    /**
      * Restaurar inventario de combo (usado en devoluciones)
      */
     public function restoreComboStock(SaleItem $saleItem): void
@@ -424,7 +543,8 @@ class InventoryService
 
                 // Restaurar ingredientes del menu item
                 foreach ($sellable->recipes as $recipe) {
-                    if (!$recipe->product) continue;
+                    if (!$recipe->product)
+                        continue;
 
                     $quantityToRestore = $recipe->quantity_needed * $quantityMultiplier;
 

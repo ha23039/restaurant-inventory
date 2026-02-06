@@ -13,6 +13,10 @@ const props = defineProps({
     cart: {
         type: Array,
         default: () => []
+    },
+    isSimpleProduct: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -142,28 +146,32 @@ const totalPrice = computed(() => {
 
 const hasSelection = computed(() => Object.keys(selectedVariants.value).length > 0);
 
-// Add to cart
 const addToCart = () => {
     if (!hasSelection.value || justAdded.value) return;
 
     justAdded.value = true;
 
+    // Determine product type based on isSimpleProduct prop
+    const productType = props.isSimpleProduct ? 'simple_variant' : 'variant';
+    const productIdField = props.isSimpleProduct ? 'simple_product_id' : 'menu_item_id';
+
     const variantsToAdd = Object.values(selectedVariants.value).map(({ variant, quantity }) => ({
-        type: 'variant',
-        product_type: 'variant',
+        type: productType,
+        product_type: productType,
         id: variant.id,
         name: `${props.menuItem.name} - ${variant.variant_name}`,
         price: parseFloat(variant.price),
         quantity: quantity,
         variant_id: variant.id,
-        menu_item_id: props.menuItem.id,
+        [productIdField]: props.menuItem.id,
         available_quantity: variant.available_quantity,
     }));
 
     emit('update-variants', {
         productId: props.menuItem.id,
         productName: props.menuItem.name,
-        variants: variantsToAdd
+        variants: variantsToAdd,
+        isSimpleProduct: props.isSimpleProduct
     });
 
     setTimeout(() => {

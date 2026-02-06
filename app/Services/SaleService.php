@@ -198,6 +198,9 @@ class SaleService
             } elseif ($productType === 'simple') {
                 // Verificar stock del producto simple
                 $this->inventoryService->verifySimpleProductStock($item['id'], $quantity);
+            } elseif ($productType === 'simple_variant') {
+                // Verificar stock de la variante de producto simple
+                $this->inventoryService->verifySimpleProductVariantStock($item['id'], $quantity);
             }
         }
     }
@@ -272,23 +275,26 @@ class SaleService
                 $saleItemData['menu_item_variant_id'] = null;
                 $saleItemData['simple_product_id'] = null;
             } else {
-                // Para productos regulares (menu, variant, simple)
+                // Para productos regulares (menu, variant, simple, simple_variant)
                 $saleItemData['menu_item_id'] = $productType === 'menu' ? $item['id'] : null;
                 $saleItemData['menu_item_variant_id'] = $productType === 'variant' ? $item['id'] : null;
                 $saleItemData['simple_product_id'] = $productType === 'simple' ? $item['id'] : null;
+                $saleItemData['simple_product_variant_id'] = $productType === 'simple_variant' ? $item['id'] : null;
                 $saleItemData['unit_price'] = $item['unit_price'];
                 $saleItemData['total_price'] = $item['quantity'] * $item['unit_price'];
             }
 
             $saleItem = SaleItem::create($saleItemData);
 
-            // Deducir inventario solo para productos regulares (no para ventas libres ni combos por ahora)
+            // Deducir inventario solo para productos regulares (no para ventas libres)
             if ($productType === 'menu') {
                 $this->inventoryService->deductMenuItemStock($saleItem);
             } elseif ($productType === 'variant') {
                 $this->inventoryService->deductMenuItemVariantStock($saleItem);
             } elseif ($productType === 'simple') {
                 $this->inventoryService->deductSimpleProductStock($saleItem);
+            } elseif ($productType === 'simple_variant') {
+                $this->inventoryService->deductSimpleProductVariantStock($saleItem);
             } elseif ($productType === 'combo') {
                 // Para combos, deducir inventario por cada componente
                 $this->inventoryService->deductComboStock($saleItem);

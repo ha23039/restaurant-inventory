@@ -25,7 +25,7 @@ class ProcessSaleRequest extends FormRequest
         return [
             'items' => 'required|array|min:1',
             'items.*.id' => 'required',
-            'items.*.product_type' => 'sometimes|in:menu,simple',
+            'items.*.product_type' => 'sometimes|in:menu,simple,simple_variant,variant,combo,free',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'payment_method' => 'required|in:efectivo,tarjeta,transferencia,mixto',

@@ -67,6 +67,7 @@ const freeSaleTotal = ref('');
 // VARIANTES DE PRODUCTOS
 const showVariantSlideOver = ref(false);
 const selectedMenuItemForVariants = ref(null);
+const isSimpleProductVariant = ref(false);
 
 // COMBOS
 const showComboSlideOver = ref(false);
@@ -380,9 +381,10 @@ const addToCart = (product) => {
         return;
     }
 
-    // Si el producto tiene variantes, abrir slideover de selección
-    if (product.has_variants && product.variants && product.variants.length > 0) {
+    // Si el producto tiene variantes (menu item con has_variants o producto simple con allows_variants)
+    if ((product.has_variants || product.allows_variants) && product.variants && product.variants.length > 0) {
         selectedMenuItemForVariants.value = product;
+        isSimpleProductVariant.value = product.product_type === 'simple';
         showVariantSlideOver.value = true;
         return;
     }
@@ -454,11 +456,15 @@ const addVariantToCart = (variant) => {
 };
 
 // Handle multiple variants update from the new SlideOver
-const handleUpdateVariants = ({ productId, productName, variants }) => {
+const handleUpdateVariants = ({ productId, productName, variants, isSimpleProduct }) => {
+    // Determine which type of variant to filter and add
+    const variantType = isSimpleProduct ? 'simple_variant' : 'variant';
+    const idField = isSimpleProduct ? 'simple_product_id' : 'menu_item_id';
+
     // Remove existing variants of this product from cart
     cartItems.value = cartItems.value.filter(item => {
-        // Keep items that are not variants of this menu item
-        return !(item.product_type === 'variant' && item.menu_item_id === productId);
+        // Keep items that are not variants of this product
+        return !(item.product_type === variantType && item[idField] === productId);
     });
 
     // Add all selected variants with their quantities
@@ -470,9 +476,9 @@ const handleUpdateVariants = ({ productId, productName, variants }) => {
                 price: variant.price,
                 quantity: variant.quantity,
                 available_quantity: variant.available_quantity,
-                product_type: 'variant',
+                product_type: variantType,
                 variant_id: variant.variant_id,
-                menu_item_id: variant.menu_item_id
+                [idField]: productId
             });
         }
     });
@@ -2006,6 +2012,7 @@ onBeforeUnmount(() => {
         :show="showVariantSlideOver"
         :menu-item="selectedMenuItemForVariants"
         :cart="cartItems"
+        :is-simple-product="isSimpleProductVariant"
         @close="showVariantSlideOver = false"
         @select="addVariantToCart"
         @update-variants="handleUpdateVariants"

@@ -15,6 +15,7 @@ use App\Models\SimpleProductVariant;
 use App\Models\Table;
 use App\Models\KitchenOrderState;
 use App\Models\User;
+use App\Services\InventoryService;
 use App\Services\ThermalTicketService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,13 @@ use Illuminate\Support\Facades\Session;
 
 class OrderController extends Controller
 {
+    protected InventoryService $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     /**
      * Create a new order from digital menu
      */
@@ -169,7 +177,10 @@ class OrderController extends Controller
                     ];
                 }
 
-                SaleItem::create($saleItemData);
+                $saleItem = SaleItem::create($saleItemData);
+
+                // Deducir inventario inmediatamente para evitar sobreventa
+                $this->deductInventoryForItem($saleItem, $itemData['type']);
             }
 
             // Crear orden de cocina para que aparezca en Kitchen Display
@@ -278,6 +289,30 @@ class OrderController extends Controller
             'combo' => (float) $product->base_price,
             default => 0,
         };
+    }
+
+    /**
+     * Deducir inventario según el tipo de producto
+     */
+    private function deductInventoryForItem(SaleItem $saleItem, string $type): void
+    {
+        switch ($type) {
+            case 'menu':
+                $this->inventoryService->deductMenuItemStock($saleItem);
+                break;
+            case 'variant':
+                $this->inventoryService->deductMenuItemVariantStock($saleItem);
+                break;
+            case 'simple':
+                $this->inventoryService->deductSimpleProductStock($saleItem);
+                break;
+            case 'simple_variant':
+                $this->inventoryService->deductSimpleProductVariantStock($saleItem);
+                break;
+            case 'combo':
+                $this->inventoryService->deductComboStock($saleItem);
+                break;
+        }
     }
 
     /**
