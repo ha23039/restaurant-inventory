@@ -87,11 +87,12 @@ const openOrderDetail = async (order) => {
 };
 
 // Evento cuando se cancela un item
-const handleItemCancelled = () => {
+const handleItemCancelled = async () => {
     toast.success('Item cancelado correctamente');
     router.reload({ only: ['orders', 'counts'] });
-    if (selectedOrder.value) {
-        openOrderDetail(selectedOrder.value);
+    // Recargar los detalles de la orden desde el servidor
+    if (selectedOrder.value?.id) {
+        await openOrderDetail({ id: selectedOrder.value.id });
     }
 };
 
@@ -104,6 +105,14 @@ const handleCustomerUpdated = () => {
     }
 };
 
+// Evento cuando se cobra un pedido
+const handleOrderCharged = () => {
+    toast.success('Pedido cobrado correctamente');
+    showSlideOver.value = false;
+    selectedOrder.value = null;
+    router.reload({ only: ['orders', 'counts', 'tables', 'tableStatistics'] });
+};
+
 // Helper para status de cocina con iconos
 const getKitchenStatus = (status) => {
     const statuses = {
@@ -112,6 +121,12 @@ const getKitchenStatus = (status) => {
             text: 'text-blue-700 dark:text-blue-300',
             label: 'Nueva',
             dot: 'bg-blue-500'
+        },
+        preparando: { 
+            bg: 'bg-amber-100 dark:bg-amber-900/30', 
+            text: 'text-amber-700 dark:text-amber-300',
+            label: 'Preparando',
+            dot: 'bg-amber-500 animate-pulse'
         },
         en_preparacion: { 
             bg: 'bg-amber-100 dark:bg-amber-900/30', 
@@ -316,74 +331,80 @@ const getTableStatusTextColor = (status) => {
                         </p>
                     </div>
 
-                <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div v-else class="w-full space-y-2">
+                    <!-- Header row (desktop) -->
+                    <div class="hidden lg:grid lg:grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <div class="col-span-2">Pedido</div>
+                        <div class="col-span-3">Cliente</div>
+                        <div class="col-span-2">Tipo</div>
+                        <div class="col-span-2">Estado</div>
+                        <div class="col-span-2">Total</div>
+                        <div class="col-span-1 text-right">Acción</div>
+                    </div>
+
+                    <!-- Order rows -->
                     <div
                         v-for="order in orders.data"
                         :key="order.id"
                         @click="openOrderDetail(order)"
-                        class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-800 transition-all duration-200 cursor-pointer overflow-hidden group"
+                        :class="[
+                            'w-full bg-white dark:bg-gray-800 rounded-xl border-l-4 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:translate-x-1',
+                            order.source === 'digital_menu' ? 'border-l-purple-500' : 'border-l-orange-500'
+                        ]"
                     >
-                        <!-- Card Header -->
-                        <div class="p-4 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-start justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div :class="[
-                                        'w-10 h-10 rounded-xl flex items-center justify-center',
+                        <div class="p-4 lg:grid lg:grid-cols-12 gap-4 items-center w-full">
+                            <!-- Pedido (número y tiempo) -->
+                            <div class="col-span-2 flex items-center gap-3 mb-3 lg:mb-0">
+                                <div :class="[
+                                    'w-10 h-10 rounded-lg flex items-center justify-center',
+                                    order.source === 'digital_menu' 
+                                        ? 'bg-purple-100 dark:bg-purple-900/30' 
+                                        : 'bg-orange-100 dark:bg-orange-900/30'
+                                ]">
+                                    <svg :class="[
+                                        'w-5 h-5',
                                         order.source === 'digital_menu' 
-                                            ? 'bg-purple-100 dark:bg-purple-900/30' 
-                                            : 'bg-orange-100 dark:bg-orange-900/30'
-                                    ]">
-                                        <svg :class="[
-                                            'w-5 h-5',
-                                            order.source === 'digital_menu' 
-                                                ? 'text-purple-600 dark:text-purple-400' 
-                                                : 'text-orange-600 dark:text-orange-400'
-                                        ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons[getOrderTypeIcon(order)]" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-lg font-bold text-gray-900 dark:text-white">
-                                            #{{ order.sale_number }}
-                                        </p>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ getDeliveryLabel(order.delivery_method, order.table) }}
-                                        </p>
-                                    </div>
+                                            ? 'text-purple-600 dark:text-purple-400' 
+                                            : 'text-orange-600 dark:text-orange-400'
+                                    ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons[getOrderTypeIcon(order)]" />
+                                    </svg>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-lg font-bold text-gray-900 dark:text-white">
-                                        {{ formatPrice(order.total) }}
-                                    </p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500">
-                                        {{ formatTimeAgo(order.created_at) }}
-                                    </p>
+                                <div>
+                                    <p class="font-bold text-gray-900 dark:text-white">#{{ order.sale_number }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatTimeAgo(order.created_at) }}</p>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Card Body -->
-                        <div class="p-4">
                             <!-- Cliente -->
-                            <div class="flex items-center gap-2 mb-3">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.user" />
-                                </svg>
-                                <span class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ order.customer_name || 'Cliente' }}
-                                </span>
+                            <div class="col-span-3 mb-2 lg:mb-0">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.user" />
+                                    </svg>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300 truncate">
+                                        {{ order.customer_name || 'Cliente' }}
+                                    </span>
+                                </div>
                                 <span 
                                     v-if="order.source === 'digital_menu'"
-                                    class="ml-auto text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full"
+                                    class="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full mt-1 inline-block"
                                 >
                                     Menú Digital
                                 </span>
                             </div>
 
-                            <!-- Status Badge -->
-                            <div class="flex items-center justify-between">
+                            <!-- Tipo de pedido -->
+                            <div class="col-span-2 mb-2 lg:mb-0">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ getDeliveryLabel(order.delivery_method, order.table) }}
+                                </span>
+                            </div>
+
+                            <!-- Estado -->
+                            <div class="col-span-2 mb-2 lg:mb-0">
                                 <div :class="[
-                                    'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
+                                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
                                     getKitchenStatus(order.kitchen_order_state?.status).bg,
                                     getKitchenStatus(order.kitchen_order_state?.status).text
                                 ]">
@@ -393,8 +414,18 @@ const getTableStatusTextColor = (status) => {
                                     ]"></span>
                                     {{ getKitchenStatus(order.kitchen_order_state?.status).label }}
                                 </div>
-                                <!-- Visible en móvil, hover en desktop -->
-                                <button class="p-2 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors sm:opacity-0 sm:group-hover:opacity-100">
+                            </div>
+
+                            <!-- Total -->
+                            <div class="col-span-2 mb-3 lg:mb-0">
+                                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                                    {{ formatPrice(order.total) }}
+                                </p>
+                            </div>
+
+                            <!-- Acción -->
+                            <div class="col-span-1 flex justify-end">
+                                <button class="p-2 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.eye" />
                                     </svg>
@@ -500,9 +531,11 @@ const getTableStatusTextColor = (status) => {
             :show="showSlideOver"
             :order="selectedOrder"
             :loading="loadingOrder"
+            :payment-methods="payment_methods"
             @close="showSlideOver = false"
             @item-cancelled="handleItemCancelled"
             @customer-updated="handleCustomerUpdated"
+            @charged="handleOrderCharged"
         />
 
         <!-- TableSlideOver para cobrar por mesa -->

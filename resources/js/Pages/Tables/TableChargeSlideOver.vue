@@ -69,7 +69,10 @@ const displaySales = computed(() => {
 });
 
 const subtotal = computed(() => {
-    return displaySales.value.reduce((sum, sale) => sum + (sale.subtotal || sale.total || 0), 0);
+    return displaySales.value.reduce((sum, sale) => {
+        const saleSubtotal = parseFloat(sale.subtotal) || parseFloat(sale.total) || 0;
+        return sum + saleSubtotal;
+    }, 0);
 });
 
 const total = computed(() => {
@@ -151,26 +154,41 @@ const handleCharge = async () => {
             discount: parseFloat(discount.value) || 0,
         };
 
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+        };
+
         if (isSingleMode.value && props.sale) {
             // Charge single sale
             response = await fetch(route('sales.charge', props.sale.id), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                },
+                headers,
                 body: JSON.stringify(data),
             });
         } else if (props.tableId) {
             // Charge all sales for table
             response = await fetch(route('tables.charge-all', props.tableId), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                },
+                headers,
                 body: JSON.stringify(data),
             });
+        }
+
+        // Check if response is OK before parsing JSON
+        if (!response.ok) {
+            const text = await response.text();
+            try {
+                const errorData = JSON.parse(text);
+                error.value = errorData.message || errorData.error || `Error ${response.status}`;
+                if (errorData.requires_cash_register) {
+                    requiresCashRegister.value = true;
+                }
+            } catch {
+                error.value = `Error del servidor (${response.status}). Por favor, intenta de nuevo.`;
+            }
+            return;
         }
 
         const result = await response.json();
@@ -180,7 +198,6 @@ const handleCharge = async () => {
             emit('close');
         } else {
             error.value = result.message || 'Error al procesar el cobro';
-            // Check if cash register is required
             if (result.requires_cash_register) {
                 requiresCashRegister.value = true;
             }

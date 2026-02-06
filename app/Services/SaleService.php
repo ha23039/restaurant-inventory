@@ -346,6 +346,7 @@ class SaleService
         return Sale::with([
             'saleItems.menuItem',
             'saleItems.simpleProduct',
+            'saleItems.simpleProductVariant.simpleProduct',  // Variantes de producto simple (bebidas)
             'saleItems.menuItemVariant.menuItem',  // Variantes con platillo padre
             'saleItems.combo',  // Combos
             'table',

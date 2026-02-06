@@ -348,12 +348,17 @@ const changeBillBreakdown = computed(() => {
     return breakdown;
 });
 
-// Helper: Obtener nombre de item de venta (soporta menu, simple, variant, free, combo)
+// Helper: Obtener nombre de item de venta (soporta menu, simple, variant, simple_variant, free, combo)
 const getSaleItemName = (item) => {
     if (item.product_type === 'variant' && item.menu_item_variant) {
-        // Para variantes, mostrar nombre del platillo padre + nombre de variante
+        // Para variantes de platillo, mostrar nombre del platillo padre + nombre de variante
         const parentName = item.menu_item_variant.menu_item?.name || '';
         const variantName = item.menu_item_variant.variant_name;
+        return parentName ? `${parentName} - ${variantName}` : variantName;
+    } else if (item.product_type === 'simple_variant' && item.simple_product_variant) {
+        // Para variantes de producto simple (bebidas), mostrar nombre del producto padre + variante
+        const parentName = item.simple_product_variant.simple_product?.name || '';
+        const variantName = item.simple_product_variant.variant_name;
         return parentName ? `${parentName} - ${variantName}` : variantName;
     } else if (item.product_type === 'combo' && item.combo) {
         return item.combo.name;

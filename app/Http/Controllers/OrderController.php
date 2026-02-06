@@ -103,7 +103,7 @@ class OrderController extends Controller
                         'pending_total' => $pendingSales->sum('total'),
                         'current_sale' => $table->currentSale,
                     ];
-                });
+                })->toArray();
 
             $tableStatistics = $this->getTableStatistics();
             $paymentMethods = \App\Models\PaymentMethod::getActive();
@@ -325,6 +325,83 @@ class OrderController extends Controller
             'message' => 'Cliente actualizado correctamente',
             'customer_name' => $sale->customer_name,
         ]);
+    }
+
+    /**
+     * Cancelar un pedido completo
+     */
+    public function cancelOrder(Request $request, Sale $sale)
+    {
+        // Verificar que el pedido está pendiente
+        if ($sale->status !== 'pendiente') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Solo se pueden cancelar pedidos pendientes',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+
+        try {
+            // Liberar mesa si está asignada
+            if ($sale->table_id) {
+                $table = \App\Models\Table::find($sale->table_id);
+                if ($table) {
+                    $table->update([
+                        'status' => 'disponible',
+                        'current_sale_id' => null,
+                    ]);
+                }
+            }
+
+            // Cancelar todos los items
+            $sale->saleItems()->update([
+                'cancelled_at' => now(),
+                'cancelled_by_user_id' => auth()->id(),
+                'cancellation_reason' => $validated['reason'] ?? 'Pedido cancelado',
+            ]);
+
+            // Actualizar estado del pedido
+            $sale->update([
+                'status' => 'cancelada',
+                'notes' => ($sale->notes ? $sale->notes . "\n" : '') .
+                    'Cancelado: ' . ($validated['reason'] ?? 'Sin motivo especificado'),
+            ]);
+
+            // Actualizar estado de cocina si existe
+            if ($sale->kitchenOrderState) {
+                $sale->kitchenOrderState->update([
+                    'status' => 'cancelada',
+                ]);
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            \Illuminate\Support\Facades\Log::info('Pedido cancelado', [
+                'sale_id' => $sale->id,
+                'sale_number' => $sale->sale_number,
+                'reason' => $validated['reason'] ?? null,
+                'cancelled_by' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pedido cancelado correctamente',
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Error al cancelar pedido: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Error al cancelar el pedido',
+            ], 500);
+        }
     }
 
     /**

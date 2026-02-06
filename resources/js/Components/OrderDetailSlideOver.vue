@@ -1,16 +1,22 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import SlideOver from './SlideOver.vue';
+import TableChargeSlideOver from '@/Pages/Tables/TableChargeSlideOver.vue';
 
 const props = defineProps({
     show: Boolean,
     order: Object,
     loading: Boolean,
+    paymentMethods: {
+        type: Array,
+        default: () => [],
+    },
 });
 
-const emit = defineEmits(['close', 'itemCancelled', 'customerUpdated']);
+const emit = defineEmits(['close', 'itemCancelled', 'customerUpdated', 'charged']);
 
 const toast = useToast();
 
@@ -19,6 +25,12 @@ const cancellingItem = ref(null);
 const cancelReason = ref('');
 const showCancelModal = ref(false);
 const itemToCancel = ref(null);
+const showChargeSlideOver = ref(false);
+
+// Estado para cancelar pedido completo
+const showCancelOrderModal = ref(false);
+const cancelOrderReason = ref('');
+const cancellingOrder = ref(false);
 
 // Customer search state
 const showCustomerSearch = ref(false);
@@ -186,6 +198,78 @@ const formatDateTime = (date) => {
         hour: '2-digit',
         minute: '2-digit',
     });
+};
+
+// Cobrar pedido
+const openChargeSlideOver = () => {
+    showChargeSlideOver.value = true;
+};
+
+const handleCharged = (result) => {
+    showChargeSlideOver.value = false;
+    emit('charged', result);
+    emit('close');
+};
+
+// Preparar datos para cobro
+const saleForCharge = computed(() => {
+    if (!props.order) return null;
+    return {
+        id: props.order.id,
+        sale_number: props.order.sale_number,
+        customer_name: props.order.customer_name,
+        subtotal: parseFloat(props.order.active_subtotal) || parseFloat(props.order.subtotal) || 0,
+        total: parseFloat(props.order.total) || 0,
+        created_at: formatDateTime(props.order.created_at),
+        kitchen_status: props.order.kitchen_order_state?.status || 'nueva',
+        items: activeItems.value.map(item => ({
+            id: item.id,
+            name: getProductName(item),
+            quantity: item.quantity,
+            subtotal: parseFloat(item.total_price) || 0,
+        })),
+    };
+});
+
+// Imprimir ticket
+const printTicket = () => {
+    if (!props.order) return;
+    // TODO: Implementar impresión de ticket
+    toast.info('Función de impresión próximamente');
+};
+
+// Ir a POS para añadir items
+const goToAddItems = () => {
+    if (!props.order) return;
+    router.visit(route('sales.pos', { load_sale: props.order.id }));
+};
+
+// Abrir modal de cancelar pedido completo
+const openCancelOrderModal = () => {
+    cancelOrderReason.value = '';
+    showCancelOrderModal.value = true;
+};
+
+// Cancelar pedido completo
+const cancelOrder = async () => {
+    if (!props.order || cancellingOrder.value) return;
+    
+    cancellingOrder.value = true;
+    
+    try {
+        await axios.post(route('orders.cancel', props.order.id), {
+            reason: cancelOrderReason.value,
+        });
+        
+        showCancelOrderModal.value = false;
+        toast.success('Pedido cancelado correctamente');
+        emit('close');
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        toast.error(error.response?.data?.error || 'Error al cancelar el pedido');
+    } finally {
+        cancellingOrder.value = false;
+    }
 };
 </script>
 
@@ -404,19 +488,53 @@ const formatDateTime = (date) => {
                 </div>
 
                 <!-- Acciones -->
-                <div class="flex gap-3">
-                    <button class="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        Imprimir
-                    </button>
-                    <button class="flex-1 py-3 px-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all font-medium flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        Cobrar
-                    </button>
+                <div class="space-y-3">
+                    <!-- Fila superior: Añadir Items y Imprimir -->
+                    <div class="flex gap-2">
+                        <button 
+                            v-if="order.status === 'pendiente'"
+                            @click="goToAddItems"
+                            class="flex-1 py-2.5 px-3 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Añadir Items
+                        </button>
+                        <button 
+                            @click="printTicket"
+                            class="flex-1 py-2.5 px-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Imprimir
+                        </button>
+                    </div>
+                    
+                    <!-- Fila inferior: Cancelar y Cobrar -->
+                    <div class="flex gap-2">
+                        <button 
+                            v-if="order.status === 'pendiente'"
+                            @click="openCancelOrderModal"
+                            class="py-2.5 px-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancelar
+                        </button>
+                        <button 
+                            @click="openChargeSlideOver"
+                            :disabled="order.status !== 'pendiente'"
+                            class="flex-1 py-2.5 px-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all font-medium flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            Cobrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </template>
@@ -482,6 +600,79 @@ const formatDateTime = (date) => {
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         {{ cancellingItem ? 'Cancelando...' : 'Sí, cancelar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Transition>
+
+    <!-- SlideOver de Cobro -->
+    <TableChargeSlideOver
+        :show="showChargeSlideOver"
+        :sale="saleForCharge"
+        :payment-methods-from-db="paymentMethods"
+        mode="single"
+        @close="showChargeSlideOver = false"
+        @charged="handleCharged"
+    />
+
+    <!-- Modal Cancelar Pedido Completo -->
+    <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+    >
+        <div v-if="showCancelOrderModal" class="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Cancelar Pedido</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Esta acción no se puede deshacer</p>
+                    </div>
+                </div>
+
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    ¿Estás seguro de cancelar el pedido <strong>#{{ order?.sale_number }}</strong>? 
+                    Todos los items serán cancelados y la mesa se liberará.
+                </p>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Motivo de cancelación (opcional)
+                    </label>
+                    <input
+                        v-model="cancelOrderReason"
+                        type="text"
+                        placeholder="Ej: Cliente canceló"
+                        class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                </div>
+
+                <div class="flex gap-3">
+                    <button
+                        @click="showCancelOrderModal = false"
+                        class="flex-1 py-2.5 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+                    >
+                        No, mantener
+                    </button>
+                    <button
+                        @click="cancelOrder"
+                        :disabled="cancellingOrder"
+                        class="flex-1 py-2.5 px-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        <svg v-if="cancellingOrder" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {{ cancellingOrder ? 'Cancelando...' : 'Cancelar Pedido' }}
                     </button>
                 </div>
             </div>

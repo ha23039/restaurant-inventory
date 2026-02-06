@@ -19,6 +19,7 @@ class OrderTrackingController extends Controller
                 'saleItems.menuItem',
                 'saleItems.menuItemVariant.menuItem',
                 'saleItems.simpleProduct',
+                'saleItems.simpleProductVariant.simpleProduct',
                 'saleItems.combo',
                 'digitalCustomer',
                 'table',
@@ -46,6 +47,7 @@ class OrderTrackingController extends Controller
                         'menu' => $item->menuItem?->name ?? 'Platillo',
                         'variant' => ($item->menuItemVariant?->menuItem?->name ?? '') . ' - ' . ($item->menuItemVariant?->variant_name ?? ''),
                         'simple' => $item->simpleProduct?->name ?? 'Producto',
+                        'simple_variant' => ($item->simpleProductVariant?->simpleProduct?->name ?? '') . ' - ' . ($item->simpleProductVariant?->variant_name ?? ''),
                         'combo' => $item->combo?->name ?? 'Combo',
                         default => 'Producto',
                     };
@@ -119,7 +121,7 @@ class OrderTrackingController extends Controller
             $kitchenStatus = $sale->kitchenOrderState->status;
             $elapsedMinutes = $sale->kitchenOrderState->elapsed_minutes;
 
-            return match($kitchenStatus) {
+            return match ($kitchenStatus) {
                 'nueva' => [
                     'kitchen_status' => 'nueva',
                     'label' => 'Pedido Recibido',
@@ -154,7 +156,7 @@ class OrderTrackingController extends Controller
         }
 
         // Fallback: usar estado de venta
-        return match($sale->status) {
+        return match ($sale->status) {
             'completada' => [
                 'kitchen_status' => 'completada',
                 'label' => 'Completada',

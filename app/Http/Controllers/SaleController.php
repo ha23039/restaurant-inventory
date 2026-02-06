@@ -134,6 +134,8 @@ class SaleController extends Controller
                         $recipeQuery->with('product:id,name,unit_type');
                     },
                     'simpleProduct:id,name,description,sale_price,category',
+                    'simpleProductVariant:id,simple_product_id,variant_name,price',  // 🆕 Variantes de producto simple
+                    'simpleProductVariant.simpleProduct:id,name',  // 🆕 Producto padre de la variante
                     'menuItemVariant:id,menu_item_id,variant_name,price,attributes',  // 🆕 Variantes
                     'menuItemVariant.menuItem:id,name',  // 🆕 Platillo padre de la variante
                     'combo:id,name,description,base_price',  // 🆕 Combos
@@ -250,6 +252,19 @@ class SaleController extends Controller
                     ];
                     $parentName = $item->menuItemVariant->menuItem ? $item->menuItemVariant->menuItem->name : '';
                     $baseItem['product_name'] = $parentName . ' - ' . $item->menuItemVariant->variant_name;
+                } elseif ($item->product_type === 'simple_variant' && $item->simpleProductVariant) {
+                    // 🆕 Variantes de producto simple (bebidas, etc)
+                    $baseItem['simple_product_variant'] = [
+                        'id' => $item->simpleProductVariant->id,
+                        'variant_name' => $item->simpleProductVariant->variant_name,
+                        'price' => floatval($item->simpleProductVariant->price),
+                        'simple_product' => $item->simpleProductVariant->simpleProduct ? [
+                            'id' => $item->simpleProductVariant->simpleProduct->id,
+                            'name' => $item->simpleProductVariant->simpleProduct->name,
+                        ] : null,
+                    ];
+                    $parentName = $item->simpleProductVariant->simpleProduct ? $item->simpleProductVariant->simpleProduct->name : '';
+                    $baseItem['product_name'] = $parentName . ' - ' . $item->simpleProductVariant->variant_name;
                 } elseif ($item->product_type === 'combo' && $item->combo) {
                     // 🆕 Combos
                     $comboSelections = is_string($item->combo_selections)

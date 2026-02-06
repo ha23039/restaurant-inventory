@@ -36,6 +36,11 @@ class SaleItem extends Model
     ];
 
     /**
+     * Atributos a incluir en la serialización JSON
+     */
+    protected $appends = ['is_cancelled'];
+
+    /**
      * Scope para items activos (no cancelados)
      */
     public function scopeActive($query)

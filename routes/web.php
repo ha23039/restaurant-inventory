@@ -268,6 +268,9 @@ Route::middleware(['auth', 'role:admin,cajero,mesero'])->prefix('orders')->name(
 
     // Asignar cliente a una orden
     Route::post('/{sale}/assign-customer', [App\Http\Controllers\OrderController::class, 'assignCustomer'])->name('assign-customer');
+
+    // Cancelar pedido completo
+    Route::post('/{sale}/cancel', [App\Http\Controllers\OrderController::class, 'cancelOrder'])->name('cancel');
 });
 
 /*
