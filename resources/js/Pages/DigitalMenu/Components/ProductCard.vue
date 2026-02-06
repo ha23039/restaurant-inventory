@@ -47,7 +47,13 @@ const stockStatus = computed(() => {
     if (isCombo.value) return null; // No mostrar stock para combos
     if (hasVariants.value) return null; // No mostrar stock para productos con variantes
     if (!isAvailable.value) return { text: 'Agotado', color: 'red' };
-    if (props.product.available_quantity <= 5) return { text: 'Pocas unidades', color: 'yellow' };
+    
+    const qty = props.product.available_quantity;
+    // Stock muy bajo (1-3): mostrar cantidad exacta en rojo
+    if (qty <= 3) return { text: `¡Solo ${qty === 1 ? 'queda 1' : `quedan ${qty}`}!`, color: 'red' };
+    // Stock bajo (4-5): mostrar cantidad en amarillo
+    if (qty <= 5) return { text: `Quedan ${qty}`, color: 'yellow' };
+    
     return null;
 });
 

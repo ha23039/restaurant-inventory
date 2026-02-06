@@ -156,6 +156,7 @@ class MenuController extends Controller
             'settings' => [
                 'is_open' => $settings->isDigitalMenuOpen(),
                 'closed_message' => $settings->digital_menu_closed_message,
+                'next_opening_time' => $settings->getNextOpeningTime(),
                 'welcome_message' => $settings->digital_menu_welcome_message,
                 'min_order_amount' => $settings->min_order_amount,
                 'estimated_prep_time' => $settings->estimated_prep_time,

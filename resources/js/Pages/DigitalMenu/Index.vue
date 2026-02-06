@@ -412,8 +412,16 @@ const handleConfirmationClose = () => {
 
             <!-- Closed Warning -->
             <div v-if="!settings.is_open" class="mb-6 p-4 bg-red-500/10 dark:bg-red-500/20 rounded-xl border border-red-200 dark:border-red-800">
-                <p class="text-red-600 dark:text-red-400 text-center font-medium text-sm">
-                    ⏰ {{ settings.closed_message || 'Estamos cerrados en este momento' }}
+                <div class="flex items-center justify-center gap-2 text-red-600 dark:text-red-400">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="font-medium text-sm">
+                        {{ settings.closed_message || 'Estamos cerrados en este momento' }}
+                    </span>
+                </div>
+                <p v-if="settings.next_opening_time" class="text-center text-xs text-red-500 dark:text-red-300 mt-2">
+                    Abrimos {{ settings.next_opening_time }}
                 </p>
             </div>
 

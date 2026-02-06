@@ -410,11 +410,33 @@ onUnmounted(() => {
                                         <p class="text-base font-bold text-orange-600 dark:text-orange-400 mt-0.5">
                                             ${{ parseFloat(variant.price).toFixed(2) }}
                                         </p>
+                                        <!-- Stock status -->
                                         <p
                                             v-if="variant.available_quantity <= 0 && variant.available_quantity !== 999"
-                                            class="text-xs text-red-500 font-medium mt-1"
+                                            class="text-xs text-red-500 font-bold mt-1 animate-pulse flex items-center gap-1"
                                         >
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                             Agotado
+                                        </p>
+                                        <p
+                                            v-else-if="variant.available_quantity !== 999 && variant.available_quantity <= 3"
+                                            class="text-xs text-red-500 font-semibold mt-1 flex items-center gap-1"
+                                        >
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                                            </svg>
+                                            ¡Solo {{ variant.available_quantity === 1 ? 'queda 1' : `quedan ${variant.available_quantity}` }}!
+                                        </p>
+                                        <p
+                                            v-else-if="variant.available_quantity !== 999 && variant.available_quantity <= 5"
+                                            class="text-xs text-yellow-600 dark:text-yellow-400 font-medium mt-1 flex items-center gap-1"
+                                        >
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Quedan {{ variant.available_quantity }}
                                         </p>
                                     </div>
                                 </div>

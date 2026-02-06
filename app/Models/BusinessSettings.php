@@ -135,4 +135,65 @@ class BusinessSettings extends Model
 
         return $methods;
     }
+
+    /**
+     * Get the next opening time for the digital menu
+     */
+    public function getNextOpeningTime(): ?string
+    {
+        if (!$this->digital_menu_schedule) {
+            return null;
+        }
+
+        $now = now();
+        $currentDayName = strtolower($now->format('l'));
+        $currentTime = $now->format('H:i');
+
+        // Check if opens later today
+        $todaySchedule = $this->digital_menu_schedule[$currentDayName] ?? null;
+        if ($todaySchedule && $todaySchedule['enabled'] && $currentTime < $todaySchedule['open']) {
+            return 'Hoy a las ' . $this->formatTime($todaySchedule['open']);
+        }
+
+        // Check next 7 days
+        $daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $currentDayIndex = array_search($currentDayName, $daysOrder);
+
+        for ($i = 1; $i <= 7; $i++) {
+            $nextDayIndex = ($currentDayIndex + $i) % 7;
+            $nextDayName = $daysOrder[$nextDayIndex];
+            $daySchedule = $this->digital_menu_schedule[$nextDayName] ?? null;
+
+            if ($daySchedule && $daySchedule['enabled']) {
+                $dayLabel = $this->getDayLabel($nextDayName, $i);
+                return $dayLabel . ' a las ' . $this->formatTime($daySchedule['open']);
+            }
+        }
+
+        return null;
+    }
+
+    private function formatTime(string $time): string
+    {
+        return \Carbon\Carbon::createFromFormat('H:i', $time)->format('g:i A');
+    }
+
+    private function getDayLabel(string $dayName, int $daysFromNow): string
+    {
+        if ($daysFromNow === 1) {
+            return 'Mañana';
+        }
+
+        $days = [
+            'monday' => 'Lunes',
+            'tuesday' => 'Martes',
+            'wednesday' => 'Miércoles',
+            'thursday' => 'Jueves',
+            'friday' => 'Viernes',
+            'saturday' => 'Sábado',
+            'sunday' => 'Domingo',
+        ];
+
+        return $days[$dayName] ?? $dayName;
+    }
 }

@@ -46,10 +46,15 @@ const initializeSelections = () => {
                     variantName: null,
                 };
 
-                // Si tiene variantes, seleccionar la primera por defecto
+                // Si tiene variantes, seleccionar la primera DISPONIBLE por defecto
                 if (defaultOption.has_variants && defaultOption.variants?.length > 0) {
-                    newSelections[component.id].variantId = defaultOption.variants[0].id;
-                    newSelections[component.id].variantName = defaultOption.variants[0].name;
+                    // Buscar primera variante disponible (sin stock definido = ilimitado, stock > 0, o stock 999)
+                    const availableVariant = defaultOption.variants.find(
+                        v => v.available_quantity === undefined || v.available_quantity === null || v.available_quantity > 0 || v.available_quantity === 999
+                    ) || defaultOption.variants[0];
+                    
+                    newSelections[component.id].variantId = availableVariant.id;
+                    newSelections[component.id].variantName = availableVariant.name;
                 }
             }
         }
@@ -464,12 +469,28 @@ const handleTouchEnd = () => {
                                             @click="selectVariant(component.id, variant)"
                                             class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
                                             :class="[
-                                                selections[component.id]?.variantId === variant.id
-                                                    ? 'bg-orange-500 text-white'
-                                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-orange-400'
+                                                variant.available_quantity !== undefined && variant.available_quantity !== null && variant.available_quantity <= 0 && variant.available_quantity !== 999
+                                                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed line-through'
+                                                    : selections[component.id]?.variantId === variant.id
+                                                        ? 'bg-orange-500 text-white'
+                                                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-orange-400'
                                             ]"
+                                            :disabled="variant.available_quantity !== undefined && variant.available_quantity !== null && variant.available_quantity <= 0 && variant.available_quantity !== 999"
                                         >
                                             {{ variant.name }}
+                                            <svg 
+                                                v-if="variant.available_quantity !== undefined && variant.available_quantity !== null && variant.available_quantity <= 0 && variant.available_quantity !== 999" 
+                                                class="w-3 h-3 ml-1 text-red-400 inline"
+                                                fill="none" 
+                                                stroke="currentColor" 
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            <span 
+                                                v-else-if="variant.available_quantity !== undefined && variant.available_quantity !== null && variant.available_quantity !== 999 && variant.available_quantity <= 3" 
+                                                class="ml-1 text-red-500 font-bold"
+                                            >({{ variant.available_quantity }})</span>
                                         </button>
                                     </div>
                                 </div>
