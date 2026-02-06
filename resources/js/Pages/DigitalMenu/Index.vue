@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import DigitalMenuLayout from '@/Layouts/DigitalMenuLayout.vue';
@@ -19,6 +19,10 @@ const props = defineProps({
     settings: Object,
     availableTables: Array,
 });
+
+// Refs reactivas para productos (permite actualización de stock en tiempo real)
+const menuItemsData = ref([...props.menuItems]);
+const simpleProductsData = ref([...props.simpleProducts]);
 
 const searchQuery = ref('');
 const activeTab = ref('menu');
@@ -94,10 +98,84 @@ const setupNavigationGuard = () => {
     });
 };
 
+// ===== STOCK POLLING (actualización en tiempo real) =====
+const STOCK_POLL_INTERVAL = 30000; // 30 segundos
+let stockPollTimer = null;
+let isPageVisible = true;
+
+const fetchStockUpdates = async () => {
+    if (!isPageVisible) return;
+    
+    try {
+        const response = await axios.get('/api/digital-menu/stock');
+        const { stock } = response.data;
+        
+        // Actualizar stock en menuItems
+        menuItemsData.value.forEach(item => {
+            if (stock.menu_items[item.id] !== undefined) {
+                item.available_quantity = stock.menu_items[item.id];
+            }
+            // Actualizar variantes
+            if (item.variants) {
+                item.variants.forEach(variant => {
+                    if (stock.variants[variant.id] !== undefined) {
+                        variant.available_quantity = stock.variants[variant.id];
+                    }
+                });
+            }
+        });
+        
+        // Actualizar stock en simpleProducts
+        simpleProductsData.value.forEach(product => {
+            if (stock.simple_products[product.id] !== undefined) {
+                product.available_quantity = stock.simple_products[product.id];
+            }
+            // Actualizar variantes
+            if (product.variants) {
+                product.variants.forEach(variant => {
+                    if (stock.simple_variants[variant.id] !== undefined) {
+                        variant.available_quantity = stock.simple_variants[variant.id];
+                    }
+                });
+            }
+        });
+    } catch (error) {
+        // Silently fail - no interrumpir la experiencia del usuario
+        console.warn('Stock poll failed:', error.message);
+    }
+};
+
+const startStockPolling = () => {
+    // Hacer primera consulta inmediata después de montar
+    setTimeout(fetchStockUpdates, 2000);
+    
+    // Iniciar intervalo
+    stockPollTimer = setInterval(fetchStockUpdates, STOCK_POLL_INTERVAL);
+};
+
+const stopStockPolling = () => {
+    if (stockPollTimer) {
+        clearInterval(stockPollTimer);
+        stockPollTimer = null;
+    }
+};
+
+const handleVisibilityChange = () => {
+    isPageVisible = !document.hidden;
+    if (isPageVisible) {
+        // Al volver a la página, actualizar stock inmediatamente
+        fetchStockUpdates();
+    }
+};
+
 onMounted(() => {
     loadCartFromStorage();
     checkPendingOrders();
     setupNavigationGuard();
+    startStockPolling();
+    
+    // Escuchar cambios de visibilidad de la página
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onBeforeUnmount(() => {
@@ -105,6 +183,8 @@ onBeforeUnmount(() => {
     if (navigationInterceptor) {
         navigationInterceptor();
     }
+    stopStockPolling();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 // ===== CATEGORIZACIÓN DINÁMICA (como POS) =====
@@ -146,14 +226,14 @@ const groupedProducts = computed(() => {
         });
     }
 
-    // Menu items van al grupo 'menu'
-    props.menuItems.forEach(item => {
+    // Menu items van al grupo 'menu' (usando ref reactiva)
+    menuItemsData.value.forEach(item => {
         groups.menu.items.push({ ...item, product_type: 'menu', price: item.price });
         groups.menu.count++;
     });
 
-    // Simple products se agrupan por su categoría
-    props.simpleProducts.forEach(product => {
+    // Simple products se agrupan por su categoría (usando ref reactiva)
+    simpleProductsData.value.forEach(product => {
         const categoryKey = normalizeCategoryKey(product.category_name);
 
         if (!groups[categoryKey]) {

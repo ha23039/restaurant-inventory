@@ -30,6 +30,9 @@ Route::middleware('web')->prefix('digital-menu')->name('api.digital-menu.')->gro
     Route::post('/auth/verify-code', [AuthController::class, 'verifyCode'])->name('auth.verify-code');
     Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
 
+    // Stock (polling endpoint - lightweight)
+    Route::get('/stock', [\App\Http\Controllers\DigitalMenu\StockController::class, 'index'])->name('stock');
+
     // Órdenes
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders/pending', [OrderController::class, 'getPendingOrders'])->name('orders.pending');
