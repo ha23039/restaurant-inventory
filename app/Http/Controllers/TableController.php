@@ -226,15 +226,32 @@ class TableController extends Controller
                             'is_combo' => $item->product_type === 'combo',
                         ];
 
-                        // Si es combo, agregar los componentes
-                        if ($item->product_type === 'combo' && $item->combo) {
-                            $itemData['combo_components'] = $item->combo->components->map(function ($component) {
-                                return [
-                                    'id' => $component->id,
-                                    'name' => $component->sellable?->name ?? $component->name ?? 'Componente',
-                                    'quantity' => $component->quantity,
-                                ];
-                            });
+                        // Si es combo, agregar los componentes seleccionados por el cliente
+                        if ($item->product_type === 'combo' && ($item->combo_selections || $item->combo)) {
+                            // Preferir combo_selections (lo que el cliente eligió) sobre combo->components
+                            if ($item->combo_selections && isset($item->combo_selections['components_detail'])) {
+                                $itemData['combo_components'] = collect($item->combo_selections['components_detail'])->map(function ($comp) {
+                                    $name = $comp['name'] ?? 'Componente';
+                                    // Si tiene variante, combinar: "Bebida: Cascada - Fresa"
+                                    if (!empty($comp['variant_name'])) {
+                                        $name = $name . ' - ' . $comp['variant_name'];
+                                    }
+                                    return [
+                                        'id' => $comp['component_id'] ?? 0,
+                                        'name' => $name,
+                                        'quantity' => $comp['quantity'] ?? 1,
+                                    ];
+                                });
+                            } elseif ($item->combo) {
+                                // Fallback a la definición del combo si no hay selecciones guardadas
+                                $itemData['combo_components'] = $item->combo->components->map(function ($component) {
+                                    return [
+                                        'id' => $component->id,
+                                        'name' => $component->sellable?->name ?? $component->name ?? 'Componente',
+                                        'quantity' => $component->quantity,
+                                    ];
+                                });
+                            }
                         }
 
                         return $itemData;

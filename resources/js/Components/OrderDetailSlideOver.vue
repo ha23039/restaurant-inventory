@@ -146,8 +146,18 @@ const cancelItem = async () => {
 const getProductName = (item) => {
     if (!item) return '';
     if (item.product_type === 'free') return item.free_sale_name;
-    if (item.product_type === 'variant') return item.menu_item_variant?.variant_name || item.menu_item?.name;
-    if (item.product_type === 'simple_variant') return item.simple_product_variant?.variant_name || item.simple_product?.name;
+    if (item.product_type === 'variant') {
+        // Menu item variant - show parent + variant name
+        const parentName = item.menu_item_variant?.menu_item?.name || item.menu_item?.name || '';
+        const variantName = item.menu_item_variant?.variant_name || '';
+        return parentName && variantName ? `${parentName} - ${variantName}` : (variantName || parentName);
+    }
+    if (item.product_type === 'simple_variant') {
+        // Simple product variant - show parent + variant name
+        const parentName = item.simple_product_variant?.simple_product?.name || item.simple_product?.name || '';
+        const variantName = item.simple_product_variant?.variant_name || '';
+        return parentName && variantName ? `${parentName} - ${variantName}` : (variantName || parentName);
+    }
     if (item.product_type === 'menu') return item.menu_item?.name;
     if (item.product_type === 'simple') return item.simple_product?.name;
     if (item.product_type === 'combo') return item.combo?.name;
@@ -412,7 +422,7 @@ const cancelOrder = async () => {
                                     :key="comp.componentName"
                                     class="text-xs text-gray-500 dark:text-gray-400"
                                 >
-                                    └ {{ comp.componentName }}: {{ comp.name }}
+                                    └ {{ comp.componentName }}: {{ comp.name }}{{ comp.variant_name ? ` - ${comp.variant_name}` : '' }}
                                 </p>
                             </div>
                         </div>

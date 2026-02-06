@@ -571,10 +571,29 @@ const getFormItem = (itemId) => {
 };
 
 const getItemName = (item) => {
+    if (!item) return 'Producto desconocido';
+    
+    if (item.product_type === 'variant' && item.menu_item_variant) {
+        const parentName = item.menu_item_variant.menu_item?.name || item.menu_item?.name || '';
+        const variantName = item.menu_item_variant.variant_name || '';
+        return parentName && variantName ? `${parentName} - ${variantName}` : (variantName || parentName);
+    }
+    if (item.product_type === 'simple_variant' && item.simple_product_variant) {
+        const parentName = item.simple_product_variant.simple_product?.name || item.simple_product?.name || '';
+        const variantName = item.simple_product_variant.variant_name || '';
+        return parentName && variantName ? `${parentName} - ${variantName}` : (variantName || parentName);
+    }
     if (item.menu_item) {
         return item.menu_item.name;
-    } else if (item.simple_product) {
+    }
+    if (item.simple_product) {
         return item.simple_product.name;
+    }
+    if (item.combo) {
+        return item.combo.name;
+    }
+    if (item.free_sale_name) {
+        return item.free_sale_name;
     }
     return 'Producto desconocido';
 };

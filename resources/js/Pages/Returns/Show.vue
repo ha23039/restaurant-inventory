@@ -408,10 +408,30 @@ const formatDateTime = (date) => {
 };
 
 const getItemName = (item) => {
-    if (item.sale_item?.product_type === 'menu' && item.sale_item?.menu_item) {
-        return item.sale_item.menu_item.name;
-    } else if (item.sale_item?.product_type === 'simple' && item.sale_item?.simple_product) {
-        return item.sale_item.simple_product.name;
+    const saleItem = item.sale_item;
+    if (!saleItem) return 'Producto no identificado';
+    
+    if (saleItem.product_type === 'variant' && saleItem.menu_item_variant) {
+        const parentName = saleItem.menu_item_variant.menu_item?.name || '';
+        const variantName = saleItem.menu_item_variant.variant_name || '';
+        return parentName && variantName ? `${parentName} - ${variantName}` : (variantName || parentName);
+    }
+    if (saleItem.product_type === 'simple_variant' && saleItem.simple_product_variant) {
+        const parentName = saleItem.simple_product_variant.simple_product?.name || '';
+        const variantName = saleItem.simple_product_variant.variant_name || '';
+        return parentName && variantName ? `${parentName} - ${variantName}` : (variantName || parentName);
+    }
+    if (saleItem.product_type === 'menu' && saleItem.menu_item) {
+        return saleItem.menu_item.name;
+    }
+    if (saleItem.product_type === 'simple' && saleItem.simple_product) {
+        return saleItem.simple_product.name;
+    }
+    if (saleItem.product_type === 'combo' && saleItem.combo) {
+        return saleItem.combo.name;
+    }
+    if (saleItem.product_type === 'free' && saleItem.free_sale_name) {
+        return saleItem.free_sale_name;
     }
     return 'Producto no identificado';
 };
