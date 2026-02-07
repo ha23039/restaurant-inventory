@@ -489,6 +489,17 @@ onUnmounted(() => {
 
                     <!-- Action buttons -->
                     <div class="space-y-3 pt-4">
+                        <!-- Add Another Order Button -->
+                        <button
+                            @click="goToPOS"
+                            class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all flex items-center justify-center shadow-lg"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Añadir Otro Pedido
+                        </button>
+
                         <!-- Charge All Button -->
                         <button
                             v-if="salesCount > 1"

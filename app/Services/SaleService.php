@@ -387,18 +387,32 @@ class SaleService
                 'table_number' => $table->table_number,
                 'sale_id' => $sale->id,
             ]);
-        } elseif ($sale->status === 'completada') {
-            // Liberar mesa cuando se completa la venta
-            $table->update([
-                'status' => 'disponible',
-                'current_sale_id' => null,
-            ]);
+        } elseif ($sale->status === 'completada' || $sale->status === 'cancelada') {
+            // Verificar si quedan otras ventas pendientes en la mesa
+            $remainingPendingSales = \App\Models\Sale::where('table_id', $table->id)
+                ->where('id', '!=', $sale->id)
+                ->whereIn('status', ['pendiente', 'en_preparacion'])
+                ->count();
 
-            Log::info('Mesa liberada', [
-                'table_id' => $table->id,
-                'table_number' => $table->table_number,
-                'sale_id' => $sale->id,
-            ]);
+            if ($remainingPendingSales === 0) {
+                // Liberar mesa solo si no hay más pedidos
+                $table->update([
+                    'status' => 'disponible',
+                    'current_sale_id' => null,
+                ]);
+
+                Log::info('Mesa liberada tras completar/cancelar última venta', [
+                    'table_id' => $table->id,
+                    'last_sale_id' => $sale->id,
+                ]);
+            } else {
+                Log::info('Mesa permanece ocupada con otros pedidos', [
+                    'table_id' => $table->id,
+                    'remaining_count' => $remainingPendingSales,
+                ]);
+            }
+
+
         }
     }
 

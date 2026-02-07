@@ -1696,11 +1696,10 @@ onBeforeUnmount(() => {
                                                 v-for="table in available_tables"
                                                 :key="table.id"
                                                 :value="table.id"
-                                                :disabled="table.status === 'ocupada' && table.current_sale_id !== selectedExistingSale?.id"
                                             >
                                                 Mesa {{ table.table_number }} {{ table.name ? `- ${table.name}` : '' }}
                                                 ({{ table.capacity }} pers.)
-                                                {{ table.status === 'ocupada' ? '- Ocupada' : '' }}
+                                                {{ table.status === 'ocupada' ? '- Ocupada ⚠️' : '' }}
                                                 {{ table.status === 'reservada' ? '- Reservada' : '' }}
                                                 {{ table.status === 'en_limpieza' ? '- En Limpieza' : '' }}
                                             </option>

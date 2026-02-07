@@ -35,6 +35,7 @@ const loadingOrder = ref(false);
 // TableSlideOver
 const showTableSlideOver = ref(false);
 const selectedTable = ref(null);
+const isLoadingTables = ref(false);
 
 // Auto-refresh cada 30 segundos
 let refreshInterval = null;
@@ -53,12 +54,21 @@ onUnmounted(() => {
 const changeTab = (key) => {
     if (activeTab.value === key) return;
     activeTab.value = key;
+    
+    // Show loading state for tables tab
+    if (key === 'mesas') {
+        isLoadingTables.value = true;
+    }
+    
     router.get(route('orders.index'), {
         type: key,
     }, {
         preserveState: true,
         preserveScroll: true,
         only: ['orders', 'counts', 'tables', 'tableStatistics'],
+        onFinish: () => {
+            isLoadingTables.value = false;
+        },
     });
 };
 
@@ -460,7 +470,19 @@ const getTableStatusTextColor = (status) => {
 
                 <!-- Tables Grid (when on mesas tab) -->
                 <template v-if="activeTab === 'mesas'">
-                    <div v-if="tables && tables.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    <!-- Loading State -->
+                    <div v-if="isLoadingTables" class="flex items-center justify-center py-12">
+                        <div class="text-center">
+                            <svg class="animate-spin h-10 w-10 text-orange-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-gray-500 dark:text-gray-400">Cargando mesas...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tables Grid -->
+                    <div v-else-if="tables && tables.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                         <div
                             v-for="table in tables"
                             :key="table.id"
