@@ -414,6 +414,11 @@ const handleOrderCreated = (data) => {
     // Guardar datos de la orden
     orderData.value = data;
 
+    // ✅ LIMPIAR CARRITO INMEDIATAMENTE al crear el pedido exitosamente
+    // Esto asegura que el carrito se resetee aunque el usuario no cierre la confirmación
+    cart.value = [];
+    clearCartStorage();
+
     // Mostrar pantalla de confirmación
     showCheckout.value = false;
     showConfirmation.value = true;

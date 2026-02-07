@@ -213,6 +213,14 @@ watch(() => props.show, (newValue, oldValue) => {
     }
 });
 
+// Watch for product changes - reset selections when a different product is opened
+watch(() => props.menuItem?.id, (newId, oldId) => {
+    if (newId !== oldId && props.show) {
+        // Product changed while slideover is open - reload cart quantities
+        loadCartQuantities();
+    }
+});
+
 // Scroll detection
 const handleScroll = () => {
     if (!contentRef.value) return;

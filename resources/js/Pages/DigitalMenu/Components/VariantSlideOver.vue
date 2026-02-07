@@ -212,6 +212,14 @@ watch(() => props.show, (newValue, oldValue) => {
     }
 });
 
+// Watch for product changes - reset selections when a different product is opened
+watch(() => activeProduct.value?.id, (newId, oldId) => {
+    if (newId !== oldId && props.show) {
+        // Product changed while slideover is open - reload cart quantities
+        loadCartQuantities();
+    }
+});
+
 // Detectar si el scroll está en el tope
 const handleScroll = () => {
     if (!contentRef.value) return;

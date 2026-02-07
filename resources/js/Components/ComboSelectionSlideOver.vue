@@ -89,6 +89,13 @@ watch(() => props.show, (newValue) => {
     }
 });
 
+// Watch for combo changes - reinitialize selections when a different combo is opened
+watch(() => props.combo?.id, (newId, oldId) => {
+    if (newId !== oldId && props.show) {
+        initializeSelections();
+    }
+});
+
 const initializeSelections = () => {
     if (!props.combo?.components) return;
 
