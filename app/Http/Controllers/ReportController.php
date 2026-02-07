@@ -205,7 +205,19 @@ class ReportController extends Controller
             if ($variant) {
                 $parentName = $variant->menuItem ? $variant->menuItem->name : '';
 
-                return $parentName.' - '.$variant->variant_name;
+                return $parentName . ' - ' . $variant->variant_name;
+            }
+
+            return 'Variante eliminada';
+        }
+
+        // Variantes de productos simples
+        if ($item->product_type === 'simple_variant' && !empty($item->simple_product_variant_id)) {
+            $variant = \App\Models\SimpleProductVariant::with('simpleProduct')->find($item->simple_product_variant_id);
+            if ($variant) {
+                $parentName = $variant->simpleProduct ? $variant->simpleProduct->name : '';
+
+                return $parentName . ' - ' . $variant->variant_name;
             }
 
             return 'Variante eliminada';
@@ -306,8 +318,8 @@ class ReportController extends Controller
             'simple' => "simple_{$product['simple_product_id']}",
             'variant' => "variant_{$product['menu_item_variant_id']}",
             'combo' => "combo_{$product['combo_id']}",
-            'free' => 'free_'.md5($product['name'] ?? ''),
-            default => 'unknown_'.uniqid(),
+            'free' => 'free_' . md5($product['name'] ?? ''),
+            default => 'unknown_' . uniqid(),
         };
     }
 
@@ -359,7 +371,7 @@ class ReportController extends Controller
             ->groupBy('date')
             ->orderBy('date')
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'date' => $item->date,
                 'total' => (float) $item->total,
                 'orders' => (int) $item->orders,
@@ -394,7 +406,7 @@ class ReportController extends Controller
             'endDate' => $dates['current_end']->format('d/m/Y'),
         ]);
 
-        $filename = 'reporte-ventas-'.now()->format('Y-m-d').'.pdf';
+        $filename = 'reporte-ventas-' . now()->format('Y-m-d') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -414,7 +426,7 @@ class ReportController extends Controller
             $previousData['top_products']
         );
 
-        $filename = 'reporte-ventas-'.now()->format('Y-m-d').'.csv';
+        $filename = 'reporte-ventas-' . now()->format('Y-m-d') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -425,7 +437,7 @@ class ReportController extends Controller
             $file = fopen('php://output', 'w');
 
             // UTF-8 BOM for Excel compatibility
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Headers
             fputcsv($file, ['#', 'Producto', 'Cantidad', 'Ingresos', 'Cambio %']);
@@ -437,7 +449,7 @@ class ReportController extends Controller
                     $product['name'],
                     $product['total_quantity'],
                     number_format($product['total_revenue'], 2),
-                    ($product['quantity_change'] >= 0 ? '+' : '').$product['quantity_change'].'%',
+                    ($product['quantity_change'] >= 0 ? '+' : '') . $product['quantity_change'] . '%',
                 ]);
             }
 

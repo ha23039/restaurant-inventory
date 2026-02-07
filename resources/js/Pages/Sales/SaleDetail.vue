@@ -494,7 +494,7 @@
                                                             </span>
                                                             <span class="text-gray-700 dark:text-gray-300">
                                                                 <span v-if="comp.componentName" class="font-medium">{{ comp.componentName }}:</span>
-                                                                {{ comp.name }}
+                                                                {{ comp.name }}{{ comp.variant_name ? ` - ${comp.variant_name}` : '' }}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -955,6 +955,9 @@ const getProductName = (item) => {
     } else if (item.product_type === 'variant' && item.menu_item_variant) {
         const parentName = item.menu_item_variant.menu_item?.name || '';
         return parentName ? `${parentName} - ${item.menu_item_variant.variant_name}` : item.menu_item_variant.variant_name;
+    } else if (item.product_type === 'simple_variant' && item.simple_product_variant) {
+        const parentName = item.simple_product_variant.simple_product?.name || '';
+        return parentName ? `${parentName} - ${item.simple_product_variant.variant_name}` : item.simple_product_variant.variant_name;
     } else if (item.product_type === 'menu' && item.menu_item) {
         return item.menu_item.name;
     } else if (item.product_type === 'simple' && item.simple_product) {

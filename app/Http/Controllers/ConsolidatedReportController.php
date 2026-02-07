@@ -125,7 +125,7 @@ class ConsolidatedReportController extends Controller
         ];
 
         if ($options['includeSales'] ?? true) {
-            $sales = Sale::whereBetween('created_at', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59'])
+            $sales = Sale::whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
                 ->where('status', 'completed')
                 ->get();
 
@@ -147,19 +147,19 @@ class ConsolidatedReportController extends Controller
                 'total_income' => $income->sum('amount'),
                 'total_expenses' => $expenses->sum('amount'),
                 'net_cashflow' => $income->sum('amount') - $expenses->sum('amount'),
-                'income_by_category' => $income->groupBy('category')->map(fn ($items) => $items->sum('amount')),
-                'expenses_by_category' => $expenses->groupBy('category')->map(fn ($items) => $items->sum('amount')),
+                'income_by_category' => $income->groupBy('category')->map(fn($items) => $items->sum('amount')),
+                'expenses_by_category' => $expenses->groupBy('category')->map(fn($items) => $items->sum('amount')),
             ];
         }
 
         if ($options['includeInventory'] ?? true) {
             $products = Product::with('category')->get();
-            $lowStock = $products->filter(fn ($p) => $p->current_stock <= $p->min_stock);
+            $lowStock = $products->filter(fn($p) => $p->current_stock <= $p->min_stock);
 
             $data['inventory'] = [
                 'total_products' => $products->count(),
                 'low_stock_count' => $lowStock->count(),
-                'total_inventory_value' => $products->sum(fn ($p) => $p->current_stock * $p->unit_cost),
+                'total_inventory_value' => $products->sum(fn($p) => $p->current_stock * $p->unit_cost),
                 'out_of_stock' => $products->where('current_stock', 0)->count(),
             ];
         }
@@ -232,12 +232,13 @@ class ConsolidatedReportController extends Controller
             ],
         ];
 
-        $sales = Sale::whereBetween('created_at', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59'])
+        $sales = Sale::whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->where('status', 'completada')
             ->with([
                 'saleItems.menuItem.recipes.product',
                 'saleItems.menuItemVariant.recipes.product',
                 'saleItems.simpleProduct.product',
+                'saleItems.simpleProductVariant.simpleProduct.product',
                 'saleItems.combo.components.sellable',
             ])
             ->get();
@@ -288,19 +289,21 @@ class ConsolidatedReportController extends Controller
                 foreach ($sale->saleItems as $item) {
                     // Generar key único según tipo de producto
                     $key = match ($item->product_type) {
-                        'menu' => 'menu_'.$item->menu_item_id,
-                        'variant' => 'variant_'.$item->menu_item_variant_id,
-                        'simple' => 'simple_'.$item->simple_product_id,
-                        'combo' => 'combo_'.$item->combo_id,
-                        default => 'other_'.uniqid(),
+                        'menu' => 'menu_' . $item->menu_item_id,
+                        'variant' => 'variant_' . $item->menu_item_variant_id,
+                        'simple' => 'simple_' . $item->simple_product_id,
+                        'simple_variant' => 'simple_variant_' . $item->simple_product_variant_id,
+                        'combo' => 'combo_' . $item->combo_id,
+                        default => 'other_' . uniqid(),
                     };
 
                     if (!isset($productSales[$key])) {
                         $productSales[$key] = [
                             'name' => match ($item->product_type) {
                                 'menu' => $item->menuItem->name ?? 'N/A',
-                                'variant' => ($item->menuItemVariant->menuItem->name ?? '').' - '.($item->menuItemVariant->variant_name ?? 'N/A'),
+                                'variant' => ($item->menuItemVariant->menuItem->name ?? '') . ' - ' . ($item->menuItemVariant->variant_name ?? 'N/A'),
                                 'simple' => $item->simpleProduct->name ?? 'N/A',
+                                'simple_variant' => ($item->simpleProductVariant->simpleProduct->name ?? '') . ' - ' . ($item->simpleProductVariant->variant_name ?? 'N/A'),
                                 'combo' => $item->combo->name ?? 'N/A',
                                 default => 'Producto',
                             },
@@ -364,11 +367,11 @@ class ConsolidatedReportController extends Controller
         if ($options['includeValues'] ?? true) {
             $data['valuation'] = [
                 'total_products' => $products->count(),
-                'total_value' => $products->sum(fn ($p) => $p->current_stock * $p->unit_cost),
+                'total_value' => $products->sum(fn($p) => $p->current_stock * $p->unit_cost),
                 'by_category' => $products->groupBy('category.name')->map(function ($items) {
                     return [
                         'count' => $items->count(),
-                        'value' => $items->sum(fn ($p) => $p->current_stock * $p->unit_cost),
+                        'value' => $items->sum(fn($p) => $p->current_stock * $p->unit_cost),
                     ];
                 }),
             ];
@@ -381,19 +384,19 @@ class ConsolidatedReportController extends Controller
 
             $data['movements'] = [
                 'total_movements' => $movements->count(),
-                'by_type' => $movements->groupBy('movement_type')->map(fn ($items) => $items->count()),
-                'by_reason' => $movements->groupBy('reason')->map(fn ($items) => $items->count()),
+                'by_type' => $movements->groupBy('movement_type')->map(fn($items) => $items->count()),
+                'by_reason' => $movements->groupBy('reason')->map(fn($items) => $items->count()),
             ];
         }
 
         if ($options['includeAlerts'] ?? true) {
-            $lowStock = $products->filter(fn ($p) => $p->current_stock <= $p->min_stock);
+            $lowStock = $products->filter(fn($p) => $p->current_stock <= $p->min_stock);
             $outOfStock = $products->where('current_stock', 0);
 
             $data['alerts'] = [
                 'low_stock_count' => $lowStock->count(),
                 'out_of_stock_count' => $outOfStock->count(),
-                'low_stock_products' => $lowStock->map(fn ($p) => [
+                'low_stock_products' => $lowStock->map(fn($p) => [
                     'name' => $p->name,
                     'current_stock' => $p->current_stock,
                     'min_stock' => $p->min_stock,
@@ -407,7 +410,7 @@ class ConsolidatedReportController extends Controller
 
     private function exportExecutiveCsv($data, $dateFrom, $dateTo)
     {
-        $filename = 'reporte_ejecutivo_'.$dateFrom.'_'.$dateTo.'.csv';
+        $filename = 'reporte_ejecutivo_' . $dateFrom . '_' . $dateTo . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -415,26 +418,26 @@ class ConsolidatedReportController extends Controller
 
         $callback = function () use ($data) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, ['REPORTE EJECUTIVO']);
-            fputcsv($file, ['Periodo', $data['period']['from'].' - '.$data['period']['to']]);
+            fputcsv($file, ['Periodo', $data['period']['from'] . ' - ' . $data['period']['to']]);
             fputcsv($file, []);
 
             if (isset($data['sales'])) {
                 fputcsv($file, ['VENTAS']);
                 fputcsv($file, ['Total de Ventas', $data['sales']['total_sales']]);
-                fputcsv($file, ['Ingresos Totales', '$'.number_format($data['sales']['total_revenue'], 2)]);
-                fputcsv($file, ['Ticket Promedio', '$'.number_format($data['sales']['average_ticket'], 2)]);
-                fputcsv($file, ['Descuentos Totales', '$'.number_format($data['sales']['total_discount'], 2)]);
+                fputcsv($file, ['Ingresos Totales', '$' . number_format($data['sales']['total_revenue'], 2)]);
+                fputcsv($file, ['Ticket Promedio', '$' . number_format($data['sales']['average_ticket'], 2)]);
+                fputcsv($file, ['Descuentos Totales', '$' . number_format($data['sales']['total_discount'], 2)]);
                 fputcsv($file, []);
             }
 
             if (isset($data['cashflow'])) {
                 fputcsv($file, ['FLUJO DE EFECTIVO']);
-                fputcsv($file, ['Ingresos Totales', '$'.number_format($data['cashflow']['total_income'], 2)]);
-                fputcsv($file, ['Egresos Totales', '$'.number_format($data['cashflow']['total_expenses'], 2)]);
-                fputcsv($file, ['Flujo Neto', '$'.number_format($data['cashflow']['net_cashflow'], 2)]);
+                fputcsv($file, ['Ingresos Totales', '$' . number_format($data['cashflow']['total_income'], 2)]);
+                fputcsv($file, ['Egresos Totales', '$' . number_format($data['cashflow']['total_expenses'], 2)]);
+                fputcsv($file, ['Flujo Neto', '$' . number_format($data['cashflow']['net_cashflow'], 2)]);
                 fputcsv($file, []);
             }
 
@@ -442,7 +445,7 @@ class ConsolidatedReportController extends Controller
                 fputcsv($file, ['INVENTARIO']);
                 fputcsv($file, ['Total de Productos', $data['inventory']['total_products']]);
                 fputcsv($file, ['Productos con Stock Bajo', $data['inventory']['low_stock_count']]);
-                fputcsv($file, ['Valor Total del Inventario', '$'.number_format($data['inventory']['total_inventory_value'], 2)]);
+                fputcsv($file, ['Valor Total del Inventario', '$' . number_format($data['inventory']['total_inventory_value'], 2)]);
                 fputcsv($file, ['Productos Agotados', $data['inventory']['out_of_stock']]);
             }
 
@@ -461,12 +464,12 @@ class ConsolidatedReportController extends Controller
     {
         $pdf = Pdf::loadView('reports.executive', compact('data'));
 
-        return $pdf->download('reporte_ejecutivo_'.$dateFrom.'_'.$dateTo.'.pdf');
+        return $pdf->download('reporte_ejecutivo_' . $dateFrom . '_' . $dateTo . '.pdf');
     }
 
     private function exportFinancialCsv($data, $dateFrom, $dateTo)
     {
-        $filename = 'estado_financiero_'.$dateFrom.'_'.$dateTo.'.csv';
+        $filename = 'estado_financiero_' . $dateFrom . '_' . $dateTo . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -474,22 +477,22 @@ class ConsolidatedReportController extends Controller
 
         $callback = function () use ($data) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, ['ESTADO FINANCIERO']);
-            fputcsv($file, ['Periodo', $data['period']['from'].' - '.$data['period']['to']]);
+            fputcsv($file, ['Periodo', $data['period']['from'] . ' - ' . $data['period']['to']]);
             fputcsv($file, []);
 
             if (isset($data['income'])) {
                 fputcsv($file, ['INGRESOS']);
-                fputcsv($file, ['Total', '$'.number_format($data['income']['total'], 2)]);
+                fputcsv($file, ['Total', '$' . number_format($data['income']['total'], 2)]);
                 fputcsv($file, ['Número de Transacciones', $data['income']['count']]);
                 fputcsv($file, []);
                 fputcsv($file, ['Categoría', 'Monto', 'Transacciones']);
                 foreach ($data['income']['by_category'] as $category) {
                     fputcsv($file, [
                         $category['category'],
-                        '$'.number_format($category['amount'], 2),
+                        '$' . number_format($category['amount'], 2),
                         $category['count'],
                     ]);
                 }
@@ -498,14 +501,14 @@ class ConsolidatedReportController extends Controller
 
             if (isset($data['expenses'])) {
                 fputcsv($file, ['EGRESOS']);
-                fputcsv($file, ['Total', '$'.number_format($data['expenses']['total'], 2)]);
+                fputcsv($file, ['Total', '$' . number_format($data['expenses']['total'], 2)]);
                 fputcsv($file, ['Número de Transacciones', $data['expenses']['count']]);
                 fputcsv($file, []);
                 fputcsv($file, ['Categoría', 'Monto', 'Transacciones']);
                 foreach ($data['expenses']['by_category'] as $category) {
                     fputcsv($file, [
                         $category['category'],
-                        '$'.number_format($category['amount'], 2),
+                        '$' . number_format($category['amount'], 2),
                         $category['count'],
                     ]);
                 }
@@ -514,10 +517,10 @@ class ConsolidatedReportController extends Controller
 
             if (isset($data['balance'])) {
                 fputcsv($file, ['BALANCE GENERAL']);
-                fputcsv($file, ['Ingresos', '$'.number_format($data['balance']['income'], 2)]);
-                fputcsv($file, ['Egresos', '$'.number_format($data['balance']['expenses'], 2)]);
-                fputcsv($file, ['Balance Neto', '$'.number_format($data['balance']['net'], 2)]);
-                fputcsv($file, ['Margen de Utilidad', number_format($data['balance']['profit_margin'], 2).'%']);
+                fputcsv($file, ['Ingresos', '$' . number_format($data['balance']['income'], 2)]);
+                fputcsv($file, ['Egresos', '$' . number_format($data['balance']['expenses'], 2)]);
+                fputcsv($file, ['Balance Neto', '$' . number_format($data['balance']['net'], 2)]);
+                fputcsv($file, ['Margen de Utilidad', number_format($data['balance']['profit_margin'], 2) . '%']);
             }
 
             fclose($file);
@@ -535,12 +538,12 @@ class ConsolidatedReportController extends Controller
     {
         $pdf = Pdf::loadView('reports.financial', compact('data'));
 
-        return $pdf->download('estado_financiero_'.$dateFrom.'_'.$dateTo.'.pdf');
+        return $pdf->download('estado_financiero_' . $dateFrom . '_' . $dateTo . '.pdf');
     }
 
     private function exportProfitabilityCsv($data, $dateFrom, $dateTo)
     {
-        $filename = 'analisis_rentabilidad_'.$dateFrom.'_'.$dateTo.'.csv';
+        $filename = 'analisis_rentabilidad_' . $dateFrom . '_' . $dateTo . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -548,17 +551,17 @@ class ConsolidatedReportController extends Controller
 
         $callback = function () use ($data) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, ['ANÁLISIS DE RENTABILIDAD']);
-            fputcsv($file, ['Periodo', $data['period']['from'].' - '.$data['period']['to']]);
+            fputcsv($file, ['Periodo', $data['period']['from'] . ' - ' . $data['period']['to']]);
             fputcsv($file, []);
 
             fputcsv($file, ['RESUMEN GENERAL']);
-            fputcsv($file, ['Ingresos Totales', '$'.number_format($data['overview']['total_revenue'], 2)]);
-            fputcsv($file, ['Costo Total', '$'.number_format($data['overview']['total_cost'], 2)]);
-            fputcsv($file, ['Utilidad Bruta', '$'.number_format($data['overview']['gross_profit'], 2)]);
-            fputcsv($file, ['Margen de Utilidad', number_format($data['overview']['profit_margin'], 2).'%']);
+            fputcsv($file, ['Ingresos Totales', '$' . number_format($data['overview']['total_revenue'], 2)]);
+            fputcsv($file, ['Costo Total', '$' . number_format($data['overview']['total_cost'], 2)]);
+            fputcsv($file, ['Utilidad Bruta', '$' . number_format($data['overview']['gross_profit'], 2)]);
+            fputcsv($file, ['Margen de Utilidad', number_format($data['overview']['profit_margin'], 2) . '%']);
             fputcsv($file, []);
 
             if (isset($data['products'])) {
@@ -576,10 +579,10 @@ class ConsolidatedReportController extends Controller
                         $product['name'],
                         $typeLabel,
                         $product['quantity_sold'],
-                        '$'.number_format($product['revenue'], 2),
-                        '$'.number_format($product['cost'], 2),
-                        '$'.number_format($product['profit'], 2),
-                        number_format($product['margin'], 2).'%',
+                        '$' . number_format($product['revenue'], 2),
+                        '$' . number_format($product['cost'], 2),
+                        '$' . number_format($product['profit'], 2),
+                        number_format($product['margin'], 2) . '%',
                     ]);
                 }
             }
@@ -599,12 +602,12 @@ class ConsolidatedReportController extends Controller
     {
         $pdf = Pdf::loadView('reports.profitability', compact('data'));
 
-        return $pdf->download('analisis_rentabilidad_'.$dateFrom.'_'.$dateTo.'.pdf');
+        return $pdf->download('analisis_rentabilidad_' . $dateFrom . '_' . $dateTo . '.pdf');
     }
 
     private function exportInventoryCsv($data, $dateFrom, $dateTo)
     {
-        $filename = 'inventario_valorizado_'.$dateFrom.'_'.$dateTo.'.csv';
+        $filename = 'inventario_valorizado_' . $dateFrom . '_' . $dateTo . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -612,16 +615,16 @@ class ConsolidatedReportController extends Controller
 
         $callback = function () use ($data) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, ['INVENTARIO VALORIZADO']);
-            fputcsv($file, ['Periodo', $data['period']['from'].' - '.$data['period']['to']]);
+            fputcsv($file, ['Periodo', $data['period']['from'] . ' - ' . $data['period']['to']]);
             fputcsv($file, []);
 
             if (isset($data['valuation'])) {
                 fputcsv($file, ['VALORIZACIÓN']);
                 fputcsv($file, ['Total de Productos', $data['valuation']['total_products']]);
-                fputcsv($file, ['Valor Total', '$'.number_format($data['valuation']['total_value'], 2)]);
+                fputcsv($file, ['Valor Total', '$' . number_format($data['valuation']['total_value'], 2)]);
                 fputcsv($file, []);
             }
 
@@ -664,6 +667,6 @@ class ConsolidatedReportController extends Controller
     {
         $pdf = Pdf::loadView('reports.inventory', compact('data'));
 
-        return $pdf->download('inventario_valorizado_'.$dateFrom.'_'.$dateTo.'.pdf');
+        return $pdf->download('inventario_valorizado_' . $dateFrom . '_' . $dateTo . '.pdf');
     }
 }
